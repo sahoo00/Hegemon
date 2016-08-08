@@ -550,6 +550,32 @@ class Hegemon {
     return $res;
   }
 
+  public function getCorrelation($id1) {
+    $res = [];
+    $exprFile = $this->getExprFile();
+    $path = getenv("PATH");        // save old value 
+    $java_home = "/booleanfs/sahoo/softwares/java/jdk1.8.0_45";
+    $path1 = "$java_home/bin";
+    if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
+    putenv("PATH=$path1");        // set new value 
+    putenv("JAVA_HOME=$java_home");        // set new value 
+    $cmd = "java Hegemon corr $exprFile $id1";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = rtrim($line, "\r\n");
+      $list = explode("\t", $line);
+      if (count($list) < 2) {
+        continue;
+      }
+      $res[$list[1]] = $list[0];
+    }
+    pclose($fh);
+    return $res;
+  }
+
 }
 
 ?>

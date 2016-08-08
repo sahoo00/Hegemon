@@ -54,6 +54,10 @@ if (array_key_exists("go", $_GET)) {
     midreg($file, $_GET['A'], $_GET['B'], $_GET['id'], $_GET['sthr'],
         $_GET['pthr']);
   }
+  if (strcmp($_GET["go"], "getcorr") == 0) {
+    printCorrelation($file, $_GET['A'], $_GET['B'], $_GET['id'], $_GET['sthr'],
+        $_GET['pthr']);
+  }
   callGroupsCommands($file, $groups);
 }
 elseif (array_key_exists("go", $_POST)) {
@@ -229,6 +233,23 @@ function midreg($file, $str1, $str2, $id, $sthr, $pthr) {
   }
 }
 
+function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
+  $h = getHegemon($file, $id);
+  $ids = $h->getIDs("$str1 $str2");
+  $bestid = $h->getBestID(array_keys($ids));
+  $res = $h->getCorrelation($bestid);
+  $head = ["1.0 to 0.5", "0.5 to -0.5", "-0.5 to -1.0"];
+  $values = [0, 0, 0];
+  $idlist = [[], [], []];
+  foreach ($res as $k => $v) {
+    if ($v >= 0.5) { array_push($idlist[0], $k); $values[0] ++;}
+    else if ($v <= -0.5) { array_push($idlist[2], $k); $values[2] ++;}
+    else { array_push($idlist[1], $k); $values[1] ++;}
+  }
+  setupDisplay($h, $id, $sthr, $pthr, $bestid,"", $head,
+      $values, $idlist);
+}
+
 function topGenes($file, $id, $num) {
   $h = getHegemon($file, $id);
   $ids = $h->topGenes($num);
@@ -392,7 +413,7 @@ echo "
       </select>
       <input type=\"button\" name=\"topGenes\" value=\"topGenes\"
               onclick=\"callTopGenes();\"/>
-      Num Genes: <input type=\"text\" size=\"3\" id=\"arg1\"/>
+      nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
       <div id=\"box\">
       Gene A: <input type=\"text\" size=\"20\" id=\"Ab\" 
               name=\"Ab\" value=\"\" alt=\"Gene A\" />
@@ -410,6 +431,8 @@ echo "
               onclick=\"callMiDReG();\"/> 
     CT: <input type=\"text\" size=\"3\" id=\"CT\"
               name=\"CT\" value=\"\" alt=\"Censor Time\"/>
+          <input type=\"button\" name=\"getCorr\" value=\"getCorr\"
+              onclick=\"callCorr();\"/>
           <input type=\"button\" name=\"Clear\" value=\"Clear\"
               onclick=\"callClear();\"/>
 ";

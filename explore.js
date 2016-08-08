@@ -176,3 +176,22 @@ function loadDisplay(mouse, ori) {
   }
 }
 
+function callCorr() {
+  if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
+    $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
+    $('#results').css("visibility", "visible");
+    var s1 = $('#dataset').val();
+    var str1 = $('#Ab').val();
+    var str2 = $('#Bb').val();
+    var sthr = $.trim($('#sthr').val());
+    var pthr = $.trim($('#pthr').val());
+    if (/^[\d\.]+$/.test(sthr) == false)
+      sthr=3;
+    if (/^[\d\.]+$/.test(pthr) == false)
+      pthr=0.1;
+    var url = 'explore.php?go=getcorr&id=' + s1 + '&sthr=' + sthr;
+    url += '&pthr=' + pthr + "&A=" + str1 + "&B=" + str2;
+    $('#results').load(url);
+  }
+}
+

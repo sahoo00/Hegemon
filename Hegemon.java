@@ -13,6 +13,14 @@ class Hegemon {
     pre = p;
   }
 
+  public boolean isExpr() {
+    File f = new File(pre);
+    if(f.exists() && !f.isDirectory()) { 
+      return true;
+    }
+    return false;
+  }
+
   public boolean hasBv() {
     File f = new File(getBv());
     if(f.exists() && !f.isDirectory()) { 
@@ -397,6 +405,136 @@ class Hegemon {
     return thr;
   }
 
+  public static void getExprData(String[] arr, double[] data) {
+    for (int i = 0, il = data.length; i < il; i++) {
+      data[i] = Double.NaN;
+    }
+    for (int i = 2, il = arr.length; i < il && i < data.length; i++) {
+      try {
+        double v = Double.parseDouble(arr[i]);
+        data[i] = v;
+      }
+      catch (Exception e) {
+      }
+    }
+  }
+
+  public static double getCorrelation(double[] v1, double[] v2) {
+    double sum_xy = 0, sum_x = 0, sum_y = 0, sum_sqx = 0, sum_sqy = 0;
+    int count = 0;
+    double res =0;
+    int length = v1.length;
+    if (length > v2.length) {
+      length = v2.length;
+    }
+    for (int i =0; i <length; i++) {
+      double x = v1[i];
+      double y = v2[i];
+      if (!Double.isNaN(x) && !Double.isNaN(y)) {
+        count ++;
+        sum_xy += x * y;
+        sum_x += x;
+        sum_y += y;
+        sum_sqx += x * x;
+        sum_sqy += y * y;
+      }
+    }
+    if (count != 0) {
+      res = (sum_xy - 1.0/count * sum_x * sum_y)/
+        Math.sqrt(sum_sqx - 1.0/count * sum_x * sum_x)/
+        Math.sqrt(sum_sqy - 1.0/count * sum_y * sum_y);
+    }
+    if (Double.isNaN(res)) {
+      res = 0.0;
+    }
+    return res;
+  }
+
+/*
+  private static HashMap sortByValues(HashMap map) { 
+    List list = new LinkedList(map.entrySet());
+    // Defined Custom Comparator here
+    Collections.sort(list, new Comparator() {
+        public int compare(Object o1, Object o2) {
+        return ((Comparable) ((Map.Entry) (o1)).getValue())
+        .compareTo(((Map.Entry) (o2)).getValue());
+        }
+        });
+
+    // Here I am copying the sorted list in HashMap
+    // using LinkedHashMap to preserve the insertion order
+    HashMap sortedHashMap = new LinkedHashMap();
+    for (Iterator it = list.iterator(); it.hasNext();) {
+      Map.Entry entry = (Map.Entry) it.next();
+      sortedHashMap.put(entry.getKey(), entry.getValue());
+    } 
+    return sortedHashMap;
+  }
+*/
+  public static <K, V extends Comparable<? super V>> Map<K, V> sortByValues(
+      Map<K, V> tempMap) {
+    TreeMap<K, V> map = new TreeMap<>(buildComparator(tempMap));
+    map.putAll(tempMap);
+    return map;
+  }
+
+  public static <K, V extends Comparable<? super V>> Comparator<? super K>
+    buildComparator(final Map<K, V> tempMap) {
+      return (o2, o1) -> tempMap.get(o1).compareTo(tempMap.get(o2));
+    }
+
+  public void printCorrelation(String id) {
+    if (!isExpr()) {
+      return;
+    }
+    String exprFile = pre;
+    String line;
+    try {
+      String line1 = getLine(exprFile, id);
+      if (line1 == null) {
+        return;
+      }
+      String[] result1 = line1.split("\\t", -2); // -2 : Don't discard trailing nulls
+      double[] data1 = new double[result1.length];
+      getExprData(result1, data1); 
+      
+      // FileReader reads text files in the default encoding.
+      FileReader fileReader = 
+        new FileReader(exprFile);
+
+      // Always wrap FileReader in BufferedReader.
+      BufferedReader bufferedReader = 
+        new BufferedReader(fileReader);
+
+      double[] data2 = new double[result1.length];
+      HashMap<String, Double> hmap1 = new HashMap<String, Double>();
+      HashMap<String, String> hmap2 = new HashMap<String, String>();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        getExprData(result, data2); 
+        double res = getCorrelation(data1, data2);
+        hmap1.put(result[0], res);
+        hmap2.put(result[0], result[1]);
+      }
+      // Always close files.
+      bufferedReader.close();         
+      Map<String, Double> map = sortByValues(hmap1); 
+      Set set2 = map.entrySet();
+      Iterator iterator2 = set2.iterator();
+      while(iterator2.hasNext()) {
+        Map.Entry me2 = (Map.Entry)iterator2.next();
+        out.println(me2.getValue() + "\t" + me2.getKey() + "\t" +
+            hmap2.get(me2.getKey())); 
+      }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java Hegemon <cmd> <args> ... <args>");
@@ -410,6 +548,14 @@ class Hegemon {
     if (cmd.equals("boolean")) {
       Hegemon h = new Hegemon(args[1]);
       h.printBoolean(args[2]);
+    }
+    if (cmd.equals("corr") && args.length < 3) {
+      System.out.println("Usage: java Hegemon corr expr.txt id");
+      System.exit(1);
+    }
+    if (cmd.equals("corr")) {
+      Hegemon h = new Hegemon(args[1]);
+      h.printCorrelation(args[2]);
     }
   }
 }
