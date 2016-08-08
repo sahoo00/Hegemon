@@ -1,0 +1,49 @@
+html, body {
+  margin: 5px;
+  padding: 5px;
+  border: none;
+  background: #FFF;
+}
+body, select {
+  color: #000;
+  font: 16px/1.3em Arial, Helvetica, sans-serif;
+}
+#header {
+  color: #000;
+}
+#exploreAll {
+  margin:0px;
+  padding:0px;
+}
+#box {
+  margin-top: 10px;
+  line-height: 1.5em;
+}
+img.groupPlot {
+  position: relative;
+  padding: 0 0 0 0;
+  margin: 0 0 0 0;
+  float:left;
+  border:1px solid #fff;
+}
+#rect { 
+  position: absolute;
+  top: 100px;
+  left: 60px;
+  background-color: transparent;
+  width: 0px; 
+  height: 0px;
+  border: 1px #000000 solid;
+  padding: 0 0 0 0;
+  clear: both;
+  visibility:hidden;
+}
+#tools_display {
+  position: relative;
+  font-family: Courier New;
+  font-size: 12px;
+  width: 250px;
+  padding: 0 0 0 0;
+  visibility:visible;
+  float:right;
+}
