@@ -195,3 +195,16 @@ function callCorr() {
   }
 }
 
+function callGetIDs() {
+  if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
+    $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
+    $('#results').css("visibility", "visible");
+    var s1 = $('#dataset').val();
+    var str1 = $('#Ab').val();
+    var str2 = $('#Bb').val();
+    var url = 'explore.php?go=getids&id=' + s1;
+    url += "&A=" + str1 + "&B=" + str2;
+    $('#results').load(url);
+  }
+}
+

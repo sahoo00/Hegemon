@@ -605,38 +605,3 @@ function callClear() {
   ss1.style.visibility = 'visible';
 }
 
-function callCorr() {
-}
-
-function callGetIDs() {
-  if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
-    var ss = document.getElementById('lineresults');
-    ss.innerHTML ='Please Wait ... <br/><img width=70 src="loading.gif"/>' ;
-    ss.style.visibility = 'visible';
-    var s1 = escape(getDatasetID('dataset'));
-    var str1 = escape(document.getElementById('gList').value);
-    if ( !s1 ) {
-      ss.innerHTML = 'Select a dataset';
-      return;
-    }
-    if ( s1 && (str1 == null)) {
-      ss.innerHTML = 'Enter a list of genes';
-      return;
-    }
-    var params = "go=getids&id=" + s1 + "&gList=" + str1;
-    xmlHttp.open("POST", "explore.php", true);
-    //Send the proper header information along with the request
-    xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xmlHttp.setRequestHeader("Content-length", params.length);
-    xmlHttp.setRequestHeader("Connection", "close");
-    xmlHttp.onreadystatechange = function() {
-      if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-        var ss = document.getElementById('lineresults');
-        ss.innerHTML = xmlHttp.responseText;
-        ss.style.visibility = 'visible';
-      }
-    }
-    xmlHttp.send(params);
-  }		
-}
-

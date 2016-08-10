@@ -35,6 +35,9 @@ if (array_key_exists("groups", $_POST)) {
 }
 
 if (array_key_exists("go", $_GET)) {
+  if (strcmp($_GET["go"], "getids") == 0) {
+    printAllIDs($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
   if (strcmp($_GET["go"], "getplots") == 0) {
     getPlots($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
@@ -238,13 +241,14 @@ function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
   $ids = $h->getIDs("$str1 $str2");
   $bestid = $h->getBestID(array_keys($ids));
   $res = $h->getCorrelation($bestid);
-  $head = ["1.0 to 0.5", "0.5 to -0.5", "-0.5 to -1.0"];
-  $values = [0, 0, 0];
-  $idlist = [[], [], []];
+  $head = ["1.0 to 0.8", "0.8 to 0.5", "0.5 to -0.5", "-0.5 to -1.0"];
+  $values = [0, 0, 0, 0];
+  $idlist = [[], [], [], []];
   foreach ($res as $k => $v) {
-    if ($v >= 0.5) { array_push($idlist[0], $k); $values[0] ++;}
-    else if ($v <= -0.5) { array_push($idlist[2], $k); $values[2] ++;}
-    else { array_push($idlist[1], $k); $values[1] ++;}
+    if ($v >= 0.8) { array_push($idlist[0], $k); $values[0] ++;}
+    else if ($v >= 0.5) { array_push($idlist[1], $k); $values[1] ++;}
+    else if ($v >= -0.5) { array_push($idlist[2], $k); $values[2] ++;}
+    else { array_push($idlist[3], $k); $values[3] ++;}
   }
   setupDisplay($h, $id, $sthr, $pthr, $bestid,"", $head,
       $values, $idlist);
@@ -319,6 +323,38 @@ function getStats($file, $str1, $str2, $id, $sthr, $pthr) {
       echo "</table>\n";
       echo '</td></tr>';
     }
+  }
+  echo "</table>\n";
+}
+
+function printAllIDs($file, $str1, $str2, $id) {
+  $h = getHegemon($file, $id);
+  $ids = $h->getIDs($str1);
+  $bestid1 = $h->getBestID(array_keys($ids));
+  echo "<table border=\"0\">\n";
+  foreach ($ids as $k => $v) {
+    echo "<tr>\n";
+    if (strcmp($bestid1, $k) == 0) {
+      echo "<td><b>$k</b></td><td><b>". $h->getName($k) .
+        "</b></td><td><b>$v -- Best ID for Gene A</b></td>\n";
+    }
+    else {
+      echo "<td>$k</td><td>". $h->getName($k) ."</td><td>$v</td>\n";
+    }
+    echo "</tr>\n";
+  }
+  $ids = $h->getIDs($str2);
+  $bestid2 = $h->getBestID(array_keys($ids));
+  foreach ($ids as $k => $v) {
+    echo "<tr>\n";
+    if (strcmp($bestid2, $k) == 0) {
+      echo "<td><b>$k</b></td><td><b>". $h->getName($k) .
+        "</b></td><td><b>$v -- Best ID for Gene B</b></td>\n";
+    }
+    else {
+      echo "<td>$k</td><td>". $h->getName($k) ."</td><td>$v</td>\n";
+    }
+    echo "</tr>\n";
   }
   echo "</table>\n";
 }
@@ -415,10 +451,12 @@ echo "
               onclick=\"callTopGenes();\"/>
       nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
       <div id=\"box\">
-      Gene A: <input type=\"text\" size=\"20\" id=\"Ab\" 
+      Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
               name=\"Ab\" value=\"\" alt=\"Gene A\" />
-      Gene B: <input type=\"text\" size=\"20\" id=\"Bb\"
+      Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
               name=\"Bb\" value=\"\" alt=\"Gene B\" />
+          <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
+              onclick=\"callGetIDs();\"/>
           <input type=\"button\" name=\"getPlots\" value=\"getPlots\"
               onclick=\"callGetPlots();\"/>
           <input type=\"button\" name=\"getStats\" value=\"getStats\"
