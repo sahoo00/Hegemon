@@ -216,7 +216,7 @@ class Hegemon {
   }
 
   public function getNum() {
-    return count($this->headers);
+    return $this->end-$this->start + 1;
   }
   public function getStart() {
     return $this->start;
@@ -281,7 +281,7 @@ class Hegemon {
       return null;
     }
     list($x_arr, $h_arr) = U::getX($exprFile, $ptr1, 0);
-    return U::getThrData($x_arr, $this->start, $this->getNum()-$this->start);
+    return U::getThrData($x_arr, $this->start, $this->getNum());
   }
 
   function compareIds($id1, $id2) {
@@ -290,8 +290,8 @@ class Hegemon {
     if ($data1 == null || $data2 == null) {
       return 0;
     }
-    $thr1 = U::getThrData($data1, $this->start, $this->getNum()-$this->start);
-    $thr2 = U::getThrData($data2, $this->start, $this->getNum()-$this->start);
+    $thr1 = U::getThrData($data1, $this->start, $this->getNum());
+    $thr2 = U::getThrData($data2, $this->start, $this->getNum());
     $count1 = 0;
     $count2 = 0;
     for ($i = $this->start; $i <= $this->end; $i++) {
