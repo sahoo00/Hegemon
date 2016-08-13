@@ -70,6 +70,11 @@ function callGroupsCommands($file, $groups) {
         $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn'], 
         $groups);
   }
+  if (strcmp($_GET["go"], "getgcorr") == 0) {
+    getgcorr($file, $_GET['file'], $_GET['id'],
+        $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn'], 
+        $groups);
+  }
 }
 
 function getSelectTool($file) {
@@ -157,6 +162,8 @@ function explore($file, $str1, $str2, $id) {
            onclick=\"callStats();\"/>
       <input type=\"button\" name=\"Survival\" value=\"Survival\"
            onclick=\"callSurvival();\"/>
+      <input type=\"button\" name=\"Corr\" value=\"Corr\"
+           onclick=\"callGCorr();\"/>
        <br/>
       $selectTool
     </div>
@@ -731,5 +738,12 @@ function boxplot($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
   U::cleanup($outprefix);
 }
 
+function getgcorr($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
+  if (!$groups) {
+    echo "No groups\n";
+    return;
+  }
+    echo "groups\n";
+}
 
 ?>

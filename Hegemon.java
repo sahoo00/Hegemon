@@ -8,9 +8,15 @@ import java.util.*;
 class Hegemon {
   String pre;
   PrintStream out = System.out;
+  String[] headers;
+  int start;
+  int end;
 
   public Hegemon(String p) {
     pre = p;
+    start = 2;
+    headers = getHeaders();
+    end = headers.length - 1;
   }
 
   public boolean isExpr() {
@@ -19,6 +25,18 @@ class Hegemon {
       return true;
     }
     return false;
+  }
+
+  public boolean hasExpr() {
+    File f = new File(getExpr());
+    if(f.exists() && !f.isDirectory()) { 
+      return true;
+    }
+    return false;
+  }
+
+  public String getExpr() {
+    return pre + "-expr.txt";
   }
 
   public boolean hasBv() {
@@ -43,6 +61,37 @@ class Hegemon {
 
   public String getInfo() {
     return pre + "-info.txt";
+  }
+
+  public String getExprFile() {
+    String exprFile;
+    if (isExpr()) {
+      return pre;
+    }
+    else {
+      if (hasExpr()) {
+        return getExpr();
+      }
+    }
+    return null;
+  }
+
+  public String[] getHeaders() {
+    try {
+      String exprFile = getExprFile();
+      if (exprFile == null) {
+        return null;
+      }
+      FileReader fileReader = new FileReader(exprFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      String line = bufferedReader.readLine();
+      String[] result = line.split("\\t", -2);
+      bufferedReader.close(); 
+      return result;
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   public String getLine(String bvFile, String id) throws FileNotFoundException, IOException {
@@ -101,13 +150,14 @@ class Hegemon {
   }
 
   public void getBnum(int[] res, 
-      BitSet a, BitSet a_thr, BitSet b, BitSet b_thr) {
+      BitSet a, BitSet a_thr, BitSet b, BitSet b_thr, BitSet groups) {
     res[0] = res[1] = res[2] = res[3] = 0;
     if (a.length() == 0 || b.length() == 0) {
       return;
     }
     BitSet thrBits = (BitSet) a_thr.clone();
     thrBits.and(b_thr);
+    if (groups != null) { thrBits.and(groups); }
     BitSet tmp = (BitSet) thrBits.clone();
     BitSet v1 = (BitSet) a.clone();
     v1.or(b);
@@ -250,7 +300,39 @@ class Hegemon {
     return res;
   }
 
-  public void printBoolean(String id) {
+  public BitSet getGroups(String listFile)  {
+    if (listFile == null) {
+      return null;
+    }
+    try {
+      String exprFile = getExprFile();
+      if (exprFile == null) {
+        return null;
+      }
+      String line;
+      FileReader fileReader = new FileReader(listFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      HashSet<String> idlist = new HashSet<String>();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        idlist.add(result[0]);
+      }
+      BitSet res = new BitSet(headers.length - start);
+      //System.out.println(str.length());
+      for (int i =start; i < end; i++) {
+        res.clear(i - start);
+        if (idlist.contains(headers[i])) {
+          res.set(i - start);
+        }
+      }
+      return res;
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
+
+  public void printBoolean(String id, String listFile) {
     if (!hasBv()) {
       return;
     }
@@ -258,6 +340,7 @@ class Hegemon {
     String line;
     try {
       Set<String> keys = getFilter();
+      BitSet groups = getGroups(listFile);
       String line1 = getLine(bvFile, id);
       if (line1 == null) {
         return;
@@ -295,7 +378,7 @@ class Hegemon {
         if (!haveGoodDynamicRange(numArr, vb_thr)) {
           continue;
         }
-        getBnum(bnum, va, va_thr, vb, vb_thr);
+        getBnum(bnum, va, va_thr, vb, vb_thr, groups);
         getEstNum(estnum, bnum);
         getSnum(snum, bnum, estnum);
         getPnum(pnum, bnum);
@@ -312,6 +395,10 @@ class Hegemon {
     catch(Exception ex) {
       ex.printStackTrace();
     }
+  }
+
+  public void printBoolean(String id) {
+    printBoolean(id, null);
   }
 
   public static double sum(double[] data, int start, int end) {
@@ -405,16 +492,39 @@ class Hegemon {
     return thr;
   }
 
-  public static void getExprData(String[] arr, double[] data) {
+  public void getExprData(String[] arr, double[] data) {
     for (int i = 0, il = data.length; i < il; i++) {
       data[i] = Double.NaN;
     }
-    for (int i = 2, il = arr.length; i < il && i < data.length; i++) {
+    int i = start;
+    for (int il = arr.length; i <= end && i < il && i < data.length; i++) {
       try {
         double v = Double.parseDouble(arr[i]);
         data[i] = v;
       }
       catch (Exception e) {
+      }
+    }
+  }
+
+  public void getExprData(String[] arr, double[] data, BitSet bs) {
+    if (bs == null) {
+      getExprData(arr, data);
+      return;
+    }
+    for (int i = 0, il = data.length; i < il; i++) {
+      data[i] = Double.NaN;
+    }
+    //To iterate over the true bits in a BitSet
+    for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
+      int index = i + start;
+      if ( index < arr.length && index < data.length ) {
+        try {
+          double v = Double.parseDouble(arr[index]);
+          data[index] = v;
+        }
+        catch (Exception e) {
+        }
       }
     }
   }
@@ -484,19 +594,24 @@ class Hegemon {
     }
 
   public void printCorrelation(String id) {
-    if (!isExpr()) {
+    printCorrelation(id, null);
+  }
+
+  public void printCorrelation(String id, String listFile) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
       return;
     }
-    String exprFile = pre;
     String line;
     try {
+      BitSet groups = getGroups(listFile);
       String line1 = getLine(exprFile, id);
       if (line1 == null) {
         return;
       }
       String[] result1 = line1.split("\\t", -2); // -2 : Don't discard trailing nulls
       double[] data1 = new double[result1.length];
-      getExprData(result1, data1); 
+      getExprData(result1, data1, groups); 
       
       // FileReader reads text files in the default encoding.
       FileReader fileReader = 
@@ -511,7 +626,7 @@ class Hegemon {
       HashMap<String, String> hmap2 = new HashMap<String, String>();
       while((line = bufferedReader.readLine()) != null) {
         String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
-        getExprData(result, data2); 
+        getExprData(result, data2, groups); 
         double res = getCorrelation(data1, data2);
         hmap1.put(result[0], res);
         hmap2.put(result[0], result[1]);
@@ -542,20 +657,30 @@ class Hegemon {
     }
     String cmd = args[0];
     if (cmd.equals("boolean") && args.length < 3) {
-      System.out.println("Usage: java Hegemon boolean pre id");
+      System.out.println("Usage: java Hegemon boolean pre id <listFile>");
       System.exit(1);
     }
     if (cmd.equals("boolean")) {
       Hegemon h = new Hegemon(args[1]);
-      h.printBoolean(args[2]);
+      if (args.length < 4) {
+        h.printBoolean(args[2]);
+      }
+      else {
+        h.printBoolean(args[2], args[3]);
+      }
     }
     if (cmd.equals("corr") && args.length < 3) {
-      System.out.println("Usage: java Hegemon corr expr.txt id");
+      System.out.println("Usage: java Hegemon corr expr.txt id <listFile>");
       System.exit(1);
     }
     if (cmd.equals("corr")) {
       Hegemon h = new Hegemon(args[1]);
-      h.printCorrelation(args[2]);
+      if (args.length < 4) {
+        h.printCorrelation(args[2]);
+      }
+      else {
+        h.printCorrelation(args[2], args[3]);
+      }
     }
   }
 }

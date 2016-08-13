@@ -605,3 +605,13 @@ function callClear() {
   ss1.style.visibility = 'visible';
 }
 
+function callGCorr() {
+  var url = document.getElementById('img0link').href;
+  url = url.replace("go=plot", "go=getgcorr");
+  url += '&groups=' + getGroupStr();
+  var list = url.split("?");
+  var params = list[1];
+  $('#lineresults').load(url);
+  $('#lineresults').css("visibility", "visible");
+}
+
