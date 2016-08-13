@@ -121,6 +121,7 @@ function explore($file, $str1, $str2, $id) {
     <td style=\"vertical-align:top\">
     <img id=\"img0\" class=\"groupPlot\" width=\"640\" height=\"480\"
     src=\"$url\"/>
+    <br/>
     <div id=\"rect\"></div>
     <div class=\"imginfo\">
     <a target=\"_blank\" id=\"img0link\" href=\"$url\">Image link</a> 

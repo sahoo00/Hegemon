@@ -47,3 +47,13 @@ img.groupPlot {
   visibility:visible;
   float:right;
 }
+.imginfo {
+  position: relative;
+  width: 640px;
+  word-wrap: break-word;
+  padding: 0 0 0 0;
+  margin: 0 0 0 0;
+  visibility:visible;
+  text-align:left;
+  float:left;
+}
