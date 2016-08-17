@@ -24,14 +24,14 @@ if (array_key_exists("key", $_GET)) {
   foreach (split(":", trim($_GET["key"])) as $v) { $keys[$v] = 1; }
 }
 if (array_key_exists("groups", $_GET)) {
-  $groups = $_GET['groups'];
+  $groups = urldecode($_GET['groups']);
 }
 if (array_key_exists("key", $_POST)) {
   $keys = array();
   foreach (split(":", trim($_POST["key"])) as $v) { $keys[$v] = 1; }
 }
 if (array_key_exists("groups", $_POST)) {
-  $groups = $_POST['groups'];
+  $groups = urldecode($_POST['groups']);
 }
 
 if (array_key_exists("go", $_GET)) {
@@ -40,6 +40,11 @@ if (array_key_exists("go", $_GET)) {
   }
   if (strcmp($_GET["go"], "getplots") == 0) {
     getPlots($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
+  if (strcmp($_GET["go"], "plotids") == 0) {
+    plotids($file, $_GET['file'], $_GET['id'], 
+        $_GET['x'], $_GET['y'],$_GET['xn'],$_GET['yn'],
+        $groups);
   }
   if (strcmp($_GET["go"], "plot") == 0) {
     plot($file, $_GET['file'], $_GET['id'], 
@@ -65,7 +70,7 @@ if (array_key_exists("go", $_GET)) {
 }
 elseif (array_key_exists("go", $_POST)) {
   if (strcmp($_POST["go"], "plot") == 0) {
-    plotDataUri($file, $_POST['file'], $_POST['id'], 
+    plotDataUri($file, urldecode($_POST['file']), $_POST['id'], 
         $_POST['x'], $_POST['y'],$_POST['xn'],$_POST['yn'],
         $groups);
   }
@@ -143,6 +148,7 @@ function setupDisplay($h, $id, $sthr, $pthr, $bestid1, $bestid2, $head,
 
 function midreg($file, $str1, $str2, $id, $sthr, $pthr) {
   $h = getHegemon($file, $id);
+  $h->initPlatform();
   if ($str1 == "" || $str2 == "") {
     $ids = $h->getIDs("$str1 $str2");
     $bestid = $h->getBestID(array_keys($ids));
@@ -238,6 +244,7 @@ function midreg($file, $str1, $str2, $id, $sthr, $pthr) {
 
 function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
   $h = getHegemon($file, $id);
+  $h->initPlatform();
   $ids = $h->getIDs("$str1 $str2");
   $bestid = $h->getBestID(array_keys($ids));
   $res = $h->getCorrelation($bestid);
@@ -268,6 +275,7 @@ function topGenes($file, $id, $num) {
 
 function getStats($file, $str1, $str2, $id, $sthr, $pthr) {
   $h = getHegemon($file, $id);
+  $h->initPlatform();
   $exprFile = $h->getExprFile();
   echo "<table border=0>\n";
   foreach ($h->getIDs($str1) as $v1 => $n1) {
@@ -329,6 +337,7 @@ function getStats($file, $str1, $str2, $id, $sthr, $pthr) {
 
 function printAllIDs($file, $str1, $str2, $id) {
   $h = getHegemon($file, $id);
+  $h->initPlatform();
   $ids = $h->getIDs($str1);
   $bestid1 = $h->getBestID(array_keys($ids));
   echo "<table border=\"0\">\n";
@@ -361,6 +370,7 @@ function printAllIDs($file, $str1, $str2, $id) {
 
 function getPlots($file, $str1, $str2, $id) {
   $h = getHegemon($file, $id);
+  $h->initPlatform();
   $exprFile = $h->getExprFile();
   foreach ($h->getIDs($str1) as $v1 => $n1) {
     $ptr1 = $h->getPtr($v1);
@@ -372,6 +382,14 @@ function getPlots($file, $str1, $str2, $id) {
         "&x=$ptr1&y=$ptr2\n";
     }
   }
+}
+
+function plotids($file, $f, $id, $x, $y, $xn, $yn, $groups) {
+  $h = getHegemon($file, $id);
+  $id1 = $h->readID($x);
+  $id2 = $h->readID($y);
+  $res = [[$id1, $h->getName($id1)], [$id2, $h->getName($id2)]];
+  echo json_encode($res);
 }
 
 function plot($file, $f, $id, $x, $y, $xn, $yn, $groups) {
@@ -420,6 +438,7 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />
   <title>Exploring Gene Expression Dataset</title>
   <script src=\"https://code.jquery.com/jquery-3.1.0.min.js\" type=\"text/javascript\"></script>
+  <script src=\"https://d3js.org/d3.v4.min.js\"></script>
   <link href=\"explore.css\" media=\"screen\" rel=\"Stylesheet\" type=\"text/css\"/>
   <script src=\"explore.js\" type=\"text/javascript\"></script>
   <script src=\"Mouse.js\" type=\"text/javascript\"></script>
@@ -452,9 +471,9 @@ echo "
       nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
       <div id=\"box\">
       Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
-              name=\"Ab\" value=\"\" alt=\"Gene A\" />
+              name=\"Ab\" value=\"ATML1\" alt=\"Gene A\" />
       Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
-              name=\"Bb\" value=\"\" alt=\"Gene B\" />
+              name=\"Bb\" value=\"PDF2\" alt=\"Gene B\" />
           <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
               onclick=\"callGetIDs();\"/>
           <input type=\"button\" name=\"getPlots\" value=\"getPlots\"

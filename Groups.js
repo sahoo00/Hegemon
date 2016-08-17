@@ -237,6 +237,27 @@ function submitMouseEvent() {
   }
 }
 
+function loadDisplay(mouse) {
+  var imgobj = document.getElementById('img0');
+  var ori = getOffset(imgobj);
+  var url = '';
+  url = url + "&top=" + mouse.getTop();
+  url = url + "&left=" + mouse.getLeft();
+  url = url + "&width=" + mouse.getWidth();
+  url = url + "&height=" + mouse.getHeight();
+  url = url + "&orix=" + ori.left;
+  url = url + "&oriy=" + ori.top;
+  var imgurl= document.getElementById('img0link').href;
+  try {
+    url = imgurl.replace("go=plot", "go=group") + url;
+    xmlHttp.open("GET",url,true);
+    xmlHttp.onreadystatechange=submitMouseEvent;
+    xmlHttp.send(null);
+  } catch(e) {
+    alert("URL Problem");
+  }
+}
+
 function getGroupStr() {
   var list = document.getElementsByName('selectGroup');
   var str = '';
@@ -261,6 +282,21 @@ function getNumArrays() {
   return sum;
 }
 
+function updateImg1linkPost(url) {
+  var list = url.split("?");
+  var d = list[1].split('&').reduce(function(s,c){
+      var t=c.split('=');s[t[0]]=t[1];return s;},{})
+  $.ajax({type: 'POST',
+      data: d,
+      url: list[0],
+      success: function (data) {
+      var ur = data;
+      document.getElementById('img0').src = ur;
+      document.getElementById('img1link').href = ur;
+      document.getElementById('img1link').style.visibility = 'visible';
+        }});
+}
+
 function changeImage() {
   var num = getNumArrays();
   var url = document.getElementById('img0link').href;
@@ -271,22 +307,8 @@ function changeImage() {
     document.getElementById('img1link').style.visibility = 'visible';
   }
   else {
-    var list = url.split("?");
-    var params = list[1] + '&groups=' + getGroupStr();
-    xmlHttp.open("POST", list[0], true);
-    //Send the proper header information along with the request
-    xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xmlHttp.setRequestHeader("Content-length", params.length);
-    xmlHttp.setRequestHeader("Connection", "close");
-    xmlHttp.onreadystatechange = function() {
-      if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-        var ur = xmlHttp.responseText;
-        document.getElementById('img0').src = ur;
-        document.getElementById('img1link').href = ur;
-        document.getElementById('img1link').style.visibility = 'visible';
-      }
-    }
-    xmlHttp.send(params);
+    var nurl = url + '&groups=' + getGroupStr();
+    updateImg1linkPost(nurl);
   }
 }
 
@@ -605,13 +627,329 @@ function callClear() {
   ss1.style.visibility = 'visible';
 }
 
+var selectionRect = {
+    element         : null,
+    previousElement : null,
+    currentY        : 0,
+    currentX        : 0,
+    originX         : 0,
+    originY         : 0,
+    setElement: function(ele) {
+        this.previousElement = this.element;
+        this.element = ele;
+    },
+    getNewAttributes: function() {
+        var x = this.currentX<this.originX?this.currentX:this.originX;
+        var y = this.currentY<this.originY?this.currentY:this.originY;
+        var width = Math.abs(this.currentX - this.originX);
+        var height = Math.abs(this.currentY - this.originY);
+        return {
+            x       : x,
+            y       : y,
+            width   : width,
+            height  : height
+        };
+    },
+    getCurrentAttributes: function() {
+        // use plus sign to convert string into number
+        var x = +this.element.attr("x");
+        var y = +this.element.attr("y");
+        var width = +this.element.attr("width");
+        var height = +this.element.attr("height");
+        return {
+            x1  : x,
+            y1  : y,
+            x2  : x + width,
+            y2  : y + height
+        };
+    },
+    getCurrentAttributesAsText: function() {
+        var attrs = this.getCurrentAttributes();
+        return "x1: " + attrs.x1 + " x2: " + attrs.x2 + " y1: " + attrs.y1 + " y2: " + attrs.y2;
+    },
+    init: function(newX, newY, svg) {
+        var rectElement = svg.append("rect")
+          .attr("rx", 4)
+          .attr("ry", 4)
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", 0)
+          .attr("height", 0)
+          .classed("selection", true);
+        this.setElement(rectElement);
+        this.originX = newX;
+        this.originY = newY;
+        this.update(newX, newY);
+    },
+    update: function(newX, newY) {
+        this.currentX = newX;
+        this.currentY = newY;
+        var a = this.getNewAttributes();
+        for (var k in a) {
+          this.element.attr(k, a[k]);
+        }
+    },
+    focus: function() {
+        this.element
+            .style("stroke", "#DE695B")
+            .style("stroke-width", "1");
+    },
+    remove: function() {
+        this.element.remove();
+        this.element = null;
+    },
+    removePrevious: function() {
+        if(this.previousElement) {
+            this.previousElement.remove();
+        }
+    }
+};
+
+function displayCorrRes(corr, cData) {
+  var table = d3.select("#lineresults").select("table")
+    .html(function (a) { return ""; });
+  var thead = table.append("thead"),
+      tbody = table.append("tbody");
+  columns = ["ID", "corrX", "corrY", "Name"];
+  thead.append("tr").selectAll("th").data(columns).enter().append("th")
+    .text(function (c) { return c; });
+  var rows = tbody.selectAll("tr").data(corr).enter().append("tr");
+  var cells = rows.selectAll("td")
+    .data(function(row) {
+        var r = [row, "E", "E", "E"];
+        if (typeof row != "undefined") {
+        r[1] = cData.getC(row, 0);
+        r[2] = cData.getC(row, 1);
+        r[3] = cData.get(row, 2);
+        }
+        return r;})
+    .enter()
+    .append("td")
+    .attr("style", "font-family: Courier") // sets the font style
+    .html(function(d) { return d; });
+  cells.each(function(p, j) {
+    if (j === 1) {
+    var id = d3.select(this.previousElementSibling).text();
+    d3.select(this).text(null)
+    .append("a").attr("href", "javascript:void(0)").html(function (d) {
+        return d;})
+    .on("click", function(d,i){
+      cData.changeExplore(id, 1);
+      return false;});
+    }
+    if (j === 2) {
+    var sib = this.previousElementSibling;
+    var id = d3.select(sib.previousElementSibling).text();
+    d3.select(this).text(null)
+    .append("a").attr("href", "javascript:void(0)").html(function (d) {
+        return d;})
+    .on("click", function(d,i){
+      cData.changeExplore(id, 0);
+      return false;});
+    }
+  });
+}
+
+function dragStart() {
+    var p = d3.mouse(this);
+    selectionRect.init(p[0], p[1], d3.select(this));
+    selectionRect.removePrevious();
+}
+
+function dragMove() {
+    var p = d3.mouse(this);
+    selectionRect.update(p[0], p[1]);
+}
+
+function dragEnd(cData, xMap, yMap) {
+  var finalAttributes = selectionRect.getCurrentAttributes();
+  if(finalAttributes.x2 - finalAttributes.x1 > 1 && finalAttributes.y2 - finalAttributes.y1 > 1){
+    // range selected
+    d3.event.sourceEvent.preventDefault();
+    selectionRect.focus();
+    var x1 = xMap.invert(finalAttributes.x1);
+    var x2 = xMap.invert(finalAttributes.x2);
+    var y1 = yMap.invert(finalAttributes.y1);
+    var y2 = yMap.invert(finalAttributes.y2);
+    var res = cData.getKeys(x1, y1, x2, y2);
+    displayCorrRes(res, cData);
+  }
+}
+
+var corrData = { obj : null,
+  keys : null,
+  url : null,
+  keysSorted : [ null, null],
+  init : function(obj, url) {
+    this.obj = obj;
+    this.url = url;
+    var keys = d3.keys(obj);
+    this.keys = keys.slice(0);
+    this.keysSorted[0] = keys.slice(0).sort(function(a,b){return obj[a][0]-obj[b][0]});
+    this.keysSorted[1] = keys.slice(0).sort(function(a,b){return obj[a][1]-obj[b][1]});
+  },
+
+  get: function(id, i) {
+    return this.obj[id][i];
+  },
+
+  getC: function(id, i) {
+    var str = (+this.obj[id][i]).toPrecision(3);
+    return str;
+  },
+
+  binaryIndexOf: function(valueIndex, searchElement) {
+
+    var array = this.keysSorted[valueIndex];
+    var minIndex = 0;
+    var maxIndex = array.length - 1;
+    var currentIndex;
+    var currentElement;
+
+    while (minIndex <= maxIndex) {
+        currentIndex = (minIndex + maxIndex) / 2 | 0;
+        currentElement = this.obj[array[currentIndex]][valueIndex];
+
+        if (currentElement < searchElement) {
+            minIndex = currentIndex + 1;
+        }
+        else if (currentElement > searchElement) {
+            maxIndex = currentIndex - 1;
+        }
+        else {
+            return currentIndex;
+        }
+    }
+
+    return minIndex;
+  },
+
+  getKeys : function(x1, y1, x2, y2) {
+    var xi1 = this.binaryIndexOf(0, x1);
+    var xi2 = this.binaryIndexOf(0, x2);
+    var yi1 = this.binaryIndexOf(1, y1);
+    var yi2 = this.binaryIndexOf(1, y2);
+    if (xi2 < xi1) {
+        var tmp = xi1;
+        xi1 = xi2;
+        xi2 = tmp;
+    }
+    if (yi2 < yi1) {
+        var tmp = yi1;
+        yi1 = yi2;
+        yi2 = tmp;
+    }
+    var hh = d3.map();
+    var array = this.keysSorted[1];
+    for (var i = yi1; i < array.length && i <= yi2; i++) {
+      hh.set(array[i], 1);
+    }
+    array = this.keysSorted[0];
+    var res = [];
+    for (var i = xi1; i < array.length && i <= xi2; i++) {
+      if (hh.has(array[i])) {
+         res.push(array[i]);
+      }
+    }
+    return res.reverse();
+  },
+
+  changeExplore : function(id, index) {
+    var list = this.url.split("?");
+    var d = list[1].split('&').reduce(function(s,c){
+        var t=c.split('=');s[t[0]]=t[1];return s;},{})
+    d["go"] = "plotids";
+    var groups = d["groups"];
+    delete d["groups"];
+    var url = list[0] + "?" + jQuery.param(d);
+    d3.json(url, function(data) {
+        data[index][0] = id;
+        var id1 = data[0][0];
+        var id2 = data[1][0];
+        var url = list[0] + "?go=getplots&A=" + id1 +
+            "&B=" + id2 + "&id=" + d["id"];
+        d3.tsv(url, function(data) {
+            if (data.columns && data.columns.length === 5) {
+                var img0link = data.columns[4];
+                var list = img0link.split("?");
+                var h = list[1].split('&').reduce(function(s,c){
+                  var t=c.split('=');s[t[0]]=t[1];return s;},{})
+                h["xn"] = data.columns[1];
+                h["yn"] = data.columns[3];
+                img0link = list[0] + "?" + jQuery.param(h);
+                var img1link = img0link +"&groups="+groups;
+                d3.select("#img0link").attr("href", function (p, i) { 
+                    return img0link;});
+                d3.select("#gInfoX").text(id1 + " : " + h["xn"]);
+                d3.select("#gInfoY").text(id2 + " : " + h["yn"]);
+                updateImg1linkPost(img1link);
+            }
+            });
+        });
+  }
+
+};
+
+function displayGCorr(data, url) {
+  try {
+  var obj = JSON.parse(data);
+  var keys = d3.keys(obj);
+  corrData.init(obj, url);
+  var mn = {t: 20, r: 20, b: 20, l: 30},
+    width = 300, height = 150;
+  // add the graph canvas to the body of the webpage
+  d3.select("#lineresults").html("")
+  var svg = d3.select("#lineresults").append("svg")
+    .attr("width", width).attr("height", height);
+  var table = d3.select("#lineresults").append("table")
+    .attr("id", "tableresults").attr("border", 0);
+  var x = d3.scaleLinear().domain([-1, 1]).range([mn.l, width-mn.r]),
+      y = d3.scaleLinear().domain([-1, 1]).range([height-mn.b, mn.t]);
+  x.clamp(true);
+  y.clamp(true);
+  var xAxis = d3.axisBottom(x).ticks(8),
+      yAxis = d3.axisLeft(y).ticks(5);
+  var gx = svg.append("g")
+    .attr("class", "axis axis--x")
+    .attr("transform", "translate("+ 0 +"," + (height - mn.b) + ")")
+    .call(xAxis);
+  var gy = svg.append("g")
+    .attr("class", "axis axis--y")
+    .attr("transform", "translate("+ mn.l +"," + 0 + ")")
+    .call(yAxis);
+  var xMap = function(d) { return x(obj[d][0]);}
+  var yMap = function(d) { return y(obj[d][1]);}
+  svg.selectAll(".dot")
+    .data(keys)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("r", 1)
+    .attr("cx", xMap)
+    .attr("cy", yMap)
+    .style("fill", "#555");
+  var dragBehavior = d3.drag()
+    .on("drag", dragMove)
+    .on("start", dragStart)
+    .on("end", function() { 
+        dragEnd(corrData, x, y);
+    });
+  svg.call(dragBehavior);
+
+  } catch(e) { }
+}
+
 function callGCorr() {
   var url = document.getElementById('img0link').href;
   url = url.replace("go=plot", "go=getgcorr");
   url += '&groups=' + getGroupStr();
+  console.log(url);
   var list = url.split("?");
-  var params = list[1];
-  $('#lineresults').load(url);
+  var d = list[1].split('&').reduce(function(s,c){
+      var t=c.split('=');s[t[0]]=t[1];return s;},{})
+  $.ajax({type: 'POST',
+      data: d,
+      url: list[0],
+      success: function (data) { return displayGCorr(data, url);}});
   $('#lineresults').css("visibility", "visible");
 }
 

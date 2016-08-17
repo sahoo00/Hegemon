@@ -16,6 +16,11 @@ function callGroupsPostCommands($file, $groups) {
         $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
         $groups);
   }
+  if (strcmp($_POST["go"], "getgcorr") == 0) {
+    getgcorr($file, $_POST['file'], $_POST['id'],
+        $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
+        $groups);
+  }
 }
 
 function callGroupsCommands($file, $groups) {
@@ -97,6 +102,7 @@ function getSelectTool($file) {
 
 function explore($file, $str1, $str2, $id) {
   $h = getHegemon($file, $id);
+  $h->initPlatform();
   $id1 = null;
   $id2 = null;
   $ids = $h->getIDs("$str1");
@@ -128,8 +134,8 @@ function explore($file, $str1, $str2, $id) {
     <a target=\"_blank\" id=\"img1link\" style=\"visibility:hidden;\" href=\"\">Plot link</a> 
     <a target=\"_blank\" id=\"img2link\" style=\"visibility:hidden;\" href=\"\">Survival link</a> 
     <br/>
-    $str1 <br/>
-    $str2 <br/>
+    <span id=\"gInfoX\"> $str1 </span> <br/>
+    <span id=\"gInfoY\"> $str2 </span> <br/>
       <div id=\"lineresults\"> </div>
     </div>
     </td>
@@ -740,11 +746,23 @@ function boxplot($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
 }
 
 function getgcorr($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
+  $h = getHegemon($file, $id);
+  $id1 = $h->readID($x);
+  $id2 = $h->readID($y);
+  $res = null;
   if (!$groups) {
-    echo "No groups\n";
-    return;
+    $res = $h->getCorrelation2($id1, $id2, null);
   }
-    echo "groups\n";
+  else {
+    $better_token = md5(uniqid(rand(), true));
+    $outprefix = "tmpdir/tmp$better_token";
+    U::setupArrayListData($groups, $outprefix);
+    $res = $h->getCorrelation2($id1, $id2, "$outprefix.data");
+    U::cleanup($outprefix);
+  }
+  if ($res != null) {
+    echo json_encode($res);
+  }
 }
 
 ?>

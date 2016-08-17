@@ -79,13 +79,12 @@ function getMouseXY(e) {
 };
 
 
-function initDraw(canvas, loadDisplay) {
+function initDraw(canvas, loadDisp) {
   //canvas.onselectstart=falsefunc;
   canvas.ondragstart=falsefunc;
   //document.onmousedown = falsefunc;
 
   var rectobj = document.getElementById('rect');
-  var imgobj = document.getElementById('img0');
 
   canvas.onmousedown = function (e) {
     getMouseXY(e);
@@ -119,9 +118,7 @@ function initDraw(canvas, loadDisplay) {
         rectobj.style.height = 0 + "px";
         canvas.onmousemove = null;
         document.onmouseup = null;
-        if (imgobj != null) {
-          loadDisplay(mouse, getOffset(imgobj));
-        }
+        loadDisp(mouse);
       }
       return false;
     };

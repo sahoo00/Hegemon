@@ -157,25 +157,6 @@ function callExplore() {
   }
 }
 
-function loadDisplay(mouse, ori) {
-  var url = '';
-  url = url + "&top=" + mouse.getTop();
-  url = url + "&left=" + mouse.getLeft();
-  url = url + "&width=" + mouse.getWidth();
-  url = url + "&height=" + mouse.getHeight();
-  url = url + "&orix=" + ori.left;
-  url = url + "&oriy=" + ori.top;
-  var imgurl= document.getElementById('img0link').href;
-  try {
-    url = imgurl.replace("go=plot", "go=group") + url;
-    xmlHttp.open("GET",url,true);
-    xmlHttp.onreadystatechange=submitMouseEvent;
-    xmlHttp.send(null);
-  } catch(e) {
-    alert("URL Problem");
-  }
-}
-
 function callCorr() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');

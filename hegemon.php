@@ -209,6 +209,9 @@ class Hegemon {
     $this->namehash = array();
     $file = $this->rdataset->getIdx();
     $this->readIndexFile($file);
+  }
+
+  public function initPlatform() {
     if ($this->rdataset->hasPlatform()) {
       $file = $this->rdataset->getPlatform();
       $this->readPlatformFile($file);
@@ -574,6 +577,47 @@ class Hegemon {
     }
     pclose($fh);
     return $res;
+  }
+
+  public function getCorrelation2($id1, $id2, $listFile) {
+    $res = [];
+    $exprFile = $this->getExprFile();
+    $path = getenv("PATH");        // save old value 
+    $java_home = "/booleanfs/sahoo/softwares/java/jdk1.8.0_45";
+    $path1 = "$java_home/bin";
+    if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
+    putenv("PATH=$path1");        // set new value 
+    putenv("JAVA_HOME=$java_home");        // set new value 
+    $cmd = "java Hegemon corr2 $exprFile $id1 $id2";
+    if ($listFile != null) {
+      $cmd .= " $listFile";
+    }
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = rtrim($line, "\r\n");
+      $list = explode("\t", $line);
+      if (count($list) < 3) {
+        continue;
+      }
+      $n = "---";
+      if (count($list) > 3) {
+        $words = preg_split("/[\s\/:]+/", $list[3]);
+        $n = $words[0];
+      }
+      $res[$list[2]] = [$list[0], $list[1], $n];
+    }
+    pclose($fh);
+    return $res;
+  }
+
+  public function readID($x) {
+    $fp = $this->fp;
+    U::my_fseek($fp, $x, 0);
+    $id = stream_get_line($fp,1024,"\t");
+    return $id;
   }
 
 }

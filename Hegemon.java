@@ -94,6 +94,36 @@ class Hegemon {
     }
   }
 
+  public String[] get2Lines(String bvFile, String id1, String id2) throws FileNotFoundException, IOException {
+    String line;
+    String[] res = new String[2];
+    FileReader fileReader = 
+      new FileReader(bvFile);
+
+    // Always wrap FileReader in BufferedReader.
+    BufferedReader bufferedReader = 
+      new BufferedReader(fileReader);
+
+    int count = 0;
+    while((line = bufferedReader.readLine()) != null) {
+      if(line.startsWith(id1 + "\t")) {
+        res[0] = line;
+        count++;
+      }
+      if(line.startsWith(id2 + "\t")) {
+        res[1] = line;
+        count++;
+      }
+      if (count == 2) {
+        break;
+      }
+    }   
+
+    // Always close files.
+    bufferedReader.close();         
+    return res;
+  }
+
   public String getLine(String bvFile, String id) throws FileNotFoundException, IOException {
     String line;
     FileReader fileReader = 
@@ -533,6 +563,9 @@ class Hegemon {
     double sum_xy = 0, sum_x = 0, sum_y = 0, sum_sqx = 0, sum_sqy = 0;
     int count = 0;
     double res =0;
+    if (v1 == null || v2 == null) {
+      return res;
+    }
     int length = v1.length;
     if (length > v2.length) {
       length = v2.length;
@@ -650,6 +683,83 @@ class Hegemon {
     }
   }
 
+  public void printCorrelation2(String id1, String id2) {
+    printCorrelation2(id1, id2, null);
+  }
+
+  public void printCorrelation2(String id1, String id2, String listFile) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
+      return;
+    }
+    String line;
+    try {
+      BitSet groups = getGroups(listFile);
+      String[] lines = get2Lines(exprFile, id1, id2);
+      if (lines[0] == null && lines[1] == null) {
+        return;
+      }
+      double[] data0 = null;
+      double[] data1 = null;
+
+      int num = 0;
+      if (lines[0] != null) {
+        String[] result = lines[0].split("\\t", -2); // -2 : Don't discard trailing nulls
+        data0 = new double[result.length];
+        num = result.length;
+        getExprData(result, data0, groups); 
+      }
+      if (lines[1] != null) {
+        String[] result = lines[1].split("\\t", -2); // -2 : Don't discard trailing nulls
+        data1 = new double[result.length];
+        if (result.length > num) {
+          num = result.length;
+        }
+        getExprData(result, data1, groups); 
+      }
+      if (num == 0) {
+        return;
+      } 
+      // FileReader reads text files in the default encoding.
+      FileReader fileReader = 
+        new FileReader(exprFile);
+
+      // Always wrap FileReader in BufferedReader.
+      BufferedReader bufferedReader = 
+        new BufferedReader(fileReader);
+
+      double[] data2 = new double[num];
+      HashMap<String, Double> hmap0 = new HashMap<String, Double>();
+      HashMap<String, Double> hmap1 = new HashMap<String, Double>();
+      HashMap<String, String> hmap2 = new HashMap<String, String>();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        getExprData(result, data2, groups); 
+        double res = getCorrelation(data0, data2);
+        hmap0.put(result[0], res);
+        res = getCorrelation(data1, data2);
+        hmap1.put(result[0], res);
+        hmap2.put(result[0], result[1]);
+      }
+      // Always close files.
+      bufferedReader.close();         
+      Map<String, Double> map = sortByValues(hmap0); 
+      Set set2 = map.entrySet();
+      Iterator iterator2 = set2.iterator();
+      while(iterator2.hasNext()) {
+        Map.Entry me2 = (Map.Entry)iterator2.next();
+        out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey()) 
+            + "\t" + me2.getKey() + "\t" + hmap2.get(me2.getKey())); 
+      }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java Hegemon <cmd> <args> ... <args>");
@@ -680,6 +790,19 @@ class Hegemon {
       }
       else {
         h.printCorrelation(args[2], args[3]);
+      }
+    }
+    if (cmd.equals("corr2") && args.length < 4) {
+      System.out.println("Usage: java Hegemon corr2 expr.txt id1 id2 <listFile>");
+      System.exit(1);
+    }
+    if (cmd.equals("corr2")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 5) {
+        h.printCorrelation2(args[2], args[3]);
+      }
+      else {
+        h.printCorrelation2(args[2], args[3], args[4]);
       }
     }
   }

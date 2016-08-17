@@ -549,6 +549,29 @@ fig.savefig('$outprefix.png', dpi=100)
     return $colors[$x % count($colors)];
   }
 
+  function setupArrayListData($groups, $outprefix) {
+    if (($fp = fopen("$outprefix.data", "w")) === FALSE) {
+      echo "Can't open file tmp.data <br>";
+    }
+    if ($groups) {
+      $list = split(";", $groups);
+      foreach ($list as $g) {
+        if ($g != '') {
+          list($i, $nm, $v) = split("=", $g, 3);
+          $nmps = split(",", $nm);
+          if (count($nmps) > 1) {
+            $nm = $nmps[0];
+          }
+          foreach (split(":", $v) as $a) {
+            $str = join("\t", [$a, $i, $nm])."\n";
+            fwrite($fp, $str);
+          }
+        }
+      }
+    }
+    fclose($fp);
+  }
+
   function setupMatData($x_arr, $y_arr, $p_arr, $outprefix) {
     $num = count($x_arr);
     if (($fp = fopen("$outprefix.data", "w")) === FALSE) {
