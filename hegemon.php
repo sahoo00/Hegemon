@@ -659,15 +659,15 @@ class Hegemon {
       $line = fgets($fh);
       $line = rtrim($line, "\r\n");
       $list = explode("\t", $line);
-      if (count($list) < 3) {
+      if (count($list) < 5) {
         continue;
       }
       $n = "---";
-      if (count($list) > 3) {
-        $words = preg_split("/[\s\/:]+/", $list[3]);
+      if (count($list) > 5) {
+        $words = preg_split("/[\s\/:]+/", $list[5]);
         $n = $words[0];
       }
-      $res[$list[2]] = [$list[0], $list[1], $n];
+      $res[$list[4]] = [$list[0], $list[1], $list[2], $list[3], $n];
     }
     pclose($fh);
     return $res;

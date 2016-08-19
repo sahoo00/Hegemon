@@ -706,11 +706,12 @@ var selectionRect = {
 };
 
 function displayCorrRes(corr, cData) {
+  var columns = corrData.getColumns();
+  d3.select("#tablenum").text(function (a) { return corr.length; });
   var table = d3.select("#lineresults").select("table")
     .html(function (a) { return ""; });
   var thead = table.append("thead"),
       tbody = table.append("tbody");
-  var columns = corrData.getColumns();
   thead.append("tr").selectAll("th").data(columns).enter().append("th")
     .text(function (c) { return c; });
   var rows = tbody.selectAll("tr").data(corr).enter().append("tr");
@@ -718,9 +719,9 @@ function displayCorrRes(corr, cData) {
     .data(function(row) {
         var r = [row, "E", "E", "E"];
         if (typeof row != "undefined") {
+        r = [row].concat(cData.get(row));
         r[1] = cData.getC(row, 0);
         r[2] = cData.getC(row, 1);
-        r[3] = cData.get(row, 2);
         }
         return r;})
     .enter()
@@ -790,8 +791,8 @@ var corrData = { obj : null,
     this.keysSorted[1] = keys.slice(0).sort(function(a,b){return obj[a][1]-obj[b][1]});
   },
 
-  get: function(id, i) {
-    return this.obj[id][i];
+  get: function(id) {
+    return this.obj[id];
   },
 
   getC: function(id, i) {
@@ -888,6 +889,20 @@ var corrData = { obj : null,
             }
             });
         });
+  },
+  search : function (val, max) {
+    if (val in this.obj) {
+      return [val];
+    }
+    var obj = this.obj;
+    var index = this.columns.length - 2;
+    var res = [];
+    this.keys.forEach(function (e, i, a) {
+        if (obj[e][index].search(val) >= 0 && res.length < max) {
+            res.push(e);
+        }
+    });
+    return res;
   }
 
 };
@@ -967,7 +982,7 @@ function displayGDiff(data, url) {
         obj[e][1] = getLogVal(obj[e][1], maxy);
     });
   corrData.init(obj, url);
-  var columns = ["ID", "Diff", "-log10(p)", "Name"];
+  var columns = ["ID", "Diff", "-log10(p)", "n1" , "n2", "Name"];
   corrData.setColumns(columns);
   var mn = {t: 20, r: 20, b: 20, l: 30},
     width = 300, height = 150;
@@ -975,6 +990,18 @@ function displayGDiff(data, url) {
   d3.select("#lineresults").html("")
   var svg = d3.select("#lineresults").append("svg")
     .attr("width", width).attr("height", height);
+  var tablesearch = d3.select("#lineresults").append("input")
+    .attr("type", "text").attr("size", 10).attr("id", "tablesearch")
+    .attr("value", "");
+  var tablego = d3.select("#lineresults").append("input")
+    .attr("type", "button").attr("name", "GO")
+    .attr("value", "GO").on("click", function () {
+        var val = document.getElementById("tablesearch").value;
+        var res = corrData.search(val, 100);
+        displayCorrRes(res, corrData);
+    });
+  var tablenum = d3.select("#lineresults").append("div")
+    .attr("id", "tablenum");
   var table = d3.select("#lineresults").append("table")
     .attr("id", "tableresults").attr("border", 0);
   var minx = d3.min(keys, function(d) { return +obj[d][0]; });

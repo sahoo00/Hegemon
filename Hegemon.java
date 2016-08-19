@@ -782,7 +782,7 @@ class Hegemon {
     }
   }
 
-  public static double ttest(double[] data1, double[] data2) {
+  public static double ttest(double[] data1, double[] data2, int[] counts) {
     int c_1 = 0, c_2 = 0;
     double sum_1 = 0, sum_2 = 0;
     double sum_sq1 = 0, sum_sq2 = 0;
@@ -802,6 +802,8 @@ class Hegemon {
         sum_sq2 += x * x;
       }
     }
+    counts[0] = c_1;
+    counts[1] = c_2;
     if (c_1 <= 0 || c_2 <= 0) {
       return 1;
     }
@@ -893,6 +895,7 @@ class Hegemon {
       HashMap<String, Double> hmap0 = new HashMap<String, Double>();
       HashMap<String, Double> hmap1 = new HashMap<String, Double>();
       HashMap<String, String> hmap2 = new HashMap<String, String>();
+      HashMap<String, int[]> hmap3 = new HashMap<String, int[]>();
       while((line = bufferedReader.readLine()) != null) {
         String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
         getExprData(result, data, null); 
@@ -902,12 +905,14 @@ class Hegemon {
         for (int i =0; i < idlist2.size(); i++) {
           data2[i] = data[idlist2.get(i)];
         }
-        double p = ttest(data1, data2);
+        int[] counts = new int[] {0, 0};
+        double p = ttest(data1, data2, counts);
         double m1 = mean(data1, 0, data1.length - 1);
         double m2 = mean(data2, 0, data2.length - 1);
         hmap0.put(result[0], (m2 - m1));
         hmap1.put(result[0], p);
         hmap2.put(result[0], result[1]);
+        hmap3.put(result[0], counts);
       }
       // Always close files.
       bufferedReader.close();         
@@ -916,7 +921,9 @@ class Hegemon {
       Iterator iterator2 = set2.iterator();
       while(iterator2.hasNext()) {
         Map.Entry me2 = (Map.Entry)iterator2.next();
-        out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey()) 
+        int[] counts = hmap3.get(me2.getKey());
+        out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey())
+            + "\t" + counts[0] + "\t" + counts[1]
             + "\t" + me2.getKey() + "\t" + hmap2.get(me2.getKey())); 
       }
     }
