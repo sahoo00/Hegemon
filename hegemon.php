@@ -131,6 +131,25 @@ class Database {
   public function getList() {
     return $this->list;
   }
+  public function getListKey($keys) {
+    $list = [];
+    foreach ($this->list as $n) {
+      $keyfound = 1;
+      if ($n->has("key")) {
+        $lkey = $n->get("key");
+        $keyfound = 0;
+        foreach (split(":", $lkey) as $k) {
+          if (array_key_exists($k, $keys)) {
+            $keyfound = 1;
+          }
+        }
+      }
+      if ($keyfound) {
+        array_push($list, $n);
+      }
+    }
+    return $list;
+  }
   public function getTitle() {
     if (array_key_exists("title", $this->global)) {
         return $this->global['title'];
@@ -618,6 +637,40 @@ class Hegemon {
     U::my_fseek($fp, $x, 0);
     $id = stream_get_line($fp,1024,"\t");
     return $id;
+  }
+
+  public function getDiff($listFile) {
+    $res = [];
+    if ($listFile == null) {
+      return $res;
+    }
+    $exprFile = $this->getExprFile();
+    $path = getenv("PATH");        // save old value 
+    $java_home = "/booleanfs/sahoo/softwares/java/jdk1.8.0_45";
+    $path1 = "$java_home/bin";
+    if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
+    putenv("PATH=$path1");        // set new value 
+    putenv("JAVA_HOME=$java_home");        // set new value 
+    $cmd = "java Hegemon diff $exprFile $listFile";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = rtrim($line, "\r\n");
+      $list = explode("\t", $line);
+      if (count($list) < 3) {
+        continue;
+      }
+      $n = "---";
+      if (count($list) > 3) {
+        $words = preg_split("/[\s\/:]+/", $list[3]);
+        $n = $words[0];
+      }
+      $res[$list[2]] = [$list[0], $list[1], $n];
+    }
+    pclose($fh);
+    return $res;
   }
 
 }

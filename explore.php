@@ -449,12 +449,13 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 }
 
 function printBody($db) {
+  global $keys;
 echo "
     <div id=\"exploreAll\">
       <form name=\"exploreForm\" action=\"\">
       Select Dataset: <select id=\"dataset\" name=\"dataset\">
 ";
-  foreach ($db->getList() as $n) {
+  foreach ($db->getListKey($keys) as $n) {
     $id = $n->getID();
     $h = new Hegemon($n);
     $num = $h->getNum();

@@ -710,7 +710,7 @@ function displayCorrRes(corr, cData) {
     .html(function (a) { return ""; });
   var thead = table.append("thead"),
       tbody = table.append("tbody");
-  columns = ["ID", "corrX", "corrY", "Name"];
+  var columns = corrData.getColumns();
   thead.append("tr").selectAll("th").data(columns).enter().append("th")
     .text(function (c) { return c; });
   var rows = tbody.selectAll("tr").data(corr).enter().append("tr");
@@ -779,6 +779,7 @@ function dragEnd(cData, xMap, yMap) {
 var corrData = { obj : null,
   keys : null,
   url : null,
+  columns : null,
   keysSorted : [ null, null],
   init : function(obj, url) {
     this.obj = obj;
@@ -797,7 +798,8 @@ var corrData = { obj : null,
     var str = (+this.obj[id][i]).toPrecision(3);
     return str;
   },
-
+  setColumns: function (c) { this.columns = c; },
+  getColumns: function () { return this.columns; },
   binaryIndexOf: function(valueIndex, searchElement) {
 
     var array = this.keysSorted[valueIndex];
@@ -895,6 +897,8 @@ function displayGCorr(data, url) {
   var obj = JSON.parse(data);
   var keys = d3.keys(obj);
   corrData.init(obj, url);
+  var columns = ["ID", "corrX", "corrY", "Name"];
+  corrData.setColumns(columns);
   var mn = {t: 20, r: 20, b: 20, l: 30},
     width = 300, height = 150;
   // add the graph canvas to the body of the webpage
@@ -938,6 +942,91 @@ function displayGCorr(data, url) {
   } catch(e) { }
 }
 
+function getLogVal(x, maxx) {
+  if (x <= 0) {
+    return maxx;
+  }
+  else {
+    return Math.min(maxx, -Math.log10(x));
+  }
+}
+
+function displayGDiff(data, url) {
+  try {
+  var obj = JSON.parse(data);
+  var keys = d3.keys(obj);
+  keysSorted = keys.slice(0).sort(function(a,b){return obj[a][1]-obj[b][1]});
+  var i = 0;
+  for (i =0; i < keys.length; i++) {
+    if (obj[keysSorted[i]][1] != 0) {
+        break;
+    }
+  }
+  var maxy = -Math.log10(obj[keysSorted[i]][1]) * 1.05;
+  keys.forEach(function (e, i, a) {
+        obj[e][1] = getLogVal(obj[e][1], maxy);
+    });
+  corrData.init(obj, url);
+  var columns = ["ID", "Diff", "-log10(p)", "Name"];
+  corrData.setColumns(columns);
+  var mn = {t: 20, r: 20, b: 20, l: 30},
+    width = 300, height = 150;
+  // add the graph canvas to the body of the webpage
+  d3.select("#lineresults").html("")
+  var svg = d3.select("#lineresults").append("svg")
+    .attr("width", width).attr("height", height);
+  var table = d3.select("#lineresults").append("table")
+    .attr("id", "tableresults").attr("border", 0);
+  var minx = d3.min(keys, function(d) { return +obj[d][0]; });
+  var maxx = d3.max(keys, function(d) { return +obj[d][0]; });
+  var max = d3.max([-minx, maxx]) * 1.1;
+  var miny = d3.min(keys, function(d) { return +obj[d][1]; });
+  var maxy = d3.max(keys, function(d) { return +obj[d][1]; }) * 1.05;
+  var x = d3.scaleLinear().domain([-max, max]).range([mn.l, width-mn.r]),
+      y = d3.scaleLinear().domain([miny, maxy]).range([height-mn.b, mn.t]);
+  x.clamp(true);
+  y.clamp(true);
+  var xAxis = d3.axisBottom(x).ticks(4),
+      yAxis = d3.axisLeft(y).ticks(4);
+  var gx = svg.append("g")
+    .attr("class", "axis axis--x")
+    .attr("transform", "translate("+ 0 +"," + (height - mn.b) + ")")
+    .call(xAxis);
+  var gy = svg.append("g")
+    .attr("class", "axis axis--y")
+    .attr("transform", "translate("+ mn.l +"," + 0 + ")")
+    .call(yAxis);
+  var xMap = function(d) { return x(obj[d][0]);}
+  var yMap = function(d) { return y(obj[d][1]);}
+  svg.selectAll(".dot")
+    .data(keys)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("r", 1)
+    .attr("cx", xMap)
+    .attr("cy", yMap)
+    .style("fill", "#555");
+  svg.append("svg:line").attr("x1", mn.l).attr("x2", width-mn.r).
+    attr("y1", y(1.3)).attr("y2", y(1.3))
+    .style("stroke", "#5e5");
+  svg.append("svg:line").attr("x1", x(1)).attr("x2", x(1)).
+    attr("y1", mn.t).attr("y2", height-mn.b)
+    .style("stroke", "#e55");
+  svg.append("svg:line").attr("x1", x(-1)).attr("x2", x(-1)).
+    attr("y1", mn.t).attr("y2", height-mn.b)
+    .style("stroke", "#e55");
+
+  var dragBehavior = d3.drag()
+    .on("drag", dragMove)
+    .on("start", dragStart)
+    .on("end", function() { 
+        dragEnd(corrData, x, y);
+    });
+  svg.call(dragBehavior);
+
+  } catch(e) { }
+}
+
 function callGCorr() {
   var url = document.getElementById('img0link').href;
   url = url.replace("go=plot", "go=getgcorr");
@@ -950,6 +1039,21 @@ function callGCorr() {
       data: d,
       url: list[0],
       success: function (data) { return displayGCorr(data, url);}});
+  $('#lineresults').css("visibility", "visible");
+}
+
+function callGDiff() {
+  var url = document.getElementById('img0link').href;
+  url = url.replace("go=plot", "go=getgdiff");
+  url += '&groups=' + getGroupStr();
+  console.log(url);
+  var list = url.split("?");
+  var d = list[1].split('&').reduce(function(s,c){
+      var t=c.split('=');s[t[0]]=t[1];return s;},{})
+  $.ajax({type: 'POST',
+      data: d,
+      url: list[0],
+      success: function (data) { return displayGDiff(data, url);}});
   $('#lineresults').css("visibility", "visible");
 }
 

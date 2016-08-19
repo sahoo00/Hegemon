@@ -21,6 +21,11 @@ function callGroupsPostCommands($file, $groups) {
         $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
         $groups);
   }
+  if (strcmp($_POST["go"], "getgdiff") == 0) {
+    getgdiff($file, $_POST['file'], $_POST['id'],
+        $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
+        $groups);
+  }
 }
 
 function callGroupsCommands($file, $groups) {
@@ -77,6 +82,11 @@ function callGroupsCommands($file, $groups) {
   }
   if (strcmp($_GET["go"], "getgcorr") == 0) {
     getgcorr($file, $_GET['file'], $_GET['id'],
+        $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn'], 
+        $groups);
+  }
+  if (strcmp($_GET["go"], "getgdiff") == 0) {
+    getgdiff($file, $_GET['file'], $_GET['id'],
         $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn'], 
         $groups);
   }
@@ -171,6 +181,8 @@ function explore($file, $str1, $str2, $id) {
            onclick=\"callSurvival();\"/>
       <input type=\"button\" name=\"Corr\" value=\"Corr\"
            onclick=\"callGCorr();\"/>
+      <input type=\"button\" name=\"Diff\" value=\"Diff\"
+           onclick=\"callGDiff();\"/>
        <br/>
       $selectTool
     </div>
@@ -758,6 +770,21 @@ function getgcorr($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
     $outprefix = "tmpdir/tmp$better_token";
     U::setupArrayListData($groups, $outprefix);
     $res = $h->getCorrelation2($id1, $id2, "$outprefix.data");
+    U::cleanup($outprefix);
+  }
+  if ($res != null) {
+    echo json_encode($res);
+  }
+}
+
+function getgdiff($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
+  $h = getHegemon($file, $id);
+  $res = null;
+  if ($groups) {
+    $better_token = md5(uniqid(rand(), true));
+    $outprefix = "tmpdir/tmp$better_token";
+    U::setupArrayListData($groups, $outprefix);
+    $res = $h->getDiff("$outprefix.data");
     U::cleanup($outprefix);
   }
   if ($res != null) {

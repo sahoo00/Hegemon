@@ -434,14 +434,22 @@ class Hegemon {
   public static double sum(double[] data, int start, int end) {
     double sum = 0;
     for (int i = start; i <= end; i++) {
-      sum += data[i];
+      if (!Double.isNaN(data[i])) {
+        sum += data[i];
+      }
     }
     return sum;
   }
 
   public static double mean(double[] data, int start, int end) {
-    double sum = sum(data, start, end);
-    int count = end - start + 1;
+    double sum = 0;
+    int count = 0;
+    for (int i = start; i <= end; i++) {
+      if (!Double.isNaN(data[i])) {
+        sum += data[i];
+        count ++;
+      }
+    }
     if (count <= 1) {
       return sum;
     }
@@ -452,7 +460,9 @@ class Hegemon {
     double m = mean(data, start, end);
     double sum = 0;
     for (int i = start; i <= end; i++) {
-      sum += (m - data[i]) * (m - data[i]);
+      if (!Double.isNaN(data[i])) {
+        sum += (m - data[i]) * (m - data[i]);
+      }
     }
     return sum;
   }
@@ -614,16 +624,28 @@ class Hegemon {
     return sortedHashMap;
   }
 */
-  public static <K, V extends Comparable<? super V>> Map<K, V> sortByValues(
+  public static <K, V extends Comparable<? super V>> Map<K, V> sortByValuesUp(
       Map<K, V> tempMap) {
-    TreeMap<K, V> map = new TreeMap<>(buildComparator(tempMap));
+    TreeMap<K, V> map = new TreeMap<>(buildComparatorUp(tempMap));
+    map.putAll(tempMap);
+    return map;
+  }
+
+  public static <K, V extends Comparable<? super V>> Map<K, V> sortByValuesDown(
+      Map<K, V> tempMap) {
+    TreeMap<K, V> map = new TreeMap<>(buildComparatorDown(tempMap));
     map.putAll(tempMap);
     return map;
   }
 
   public static <K, V extends Comparable<? super V>> Comparator<? super K>
-    buildComparator(final Map<K, V> tempMap) {
+    buildComparatorDown(final Map<K, V> tempMap) {
       return (o2, o1) -> tempMap.get(o1).compareTo(tempMap.get(o2));
+    }
+
+  public static <K, V extends Comparable<? super V>> Comparator<? super K>
+    buildComparatorUp(final Map<K, V> tempMap) {
+      return (o1, o2) -> tempMap.get(o1).compareTo(tempMap.get(o2));
     }
 
   public void printCorrelation(String id) {
@@ -666,7 +688,7 @@ class Hegemon {
       }
       // Always close files.
       bufferedReader.close();         
-      Map<String, Double> map = sortByValues(hmap1); 
+      Map<String, Double> map = sortByValuesDown(hmap1); 
       Set set2 = map.entrySet();
       Iterator iterator2 = set2.iterator();
       while(iterator2.hasNext()) {
@@ -743,7 +765,7 @@ class Hegemon {
       }
       // Always close files.
       bufferedReader.close();         
-      Map<String, Double> map = sortByValues(hmap0); 
+      Map<String, Double> map = sortByValuesDown(hmap0); 
       Set set2 = map.entrySet();
       Iterator iterator2 = set2.iterator();
       while(iterator2.hasNext()) {
@@ -759,6 +781,150 @@ class Hegemon {
       ex.printStackTrace();
     }
   }
+
+  public static double ttest(double[] data1, double[] data2) {
+    int c_1 = 0, c_2 = 0;
+    double sum_1 = 0, sum_2 = 0;
+    double sum_sq1 = 0, sum_sq2 = 0;
+    for (int i =0; i < data1.length; i++) {
+      double x = data1[i];
+      if (!Double.isNaN(x)) {
+        c_1 ++;
+        sum_1 += x;
+        sum_sq1 += x * x;
+      }
+    }
+    for (int i =0; i < data2.length; i++) {
+      double x = data2[i];
+      if (!Double.isNaN(x)) {
+        c_2 ++;
+        sum_2 += x;
+        sum_sq2 += x * x;
+      }
+    }
+    if (c_1 <= 0 || c_2 <= 0) {
+      return 1;
+    }
+    double m_1 = sum_1/c_1;
+    double m_2 = sum_2/c_2;
+    double v_1 = (sum_sq1/c_1 - m_1 * m_1);
+    if (c_1 > 1) {
+         v_1 = v_1 * (c_1 * 1.0/ (c_1 - 1));
+    }
+    double v_2 = (sum_sq2/c_2 - m_2 * m_2);
+    if (c_2 > 1) {
+         v_2 = v_2 * (c_2 * 1.0/ (c_2 - 1));
+    }
+    double v = Math.abs(v_1/c_1 + v_2/c_2);
+    if (v == 0) {
+      v = 1;
+    }
+    double sd = Math.sqrt(v);
+    double t = Math.abs((m_1 - m_2) / sd);
+    double df = 1;
+    double dn1 = (v_1/c_1) * (v_1/c_1);
+    if (c_1 > 1) {
+        dn1 = dn1 / (c_1 - 1);
+    }
+    double dn2 = (v_2/c_2) * (v_2/c_2);
+    if (c_2 > 1) {
+        dn2 = dn2 / (c_2 - 1);
+    }
+    double dn = dn1 + dn2;
+    if (dn == 0) { dn = 1; }
+    df = v * v / dn;
+    if (df <= 0) { df = 1; }
+    specialFunctions sf = new specialFunctions();
+    double p = 2 * sf.stDist(df, t);
+    return p;
+  }
+
+  public void printDiff(String listFile) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
+      return;
+    }
+    String line;
+    try {
+      HashMap<String, Integer> hmap = new HashMap<String, Integer>();
+      for (int i = start; i <= end; i++) {
+        hmap.put(headers[i], i);
+      }
+
+      FileReader fileReader = new FileReader(listFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      ArrayList<Integer> idlist1 = new ArrayList<Integer>();
+      ArrayList<Integer> idlist2 = new ArrayList<Integer>();
+      String group1 = null;
+      String group2 = null;
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        if (result.length < 2) {
+          continue;
+        }
+        if (group1 == null || Objects.equals(group1, result[1])) {
+          group1 = result[1];
+        }
+        else if(group2 == null || Objects.equals(group2, result[1])) {
+          group2 = result[1];
+        }
+        if (Objects.equals(group1, result[1]) && hmap.containsKey(result[0])) {
+          idlist1.add(hmap.get(result[0]));
+        }
+        if (Objects.equals(group2, result[1]) && hmap.containsKey(result[0])) {
+          idlist2.add(hmap.get(result[0]));
+        }
+      }
+      if (idlist1.size() <= 0 || idlist2.size() <= 0) {
+        return;
+      }
+      // Always close files.
+      bufferedReader.close();         
+      fileReader = new FileReader(exprFile);
+      bufferedReader = new BufferedReader(fileReader);
+
+      double[] data = new double[headers.length];
+      double[] data1 = new double[idlist1.size()];
+      double[] data2 = new double[idlist2.size()];
+      line = bufferedReader.readLine();
+      HashMap<String, Double> hmap0 = new HashMap<String, Double>();
+      HashMap<String, Double> hmap1 = new HashMap<String, Double>();
+      HashMap<String, String> hmap2 = new HashMap<String, String>();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        getExprData(result, data, null); 
+        for (int i =0; i < idlist1.size(); i++) {
+          data1[i] = data[idlist1.get(i)];
+        }
+        for (int i =0; i < idlist2.size(); i++) {
+          data2[i] = data[idlist2.get(i)];
+        }
+        double p = ttest(data1, data2);
+        double m1 = mean(data1, 0, data1.length - 1);
+        double m2 = mean(data2, 0, data2.length - 1);
+        hmap0.put(result[0], (m2 - m1));
+        hmap1.put(result[0], p);
+        hmap2.put(result[0], result[1]);
+      }
+      // Always close files.
+      bufferedReader.close();         
+      Map<String, Double> map = sortByValuesDown(hmap0); 
+      Set set2 = map.entrySet();
+      Iterator iterator2 = set2.iterator();
+      while(iterator2.hasNext()) {
+        Map.Entry me2 = (Map.Entry)iterator2.next();
+        out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey()) 
+            + "\t" + me2.getKey() + "\t" + hmap2.get(me2.getKey())); 
+      }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
 
   public static void main(String[] args) {
     if (args.length < 1) {
@@ -804,6 +970,14 @@ class Hegemon {
       else {
         h.printCorrelation2(args[2], args[3], args[4]);
       }
+    }
+    if (cmd.equals("diff") && args.length < 3) {
+      System.out.println("Usage: java Hegemon diff expr.txt listFile");
+      System.exit(1);
+    }
+    if (cmd.equals("diff")) {
+      Hegemon h = new Hegemon(args[1]);
+      h.printDiff(args[2]);
     }
   }
 }
