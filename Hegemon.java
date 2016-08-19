@@ -821,6 +821,9 @@ class Hegemon {
     }
     double sd = Math.sqrt(v);
     double t = Math.abs((m_1 - m_2) / sd);
+    if (t <= 0) {
+      return 1;
+    }
     double df = 1;
     double dn1 = (v_1/c_1) * (v_1/c_1);
     if (c_1 > 1) {
