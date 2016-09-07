@@ -107,7 +107,8 @@ function callGetStats() {
     if (/^[\d\.]+$/.test(pthr) == false)
       pthr=0.1;
     var url = 'explore.php?go=getstats&id=' + s1 + '&sthr=' + sthr;
-    url += '&pthr=' + pthr + "&A=" + str1 + "&B=" + str2;
+    url += '&pthr=' + pthr + "&A=" + encodeURIComponent(str1)
+    + "&B=" + encodeURIComponent(str2);
     $('#results').load(url);
   }
 }
@@ -139,7 +140,8 @@ function callMiDReG() {
     if (/^[\d\.]+$/.test(pthr) == false)
       pthr=0.1;
     var url = 'explore.php?go=midreg&id=' + s1 + '&sthr=' + sthr;
-    url += '&pthr=' + pthr + "&A=" + str1 + "&B=" + str2;
+    url += '&pthr=' + pthr + "&A=" + encodeURIComponent(str1)
+    + "&B=" + encodeURIComponent(str2);
     $('#results').load(url);
   }
 }
@@ -152,7 +154,8 @@ function callExplore() {
     var str1 = $('#Ab').val();
     var str2 = $('#Bb').val();
     var url = 'explore.php?go=explore&id=' + s1;
-    url += "&A=" + str1 + "&B=" + str2;
+    url += "&A=" + encodeURIComponent(str1)
+    + "&B=" + encodeURIComponent(str2);
     $('#results').load(url);
   }
 }
@@ -171,7 +174,8 @@ function callCorr() {
     if (/^[\d\.]+$/.test(pthr) == false)
       pthr=0.1;
     var url = 'explore.php?go=getcorr&id=' + s1 + '&sthr=' + sthr;
-    url += '&pthr=' + pthr + "&A=" + str1 + "&B=" + str2;
+    url += '&pthr=' + pthr + "&A=" + encodeURIComponent(str1)
+    + "&B=" + encodeURIComponent(str2);
     $('#results').load(url);
   }
 }
@@ -184,7 +188,8 @@ function callGetIDs() {
     var str1 = $('#Ab').val();
     var str2 = $('#Bb').val();
     var url = 'explore.php?go=getids&id=' + s1;
-    url += "&A=" + str1 + "&B=" + str2;
+    url += "&A=" + encodeURIComponent(str1)
+    + "&B=" + encodeURIComponent(str2);
     $('#results').load(url);
   }
 }
