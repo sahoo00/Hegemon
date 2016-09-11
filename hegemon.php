@@ -553,7 +553,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java Hegemon boolean $pre $id1";
+    $cmd = "java tools.Hegemon boolean $pre $id1";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
     while (!feof($fh))
@@ -581,7 +581,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java Hegemon corr $exprFile $id1";
+    $cmd = "java tools.Hegemon corr $exprFile $id1";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
     while (!feof($fh))
@@ -589,10 +589,16 @@ class Hegemon {
       $line = fgets($fh);
       $line = rtrim($line, "\r\n");
       $list = explode("\t", $line);
-      if (count($list) < 2) {
+      if (count($list) < 3) {
         continue;
       }
       $res[$list[1]] = $list[0];
+      $n = "---";
+      if (count($list) > 3) {
+        $words = preg_split("/[\s\/:]+/", $list[3]);
+        $n = $words[0];
+      }
+      $res[$list[2]] = [$list[0], $list[1], $n];
     }
     pclose($fh);
     return $res;
@@ -607,7 +613,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java Hegemon corr2 $exprFile $id1 $id2";
+    $cmd = "java tools.Hegemon corr2 $exprFile $id1 $id2";
     if ($listFile != null) {
       $cmd .= " $listFile";
     }
@@ -618,15 +624,15 @@ class Hegemon {
       $line = fgets($fh);
       $line = rtrim($line, "\r\n");
       $list = explode("\t", $line);
-      if (count($list) < 3) {
+      if (count($list) < 5) {
         continue;
       }
       $n = "---";
-      if (count($list) > 3) {
-        $words = preg_split("/[\s\/:]+/", $list[3]);
+      if (count($list) > 5) {
+        $words = preg_split("/[\s\/:]+/", $list[5]);
         $n = $words[0];
       }
-      $res[$list[2]] = [$list[0], $list[1], $n];
+      $res[$list[4]] = [$list[0], $list[1], $list[2], $list[3], $n];
     }
     pclose($fh);
     return $res;
@@ -651,7 +657,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java Hegemon diff $exprFile $listFile";
+    $cmd = "java tools.Hegemon diff $exprFile $listFile";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
     while (!feof($fh))

@@ -912,7 +912,7 @@ function displayGCorr(data, url) {
   var obj = JSON.parse(data);
   var keys = d3.keys(obj);
   corrData.init(obj, url);
-  var columns = ["ID", "corrX", "corrY", "Name"];
+  var columns = ["ID", "corrX", "corrY", "n1", "n2", "Name"];
   corrData.setColumns(columns);
   var mn = {t: 20, r: 20, b: 20, l: 30},
     width = 300, height = 150;
@@ -920,6 +920,18 @@ function displayGCorr(data, url) {
   d3.select("#lineresults").html("")
   var svg = d3.select("#lineresults").append("svg")
     .attr("width", width).attr("height", height);
+  var tablesearch = d3.select("#lineresults").append("input")
+    .attr("type", "text").attr("size", 10).attr("id", "tablesearch")
+    .attr("value", "");
+  var tablego = d3.select("#lineresults").append("input")
+    .attr("type", "button").attr("name", "GO")
+    .attr("value", "GO").on("click", function () {
+        var val = document.getElementById("tablesearch").value;
+        var res = corrData.search(val, 100);
+        displayCorrRes(res, corrData);
+    });
+  var tablenum = d3.select("#lineresults").append("div")
+    .attr("id", "tablenum");
   var table = d3.select("#lineresults").append("table")
     .attr("id", "tableresults").attr("border", 0);
   var x = d3.scaleLinear().domain([-1, 1]).range([mn.l, width-mn.r]),

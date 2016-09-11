@@ -1,7 +1,5 @@
-/**
- * The HelloWorldApp class implements an application that
- * simply prints "Hello World!" to standard output.
- */
+package tools;
+
 import java.io.*;
 import java.util.*;
 
@@ -569,9 +567,10 @@ class Hegemon {
     }
   }
 
-  public static double getCorrelation(double[] v1, double[] v2) {
+  public static double getCorrelation(double[] v1, double[] v2, int[] counts) {
     double sum_xy = 0, sum_x = 0, sum_y = 0, sum_sqx = 0, sum_sqy = 0;
     int count = 0;
+    counts[0] = count;
     double res =0;
     if (v1 == null || v2 == null) {
       return res;
@@ -600,6 +599,7 @@ class Hegemon {
     if (Double.isNaN(res)) {
       res = 0.0;
     }
+    counts[0] = count;
     return res;
   }
 
@@ -679,12 +679,15 @@ class Hegemon {
       double[] data2 = new double[result1.length];
       HashMap<String, Double> hmap1 = new HashMap<String, Double>();
       HashMap<String, String> hmap2 = new HashMap<String, String>();
+      HashMap<String, Integer> hmap3 = new HashMap<String, Integer>();
       while((line = bufferedReader.readLine()) != null) {
         String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
         getExprData(result, data2, groups); 
-        double res = getCorrelation(data1, data2);
+        int[] counts = new int[] {0, 0};
+        double res = getCorrelation(data1, data2, counts);
         hmap1.put(result[0], res);
         hmap2.put(result[0], result[1]);
+        hmap3.put(result[0], counts[0]);
       }
       // Always close files.
       bufferedReader.close();         
@@ -693,7 +696,8 @@ class Hegemon {
       Iterator iterator2 = set2.iterator();
       while(iterator2.hasNext()) {
         Map.Entry me2 = (Map.Entry)iterator2.next();
-        out.println(me2.getValue() + "\t" + me2.getKey() + "\t" +
+        int count = hmap3.get(me2.getKey());
+        out.println(me2.getValue() + "\t" + count + "\t" + me2.getKey() + "\t" +
             hmap2.get(me2.getKey())); 
       }
     }
@@ -754,14 +758,20 @@ class Hegemon {
       HashMap<String, Double> hmap0 = new HashMap<String, Double>();
       HashMap<String, Double> hmap1 = new HashMap<String, Double>();
       HashMap<String, String> hmap2 = new HashMap<String, String>();
+      HashMap<String, int[]> hmap3 = new HashMap<String, int[]>();
       while((line = bufferedReader.readLine()) != null) {
         String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
         getExprData(result, data2, groups); 
-        double res = getCorrelation(data0, data2);
+        int[] counts = new int[] {0, 0};
+        int[] tcounts = new int[] {0, 0};
+        double res = getCorrelation(data0, data2, tcounts);
+        counts[0] = tcounts[0];
         hmap0.put(result[0], res);
-        res = getCorrelation(data1, data2);
+        res = getCorrelation(data1, data2, tcounts);
+        counts[1] = tcounts[0];
         hmap1.put(result[0], res);
         hmap2.put(result[0], result[1]);
+        hmap3.put(result[0], counts);
       }
       // Always close files.
       bufferedReader.close();         
@@ -770,7 +780,9 @@ class Hegemon {
       Iterator iterator2 = set2.iterator();
       while(iterator2.hasNext()) {
         Map.Entry me2 = (Map.Entry)iterator2.next();
-        out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey()) 
+        int[] counts = hmap3.get(me2.getKey());
+        out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey())
+            + "\t" + counts[0] + "\t" + counts[1]
             + "\t" + me2.getKey() + "\t" + hmap2.get(me2.getKey())); 
       }
     }
@@ -935,6 +947,192 @@ class Hegemon {
     }
   }
 
+  public void readAFile(String aFile, ArrayList<String> groups,
+        ArrayList< ArrayList<Integer> > groupIDs) {
+    try {
+      HashMap<String, Integer> hmap = new HashMap<String, Integer>();
+      for (int i = start; i <= end; i++) {
+        hmap.put(headers[i], i);
+      }
+      FileReader fileReader = new FileReader(aFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      HashMap<String, Integer> gs = new HashMap<String, Integer>();
+      int index = 0;
+      String line;
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        String group = "0";
+        if (result.length < 1) {
+          continue;
+        }
+        if (result.length > 1) {
+          group = result[1];
+        }
+        if (!hmap.containsKey(result[0])) {
+          continue;
+        }
+        String nm = "";
+        if (result.length > 2) {
+          nm = result[2];
+        }
+        if (!gs.containsKey(group)) {
+          gs.put(group, index);
+          groups.add(nm);
+          groupIDs.add(new ArrayList<Integer>());
+          groupIDs.get(index).add(hmap.get(result[0]));
+          index++;
+        }
+        else {
+          int i = gs.get(group);
+          groupIDs.get(i).add(hmap.get(result[0]));
+        }
+      }
+      // Always close files.
+      bufferedReader.close();         
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void readGFile(String gFile, ArrayList<String> groups,
+      ArrayList< ArrayList<String> > groupIDs,
+      HashMap<String, Long> ids) {
+    try {
+      FileReader fileReader = new FileReader(gFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      HashMap<String, Integer> gs = new HashMap<String, Integer>();
+      int index = 0;
+      String line;
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        String group = "0";
+        if (result.length < 1) {
+          continue;
+        }
+        if (!ids.containsKey(result[0])) {
+          continue;
+        }
+        if (result.length > 1) {
+          group = result[1];
+        }
+        String nm = "";
+        if (result.length > 2) {
+          nm = result[2];
+        }
+        if (!gs.containsKey(group)) {
+          gs.put(group, index);
+          groups.add(nm);
+          groupIDs.add(new ArrayList<String>());
+          groupIDs.get(index).add(result[0]);
+          index++;
+        }
+        else {
+          int i = gs.get(group);
+          groupIDs.get(i).add(result[0]);
+        }
+      }
+      // Always close files.
+      bufferedReader.close();         
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public HashMap<String, Long> getIDs() {
+    try {
+      String exprFile = getExprFile();
+      HashMap<String, Long> res = new HashMap<String, Long>();
+      FileR reader = new FileR(exprFile);
+      String line = reader.readLine();
+      long pos = reader.filePtr();
+      while((line = reader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        if (result.length < 1) {
+          continue;
+        }
+        res.put(result[0], pos);
+        System.out.println(result[0] + " " + pos);
+        pos = reader.filePtr();
+      }
+      reader.close();
+      return res;
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+    return null;
+  }
+
+  public static <V> int getLSize(ArrayList< ArrayList<V> > list) {
+    int count = 0;
+    for (int i=0; i < list.size(); i++) {
+      count += list.get(i).size();
+    }
+    return count;
+  }
+
+  public static double getDouble(String s) {
+    try {
+      double v = Double.parseDouble(s);
+      return v;
+    }
+    catch (Exception e) {
+    }
+    return Double.NaN;
+  }
+
+  public void generateHeatmap (String gFile, String aFile, String sFile) {
+    try {
+      ArrayList<String> geneGroups = new ArrayList<String>();
+      ArrayList<String> arrayGroups = new ArrayList<String>();
+      ArrayList< ArrayList<String> > geneIDs = new ArrayList< ArrayList<String> >();
+      ArrayList< ArrayList<Integer> > arrayIDs = new ArrayList< ArrayList<Integer> >();
+      HashMap<String, Long> ids = getIDs();
+      readGFile(gFile, geneGroups, geneIDs, ids);
+      readAFile(aFile, arrayGroups, arrayIDs);
+      Heatmap map = new Heatmap(sFile);
+      int anum = getLSize(arrayIDs);
+      int gnum = getLSize(geneIDs);
+      map.setSize(anum, gnum);
+      map.init();
+      String exprFile = getExprFile();
+      FileR reader = new FileR(exprFile);
+      int y = 0;
+      for (int i=0; i < geneIDs.size(); i++) {
+        for (int gi = 0; gi < geneIDs.get(i).size(); gi++) {
+          String id = geneIDs.get(i).get(gi);
+          long ptr = ids.get(id);
+          long currPtr = reader.filePtr();
+          if (ptr != currPtr) {
+            reader.seek(ptr);
+          }
+          String line = reader.readLine();
+          String[] result = line.split("\\t", -2);
+          System.out.println(id + " " + result[0] + " " + result[1]);
+          int x = 0;
+          for (int j=0; j < arrayIDs.size(); j++) {
+            for (int aj = 0; aj < arrayIDs.get(i).size() ; aj++) {
+              int vj = arrayIDs.get(i).get(aj);
+              double val = Double.NaN;
+              if (vj < result.length) {
+                val = getDouble(result[vj]);
+              }
+              map.plotCell(x, y, val);
+              x++;
+            }
+          }
+          y++;
+        }
+      }
+      map.close();
+
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
 
   public static void main(String[] args) {
     if (args.length < 1) {
@@ -988,6 +1186,14 @@ class Hegemon {
     if (cmd.equals("diff")) {
       Hegemon h = new Hegemon(args[1]);
       h.printDiff(args[2]);
+    }
+    if (cmd.equals("heatmap") && args.length < 4) {
+      System.out.println("Usage: java Hegemon heatmap expr.txt gListFile aListFile setupFile");
+      System.exit(1);
+    }
+    if (cmd.equals("heatmap")) {
+      Hegemon h = new Hegemon(args[1]);
+      h.generateHeatmap(args[2], args[3], args[4]);
     }
   }
 }

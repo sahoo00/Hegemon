@@ -30,6 +30,8 @@
 	
 */
 
+package tools;
+
 import java.lang.Math.*;
 
 public class specialFunctions {

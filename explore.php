@@ -252,9 +252,9 @@ function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
   $values = [0, 0, 0, 0];
   $idlist = [[], [], [], []];
   foreach ($res as $k => $v) {
-    if ($v >= 0.8) { array_push($idlist[0], $k); $values[0] ++;}
-    else if ($v >= 0.5) { array_push($idlist[1], $k); $values[1] ++;}
-    else if ($v >= -0.5) { array_push($idlist[2], $k); $values[2] ++;}
+    if ($v[0] >= 0.8) { array_push($idlist[0], $k); $values[0] ++;}
+    else if ($v[0] >= 0.5) { array_push($idlist[1], $k); $values[1] ++;}
+    else if ($v[0] >= -0.5) { array_push($idlist[2], $k); $values[2] ++;}
     else { array_push($idlist[3], $k); $values[3] ++;}
   }
   setupDisplay($h, $id, $sthr, $pthr, $bestid,"", $head,
