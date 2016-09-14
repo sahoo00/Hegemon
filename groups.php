@@ -763,17 +763,14 @@ function getgcorr($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
   $id2 = $h->readID($y);
   $res = null;
   if (!$groups) {
-    $res = $h->getCorrelation2($id1, $id2, null);
+    $h->printJSONCorrelation2($id1, $id2, null);
   }
   else {
     $better_token = md5(uniqid(rand(), true));
     $outprefix = "tmpdir/tmp$better_token";
     U::setupArrayListData($groups, $outprefix);
-    $res = $h->getCorrelation2($id1, $id2, "$outprefix.data");
+    $h->printJSONCorrelation2($id1, $id2, "$outprefix.data");
     U::cleanup($outprefix);
-  }
-  if ($res != null) {
-    echo json_encode($res);
   }
 }
 
@@ -784,11 +781,8 @@ function getgdiff($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
     $better_token = md5(uniqid(rand(), true));
     $outprefix = "tmpdir/tmp$better_token";
     U::setupArrayListData($groups, $outprefix);
-    $res = $h->getDiff("$outprefix.data");
+    $h->printJSONDiff("$outprefix.data");
     U::cleanup($outprefix);
-  }
-  if ($res != null) {
-    echo json_encode($res);
   }
 }
 

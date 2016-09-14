@@ -604,8 +604,7 @@ class Hegemon {
     return $res;
   }
 
-  public function getCorrelation2($id1, $id2, $listFile) {
-    $res = [];
+  public function printJSONCorrelation2($id1, $id2, $listFile) {
     $exprFile = $this->getExprFile();
     $path = getenv("PATH");        // save old value 
     $java_home = "/booleanfs/sahoo/softwares/java/jdk1.8.0_45";
@@ -619,6 +618,8 @@ class Hegemon {
     }
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
+    $index = 0;
+    echo "{";
     while (!feof($fh))
     {
       $line = fgets($fh);
@@ -632,10 +633,15 @@ class Hegemon {
         $words = preg_split("/[\s\/:]+/", $list[5]);
         $n = $words[0];
       }
-      $res[$list[4]] = [$list[0], $list[1], $list[2], $list[3], $n];
+      if ($index != 0) {
+        echo ",\n";
+      }
+      $res = [$list[0], $list[1], $list[2], $list[3], $n];
+      echo '"'.$list[4].'":'.json_encode($res);
+      $index++;
     }
     pclose($fh);
-    return $res;
+    echo "\n}";
   }
 
   public function readID($x) {
@@ -645,10 +651,10 @@ class Hegemon {
     return $id;
   }
 
-  public function getDiff($listFile) {
-    $res = [];
+  public function printJSONDiff($listFile) {
     if ($listFile == null) {
-      return $res;
+      echo "{}";
+      return;
     }
     $exprFile = $this->getExprFile();
     $path = getenv("PATH");        // save old value 
@@ -660,6 +666,8 @@ class Hegemon {
     $cmd = "java tools.Hegemon diff $exprFile $listFile";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
+    $index = 0;
+    echo "{";
     while (!feof($fh))
     {
       $line = fgets($fh);
@@ -673,10 +681,15 @@ class Hegemon {
         $words = preg_split("/[\s\/:]+/", $list[5]);
         $n = $words[0];
       }
-      $res[$list[4]] = [$list[0], $list[1], $list[2], $list[3], $n];
+      if ($index != 0) {
+        echo ",\n";
+      }
+      $res = [$list[0], $list[1], $list[2], $list[3], $n];
+      echo '"'.$list[4].'":'.json_encode($res);
+      $index++;
     }
     pclose($fh);
-    return $res;
+    echo "\n}";
   }
 
 }

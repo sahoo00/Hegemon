@@ -515,6 +515,38 @@ echo "
 Sylvia K. Plevritis. Boolean implication networks derived from large scale,
 whole genome microarray datasets. Genome Biology, 9:R157, Oct 30 2008.
         </li>
+        <li>
+Debashis Sahoo, Jun Seita, Deepta Bhattacharya, Matthew A. Inlay, Sylvia K.
+Plevritis, Irving L. Weissman, David L. Dill. MiDReG: A Method of Mining
+Developmentally Regulated Genes using Boolean Implications. Proc Natl Acad Sci
+U S A. 2010 Mar 30;107(13):5732-7. Epub 2010 Mar 15.
+        </li>
+        <li>
+Piero Dalerba *, Tomer Kalisky *, Debashis Sahoo *, Pradeep S. Rajendran, Mike
+Rothenberg, Anne A. Leyrat, Sopheak Sim, Jennifer Okamoto, John D. Johnston,
+Dalong Qian, Maider Zabala, Janet Bueno, Norma Neff, Jianbin Wang, Andy A.
+Shelton, Brendan Visser, Shigeo Hisamori, Mark van den Wetering, Hans Clevers,
+Michael F. Clarke * and Stephen R. Quake *. Single-cell dissection of
+transcriptional heterogeneity in human colon tumors. Nature Biotech, 2011 Nov
+13. doi: 10.1038/nbt.2038
+        </li>
+        <li>
+Jens-Peter Volkmer *, Debashis Sahoo *, Robert Chin *, Philip Levy Ho, Chad
+Tang, Antonina V. Kurtova, Stephen B. Willingham, Senthil K. Pazhanisamy,
+Humberto Contreras-Trujillo, Theresa A. Storm, Yair Lotan, Andrew H. Beck,
+Benjamin Chung, Ash A. Alizadeh, Guilherme Godoy, Seth P. Lerner, Matt van de
+Rijn, Linda. D. Shortliffe, Irving L. Weissman *, and Keith S. Chan *. Three
+differentiation states risk-stratify bladder cancer into distinct subtypes.
+PNAS February 7, 2012 vol. 109 no. 6 pp 2078-2083.
+        </li>
+        <li>
+Piero Dalerba*, Debashis Sahoo*, Soonmyung Paik, Xiangqian Guo, Greg Yothers,
+Nan Song, Nate Wilcox-Fogel, Erna Forgó, Pradeep S. Rajendran, Stephen P.
+Miranda, Shigeo Hisamori, Jacqueline Hutchison, Tomer Kalisky, Dalong Qian,
+Norman Wolmark, George A. Fisher, Matt van de Rijn, and Michael F. Clarke. CDX2
+as a Prognostic Biomarker in Stage II and Stage III Colon Cancer. N Engl J Med.
+2016 Jan 21;374(3):211-22. doi: 10.1056/NEJMoa1506597.
+        </li>
       </ol>
     </div>
     <div id=\"footer\">
