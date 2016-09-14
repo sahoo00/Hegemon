@@ -143,7 +143,8 @@ public class specialFunctions {
 
 	public double student_c(double v) {
 		// Coefficient appearing in Student's t distribution
-		return Math.exp(logGamma( (v+1)/2)) / (Math.sqrt(Math.PI*v)*Math.exp(logGamma(v/2)));
+		//return Math.exp(logGamma( (v+1)/2)) / (Math.sqrt(Math.PI*v)*Math.exp(logGamma(v/2)));
+                return Math.exp(logGamma( (v+1)/2) - logGamma(v/2))/Math.sqrt(Math.PI*v);
 	}
 
 	public double student_tDen(double v, double t) {
@@ -191,6 +192,15 @@ public class specialFunctions {
 		}
 		return  sm ;
 	}
+
+    public static void main(String[] args) {
+      specialFunctions sf = new specialFunctions();
+      for (int i = 1; i < 5000; i+=100) {
+        double v = i;
+        double n1 = Math.exp(sf.logGamma( (v+1)/2) - sf.logGamma(v/2))/Math.sqrt(Math.PI*v);
+        System.out.println(i + " " + sf.student_c(i) + " " + n1);
+      }
+    }
 
 
 }

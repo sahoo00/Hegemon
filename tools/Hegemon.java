@@ -908,6 +908,7 @@ class Hegemon {
       HashMap<String, Double> hmap1 = new HashMap<String, Double>();
       HashMap<String, String> hmap2 = new HashMap<String, String>();
       HashMap<String, int[]> hmap3 = new HashMap<String, int[]>();
+      int lineno = 0;
       while((line = bufferedReader.readLine()) != null) {
         String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
         getExprData(result, data, null); 
@@ -925,6 +926,7 @@ class Hegemon {
         hmap1.put(result[0], p);
         hmap2.put(result[0], result[1]);
         hmap3.put(result[0], counts);
+        lineno++;
       }
       // Always close files.
       bufferedReader.close();         
