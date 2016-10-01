@@ -553,7 +553,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java tools.Hegemon boolean $pre $id1";
+    $cmd = "java tools.Hegemon boolean \"$pre\" \"$id1\"";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
     while (!feof($fh))
@@ -581,7 +581,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java tools.Hegemon corr $exprFile $id1";
+    $cmd = "java tools.Hegemon corr $exprFile \"$id1\"";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
     while (!feof($fh))
@@ -612,7 +612,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java tools.Hegemon corr2 $exprFile $id1 $id2";
+    $cmd = "java tools.Hegemon corr2 $exprFile \"$id1\" \"$id2\"";
     if ($listFile != null) {
       $cmd .= " $listFile";
     }

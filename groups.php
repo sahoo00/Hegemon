@@ -501,6 +501,8 @@ function getthrgroup($file, $f, $id, $x, $y, $xn, $yn, $value, $groups) {
   $sfile = $h->getSurv();
   $outprefix = getOutprefix();
   list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
+  list($minx, $maxx) = U::getMinMax($x_arr, 2, count($x_arr)-2);
+  list($miny, $maxy) = U::getMinMax($y_arr, 2, count($y_arr)-2);
   $p_arr = U::getPArray($sfile, $h_arr, $groups);
   U::setupMatData($x_arr, $y_arr, $p_arr, $outprefix);
   $outfile = "$outprefix.py";
@@ -544,6 +546,7 @@ ax.set_ylabel('$y_id:  $yn', fontsize=10)
     plotLine($fp, 'h', $thry0, 0.5, 'c');
     plotLine($fp, 'h', $thry1, 0.5, 'r');
     plotLine($fp, 'h', $thry2, 0.5, 'c');
+    fwrite($fp, "ax.axis([$minx-0.5, $maxx+0.5, $miny-0.5, $maxy+0.5])\n");
   }
   if ($plotType == "step") {
     fwrite($fp, "
