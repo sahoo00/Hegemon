@@ -150,7 +150,7 @@ class U {
       $start = 0;
     }
     if ($end == FALSE) {
-      $end = count($arr) - 1;
+      $end = count($arrayref) - 1;
     }
     $result = 0;
     if ($start > $end) {
@@ -169,7 +169,7 @@ class U {
       $start = 0;
     }
     if ($end == FALSE) {
-      $end = count($arr) - 1;
+      $end = count($arrayref) - 1;
     }
     $result = $arrayref[$start];
     if ($start > $end) {
@@ -191,7 +191,7 @@ class U {
       $start = 0;
     }
     if ($end == FALSE) {
-      $end = count($arr) - 1;
+      $end = count($arrayref) - 1;
     }
     $result = $arrayref[$start];
     if ($start > $end) {
@@ -311,7 +311,63 @@ class U {
     return self::fitStep($array);
   }
 
-  public function getXYstats($x_arr, $y_arr) {
+  public function getXstats($x_arr, $start = 2) {
+    $better_token = md5(uniqid(rand(), true));
+    $outprefix = "tmpdir/tmp$better_token";
+    if (($fp = fopen("$outprefix.R", "w")) === FALSE) {
+      echo "Can't open file tmp.R <br>";
+    }
+    $num = count($x_arr);
+    $xa = array();
+    for($i=$start; $i < $num; $i++){       
+      if (ereg("^\s*$", $x_arr[$i])) {
+        continue;
+      }
+      array_push($xa, $x_arr[$i]);
+    }
+    if (count($xa) <= 1) {
+      $rhash = array("n" => count($xa), "m" => "", "sd" => "", "box" => "");
+      if (count($xa) == 1) { 
+        $rhash["m1"] = $xa[0];
+      }
+      return $rhash;
+    }
+    $res = "x <- c(" . join(",", $xa) . ");\n";
+    $res .= "
+      cat(\"BEGIN\\n\")
+      cat(sprintf(\"n=%d\\n\", length(x)))
+      cat(sprintf(\"m=%.3f\\n\", mean(x)))
+      cat(sprintf(\"sd=%.3f\\n\", sd(x)))
+      cat(\"box=\", quantile(x, probs=c(0, 0.25, 0.5, 0.75, 1)), \"\\n\")
+      cat(\"END\\n\")
+      ";
+    fwrite($fp, $res);
+    fclose($fp);
+    if (($fp = fopen("$outprefix.sh", "w")) === FALSE) {
+      echo "Can't open file tmp.sh <br>";
+    }
+    fwrite($fp, "/usr/bin/R --slave < $outprefix.R\n");
+    fclose($fp);
+
+    $rhash = array();
+    $cmd = "bash $outprefix.sh";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = chop($line, "\r\n");
+      $arr = explode("=", $line);
+      if (count($arr) == 2) {
+        $rhash[$arr[0]] = $arr[1];
+      }
+    }
+    pclose($fh);
+    self::cleanup($outprefix);
+    return $rhash;
+  }
+
+  public function getXYstats($x_arr, $y_arr, $start = 2) {
     $better_token = md5(uniqid(rand(), true));
     $outprefix = "tmpdir/tmp$better_token";
     if (($fp = fopen("$outprefix.R", "w")) === FALSE) {
@@ -320,7 +376,7 @@ class U {
     $num = count($x_arr);
     $xa = array();
     $ya = array();
-    for($i=2; $i < $num; $i++){       
+    for($i=$start; $i < $num; $i++){       
       if (ereg("^\s*$", $x_arr[$i])) {
         continue;
       }
@@ -707,6 +763,9 @@ function getThrData($arr, $start = null, $len = null) {
 function getThreshold($arr, $start = null, $len = null) {
   if (!isset($start)) { $start = 0; }
   if (!isset($len)) { $len = count($arr); }
+  if ($len <= 0) {
+    return array("", "", "");
+  }
   $s_thr = U::getStepMinerThr($arr, $start, $start+$len-1);
   $max = U::max($arr, $start, $start+$len-1);
   $min = U::min($arr, $start, $start+$len-1);
@@ -849,6 +908,82 @@ legend(\"topright\", sprintf(\"pvalue = %.4f\", p), inset=c(0.02, length(l)*0.04
 ";
  return $res;
 }
+
+function data_uri($file, $mime) 
+{
+  $contents = file_get_contents($file);
+  $base64   = base64_encode($contents); 
+  return ('data:' . $mime . ';base64,' . $base64);
+}
+
+  public function plotHistogram($x_arr, $start = 2) {
+    $better_token = md5(uniqid(rand(), true));
+    $outprefix = "tmpdir/tmp$better_token";
+    if (($fp = fopen("$outprefix.R", "w")) === FALSE) {
+      echo "Can't open file tmp.R <br>";
+    }
+    $num = count($x_arr);
+    $xa = array();
+    for($i=$start; $i < $num; $i++){       
+      if (ereg("^\s*$", $x_arr[$i])) {
+        continue;
+      }
+      array_push($xa, $x_arr[$i]);
+    }
+    if (count($xa) <= 0) {
+      return null;
+    }
+    $res = "x <- c(" . join(",", $xa) . ");\n";
+    $res .= "
+png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
+h <- hist(x, freq=TRUE, main=\"Histogram\", xlab=\"value\", 
+    ylab=\"count\")
+n <- length(h\$counts)
+plot(h\$breaks[1:n], h\$counts, type=\"h\",
+    main=\"Histogram\", xlab=\"value\",
+    ylab=\"count\")
+lines(h\$breaks[1:n], h\$counts, type=\"o\",
+    main=\"Histogram\", xlab=\"value\",
+    ylab=\"count\")
+dev.off()
+cat(\"BEGIN\\n\")
+cat(h\$breaks, \"\\n\")
+cat(h\$counts, \"\\n\")
+cat(\"END\\n\")
+      ";
+    fwrite($fp, $res);
+    fclose($fp);
+    if (($fp = fopen("$outprefix.sh", "w")) === FALSE) {
+      echo "Can't open file tmp.sh <br>";
+    }
+    fwrite($fp, "/usr/bin/R --slave < $outprefix.R\n");
+    fclose($fp);
+
+    $rhash = array();
+    $cmd = "bash $outprefix.sh";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = chop($line, "\r\n");
+      if (strcmp($line, "BEGIN") == 0) {
+        $line = fgets($fh);
+        $line = chop($line, "\r\n");
+        $rhash["breaks"] = $line;
+        $line = fgets($fh);
+        $line = chop($line, "\r\n");
+        $rhash["counts"] = $line;
+        break;
+      }
+    }
+    pclose($fh);
+    if (file_exists("$outprefix.png")) {
+      $rhash["img"] = self::data_uri("$outprefix.png", "image/png");
+    }
+    self::cleanup($outprefix);
+    return $rhash;
+  }
 
 }
 

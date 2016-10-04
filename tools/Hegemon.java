@@ -1136,6 +1136,65 @@ class Hegemon {
     }
   }
 
+  public void printStats(String id) {
+    printStats(id, null);
+  }
+
+  public void printStats(String id, String listFile) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
+      return;
+    }
+    String line;
+    try {
+      BitSet groups = getGroups(listFile);
+      String line1 = getLine(exprFile, id);
+      if (line1 == null) {
+        return;
+      }
+      String[] result1 = line1.split("\\t", -2); // -2 : Don't discard trailing nulls
+      double[] data1 = new double[result1.length];
+      getExprData(result1, data1, groups); 
+      
+      // FileReader reads text files in the default encoding.
+      FileReader fileReader = 
+        new FileReader(exprFile);
+
+      // Always wrap FileReader in BufferedReader.
+      BufferedReader bufferedReader = 
+        new BufferedReader(fileReader);
+
+      double[] data2 = new double[result1.length];
+      HashMap<String, Correlation> hmap1 = new HashMap<String, Correlation>();
+      HashMap<String, String> hmap2 = new HashMap<String, String>();
+      HashMap<String, LinearRegression> hmap3 = new HashMap<String, LinearRegression>();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        getExprData(result, data2, groups); 
+        hmap1.put(result[0], new Correlation(data1, data2));
+        hmap2.put(result[0], result[1]);
+        hmap3.put(result[0], new LinearRegression(data1, data2));
+      }
+      // Always close files.
+      bufferedReader.close();         
+      Map<String, Correlation> map = sortByValuesDown(hmap1); 
+      Set set2 = map.entrySet();
+      Iterator iterator2 = set2.iterator();
+      while(iterator2.hasNext()) {
+        Map.Entry me2 = (Map.Entry)iterator2.next();
+        out.println(me2.getValue() + "\t" + hmap3.get(me2.getKey()) + "\t" +
+            me2.getKey() + "\t" +
+            hmap2.get(me2.getKey())); 
+      }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java Hegemon <cmd> <args> ... <args>");
@@ -1196,6 +1255,19 @@ class Hegemon {
     if (cmd.equals("heatmap")) {
       Hegemon h = new Hegemon(args[1]);
       h.generateHeatmap(args[2], args[3], args[4]);
+    }
+    if (cmd.equals("stats") && args.length < 3) {
+      System.out.println("Usage: java Hegemon stats expr.txt id <listFile>");
+      System.exit(1);
+    }
+    if (cmd.equals("stats")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.printStats(args[2]);
+      }
+      else {
+        h.printStats(args[2], args[3]);
+      }
     }
   }
 }
