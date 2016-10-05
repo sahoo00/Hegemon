@@ -20,6 +20,10 @@ function callStepMiner() {
   callGeneric("StepMiner");
 }
 
+function callHistogram() {
+  callGeneric("hist");
+}
+
 function callIntersect() {
   callGeneric("intersect");
 }
@@ -28,6 +32,11 @@ function callUnion() {
   callGeneric("union");
 }
 
-function callHistogram() {
-  callGeneric("hist");
+function callDiffAB() {
+  callGeneric("diffab");
 }
+
+function callDiffBA() {
+  callGeneric("diffba");
+}
+

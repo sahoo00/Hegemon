@@ -135,6 +135,7 @@ class RankCorrelation {
       bufferedReader.close();         
       fileReader = new FileReader(exprFile);
       bufferedReader = new BufferedReader(fileReader);
+      HashMap<String, Double> hrank = new HashMap<String, Double>();
       HashMap<String, Double> hdata = new HashMap<String, Double>();
       HashMap<String, Double> hmap1 = new HashMap<String, Double>();
       HashMap<String, String> hmap2 = new HashMap<String, String>();
@@ -172,7 +173,8 @@ class RankCorrelation {
         Map.Entry me2 = (Map.Entry)iterator2.next();
         String id = (String) me2.getKey();
         double score = hseed.get(id);
-        hdata.put(id, index * score/ (2 * count));
+        hdata.put(id, 0.0);
+        hrank.put(id, 0.0);
         index++;
       }
 
@@ -214,6 +216,8 @@ class RankCorrelation {
           double rank = hdata.get(id);
           double score = hseed.get(id);
           hdata.put(id, rank + index * score / (2 * count));
+          rank = hrank.get(id);
+          hrank.put(id, rank + index * 1.0/ count);
           index++;
         }
 
@@ -223,8 +227,10 @@ class RankCorrelation {
       iterator2 = set2.iterator();
       while(iterator2.hasNext()) {
         Map.Entry me2 = (Map.Entry)iterator2.next();
-        System.out.println(me2.getValue() + "\t" + me2.getKey() + "\t" +
-            hmap2.get(me2.getKey())); 
+        String id = (String) me2.getKey();
+        double rank = hrank.get(id);
+        System.out.println(me2.getValue() + "\t" + rank + "\t" + id + "\t" +
+            hmap2.get(id)); 
 
       }
 

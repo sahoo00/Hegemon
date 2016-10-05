@@ -14,14 +14,20 @@ elseif (array_key_exists("go", $_POST)) {
   if (strcmp($_POST["go"], "StepMiner") == 0) {
     printStepMiner($_POST['A'], $_POST['B']);
   }
+  if (strcmp($_POST["go"], "hist") == 0) {
+    printHistogram($_POST['A'], $_POST['B']);
+  }
   if (strcmp($_POST["go"], "intersect") == 0) {
     printIntersect($_POST['A'], $_POST['B']);
   }
   if (strcmp($_POST["go"], "union") == 0) {
     printUnion($_POST['A'], $_POST['B']);
   }
-  if (strcmp($_POST["go"], "hist") == 0) {
-    printHistogram($_POST['A'], $_POST['B']);
+  if (strcmp($_POST["go"], "diffab") == 0) {
+    printDiff($_POST['A'], $_POST['B']);
+  }
+  if (strcmp($_POST["go"], "diffba") == 0) {
+    printDiff($_POST['B'], $_POST['A']);
   }
 }
 else {
@@ -78,21 +84,34 @@ function printTabular($arr, $num) {
 
 function printIntersect ($a, $b) {
   echo "Intersect <br/>";
-  $a = strtoupper(urldecode($a));
-  $b = strtoupper(urldecode($b));
+  $a = trim(strtoupper(urldecode($a)));
+  $b = trim(strtoupper(urldecode($b)));
   $la = preg_split("/\s+/", $a);
   $lb = preg_split("/\s+/", $b);
   $res = U::intersection($la, $lb);
+  $res = array_unique($res);
   printTabular($res, 6);
 }
 
 function printUnion ($a, $b) {
   echo "Union <br/>";
-  $a = strtoupper(urldecode($a));
-  $b = strtoupper(urldecode($b));
+  $a = trim(strtoupper(urldecode($a)));
+  $b = trim(strtoupper(urldecode($b)));
   $la = preg_split("/\s+/", $a);
   $lb = preg_split("/\s+/", $b);
   $res = U::union($la, $lb);
+  $res = array_unique($res);
+  printTabular($res, 6);
+}
+
+function printDiff ($a, $b) {
+  echo "Diff <br/>";
+  $a = trim(strtoupper(urldecode($a)));
+  $b = trim(strtoupper(urldecode($b)));
+  $la = preg_split("/\s+/", $a);
+  $lb = preg_split("/\s+/", $b);
+  $res = U::diff($la, $lb);
+  $res = array_unique($res);
   printTabular($res, 6);
 }
 
@@ -167,12 +186,16 @@ echo "
       Tools: 
           <input type=\"button\" name=\"StepMiner\" value=\"StepMiner\"
               onclick=\"callStepMiner();\"/>
+          <input type=\"button\" name=\"histogram\" value=\"histogram\"
+              onclick=\"callHistogram();\"/>
           <input type=\"button\" name=\"intersect\" value=\"intersect\"
               onclick=\"callIntersect();\"/>
           <input type=\"button\" name=\"union\" value=\"union\"
               onclick=\"callUnion();\"/>
-          <input type=\"button\" name=\"histogram\" value=\"histogram\"
-              onclick=\"callHistogram();\"/>
+          <input type=\"button\" name=\"Diff-A-B\" value=\"Diff-A-B\"
+              onclick=\"callDiffAB();\"/>
+          <input type=\"button\" name=\"Diff-B-A\" value=\"Diff-B-A\"
+              onclick=\"callDiffBA();\"/>
       <br clear=\"all\"/>
       <div id=\"results\"> </div>
       <div id=\"lineresults\"> </div>
