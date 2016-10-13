@@ -250,7 +250,7 @@ class RankCorrelation {
     }
     String cmd = args[0];
     if (cmd.equals("rank") && args.length < 2) {
-      System.out.println("Usage: java Hegemon rank exprFile [listFile [id]]");
+      System.out.println("Usage: java RankCorrelation rank exprFile [listFile [id]]");
       System.exit(1);
     }
     if (cmd.equals("rank")) {
