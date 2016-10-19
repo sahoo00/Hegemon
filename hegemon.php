@@ -539,7 +539,7 @@ class Hegemon {
         }
       }
       arsort($res);
-      $genes = array_slice($res, 0, $num);
+      $genes = array_slice($res, 0, $num, TRUE);
     }
     return $genes;
   }
