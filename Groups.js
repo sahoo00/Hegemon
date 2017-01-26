@@ -421,7 +421,7 @@ function callPatientGroup(id, num) {
     var url = 'explore.php?go=getPatients&id=' + s1;
     url += '&clinical=' + num;
     var str1 = escape(document.getElementById(id).value);
-    str1 = str1.replace("+", "%2B");
+    str1 = str1.replace(/\+/g, "%2B");
     url += '&value=' + str1;
     xmlHttp.open("GET", url, true);
     xmlHttp.onreadystatechange = submitMouseEvent; 
