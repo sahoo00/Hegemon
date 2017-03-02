@@ -8,6 +8,7 @@ include "groups.php";
 $file = "explore.conf";
 $keys = array("" => 1);
 $groups = "";
+$param = [];
 $colors = array(
     '#0000FF', '#558866',
     '#00EEEE', '#EE1000', '#000000',
@@ -33,6 +34,12 @@ if (array_key_exists("key", $_POST)) {
 if (array_key_exists("groups", $_POST)) {
   $groups = urldecode($_POST['groups']);
 }
+if (array_key_exists("param", $_GET)) {
+  $param = getParam(urldecode($_GET['param']));
+}
+if (array_key_exists("param", $_POST)) {
+  $param = getParam(urldecode($_POST['param']));
+}
 
 if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "getids") == 0) {
@@ -49,7 +56,7 @@ if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "plot") == 0) {
     plot($file, $_GET['file'], $_GET['id'], 
         $_GET['x'], $_GET['y'],$_GET['xn'],$_GET['yn'],
-        $groups);
+        $groups, $param);
   }
   if (strcmp($_GET["go"], "getstats") == 0) {
     getStats($file, $_GET['A'], $_GET['B'], $_GET['id'], $_GET['sthr'],
@@ -72,12 +79,21 @@ elseif (array_key_exists("go", $_POST)) {
   if (strcmp($_POST["go"], "plot") == 0) {
     plotDataUri($file, urldecode($_POST['file']), $_POST['id'], 
         $_POST['x'], $_POST['y'],$_POST['xn'],$_POST['yn'],
-        $groups);
+        $groups, $param);
   }
   callGroupsPostCommands($file, $groups);
 }
 else {
   printSummary($file);
+}
+
+function getParam($str) {
+  $res = [];
+  foreach (split(";", $str) as $p) {
+    list($k, $v) = split(":", $p);
+    $res[$k] = $v;
+  }
+  return $res;
 }
 
 function getHegemon($file, $id) {
@@ -392,12 +408,13 @@ function plotids($file, $f, $id, $x, $y, $xn, $yn, $groups) {
   echo json_encode($res);
 }
 
-function plot($file, $f, $id, $x, $y, $xn, $yn, $groups) {
+function plot($file, $f, $id, $x, $y, $xn, $yn, $groups, $param) {
   $h = getHegemon($file, $id);
   $sfile = $h->getSurv();
   $better_token = md5(uniqid(rand(), true));
   $outprefix = "tmpdir/tmp$better_token";
-  U::generateMatPlot($f, $sfile, $x, $y, $xn, $yn, $groups, 0, $outprefix);
+  U::generateMatPlot($f, $sfile, $x, $y, $xn, $yn, $groups,
+      0, $outprefix, $param);
   header("Content-type: image/png");
   $im     = imagecreatefrompng("$outprefix.png");
   imagepng($im);
@@ -412,12 +429,13 @@ function data_uri($file, $mime)
   return ('data:' . $mime . ';base64,' . $base64);
 }
 
-function plotDataUri($file, $f, $id, $x, $y, $xn, $yn, $groups) {
+function plotDataUri($file, $f, $id, $x, $y, $xn, $yn, $groups, $param) {
   $h = getHegemon($file, $id);
   $sfile = $h->getSurv();
   $better_token = md5(uniqid(rand(), true));
   $outprefix = "tmpdir/tmp$better_token";
-  U::generateMatPlot($f, $sfile, $x, $y, $xn, $yn, $groups, 0, $outprefix);
+  U::generateMatPlot($f, $sfile, $x, $y, $xn, $yn, $groups,
+      0, $outprefix, $param);
   echo data_uri("$outprefix.png", "image/png");
   U::cleanup($outprefix);
 }

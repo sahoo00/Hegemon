@@ -332,8 +332,8 @@ class BooleanNet {
     Arrays.sort(sddata);
     double drthr = Hegemon.fitStep(drdata, 0, drdata.length-1);
     double sdthr = Hegemon.fitStep(sddata, 0, sddata.length-1);
-    //out.println(drthr);
-    //out.println(sdthr);
+    System.err.println("drthr:" + drthr);
+    System.err.println("sdthr:" + sdthr);
     //double[] data = {1, 1, 1, 2, 3, 1, 4, 5, 4, 6, 4, 5};
     //double thr = fitStep(data, 0, data.length-1);
     //out.println(thr);
@@ -342,6 +342,7 @@ class BooleanNet {
             res.add(idlist.get(x));
         }
     }
+    System.err.println("Size:" + res.size());
     return res;
   }
 
@@ -461,7 +462,8 @@ class BooleanNet {
       double pt = Double.parseDouble(pthr);
       int t = Integer.parseInt(type);
       int d = Integer.parseInt(depth);
-      Set<String> keys = getFilter();
+      //Set<String> keys = getFilter();
+      Set<String> keys = null;
       BitSet groups = getGroups(listFile);
       Set<String> list = getBooleanRelations(id, st, pt, groups, keys, t);
       if (list == null) {

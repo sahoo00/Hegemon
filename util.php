@@ -628,7 +628,7 @@ fig.savefig('$outprefix.png', dpi=100)
     fclose($fp);
   }
 
-  function setupMatData($x_arr, $y_arr, $p_arr, $outprefix) {
+  function setupMatData($x_arr, $y_arr, $p_arr, $outprefix, $param) {
     $num = count($x_arr);
     if (($fp = fopen("$outprefix.data", "w")) === FALSE) {
       echo "Can't open file tmp.data <br>";
@@ -640,7 +640,11 @@ fig.savefig('$outprefix.png', dpi=100)
       if (ereg("^\s*$", $y_arr[$i])) {
         continue;
       }
-      $str = $x_arr[$i]." ".$y_arr[$i]." ".self::getColor($p_arr[$i])."\n";
+      $c = self::getColor($p_arr[$i]);
+      if (array_key_exists("color", $param)) {
+        $c = $param["color"];
+      }
+      $str = $x_arr[$i]." ".$y_arr[$i]." $c\n";
       fwrite($fp, $str);
     }
     fclose($fp);
@@ -711,7 +715,7 @@ fig.savefig('$outprefix.png', dpi=100)
   }
 
   function generateMatPlot($file, $sfile, $x, $y, $x_name, $y_name, $groups, 
-      $debug, $outprefix) {
+      $debug, $outprefix, $param) {
 
     list($x_arr, $y_arr, $h_arr) = self::getXandY($file, $x, $y, $debug);
     $x_id = $x_arr[0];
@@ -736,7 +740,7 @@ fig.savefig('$outprefix.png', dpi=100)
 
     $outfile = "$outprefix.py";
 
-    self::setupMatData($x_arr, $y_arr, $p_arr, $outprefix);
+    self::setupMatData($x_arr, $y_arr, $p_arr, $outprefix, $param);
 
     if (($fp = fopen($outfile, "w")) === FALSE) {
       echo "Can't open file $outfile <br>";
