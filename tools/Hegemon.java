@@ -1195,6 +1195,73 @@ class Hegemon {
     }
   }
 
+  public void topGenes(String numStr) {
+    try {
+      if (!hasInfo()) {
+        return;
+      }
+      String infoFile = getInfo();
+      String line;
+      int num = Integer.parseInt(numStr);
+      ArrayList<String> idlist = new ArrayList<String>();
+      ArrayList<String> namelist = new ArrayList<String>();
+      ArrayList<Double> drlist = new ArrayList<Double>();
+      ArrayList<Double> sdlist = new ArrayList<Double>();
+      FileReader fileReader = new FileReader(infoFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      line = bufferedReader.readLine();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        if (result.length < 9) {
+          continue;
+        }
+        double dr = Double.parseDouble(result[7]) - Double.parseDouble(result[6]);
+        double sd = Double.parseDouble(result[8]);
+        idlist.add(result[0]);
+        namelist.add(result[1]);
+        drlist.add(new Double(dr));
+        sdlist.add(new Double(sd));
+      }
+      bufferedReader.close(); 
+      double[] drdata = new double[drlist.size()];
+      double[] sddata = new double[sdlist.size()];
+      for (int x=0; x<idlist.size(); x++) {
+        drdata[x] = drlist.get(x);
+        sddata[x] = sdlist.get(x);
+      }
+      Arrays.sort(drdata);
+      Arrays.sort(sddata);
+      double drthr = fitStep(drdata, 0, drdata.length-1);
+      double sdthr = fitStep(sddata, 0, sddata.length-1);
+      //out.println(drthr);
+      //out.println(sdthr);
+      //double[] data = {1, 1, 1, 2, 3, 1, 4, 5, 4, 6, 4, 5};
+      //double thr = fitStep(data, 0, data.length-1);
+      //out.println(thr);
+      HashMap<Integer, Double> res = new HashMap<Integer, Double>();
+      for (int x=0; x<idlist.size(); x++) {
+        if (drlist.get(x) > drthr && sdlist.get(x) > sdthr) {
+          res.put(x, drlist.get(x));
+        }
+      }
+      Map<Integer, Double> map = sortByValuesDown(res); 
+      Set set2 = map.entrySet();
+      Iterator iterator2 = set2.iterator();
+      int index = 0;
+      while(iterator2.hasNext() && index < num) {
+        Map.Entry me2 = (Map.Entry)iterator2.next();
+        Integer xi = (Integer) me2.getKey();
+        int x = xi.intValue();
+        out.println(String.format("%1$.2f", me2.getValue()) + "\t" + 
+            idlist.get(x) + "\t" + namelist.get(x));
+        index++;
+      }
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java Hegemon <cmd> <args> ... <args>");
@@ -1267,6 +1334,16 @@ class Hegemon {
       }
       else {
         h.printStats(args[2], args[3]);
+      }
+    }
+    if (cmd.equals("topgenes") && args.length < 3) {
+      System.out.println("Usage: java Hegemon topgenes pre num");
+      System.exit(1);
+    }
+    if (cmd.equals("topgenes")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.topGenes(args[2]);
       }
     }
   }

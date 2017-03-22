@@ -544,6 +544,32 @@ class Hegemon {
     return $genes;
   }
 
+  public function topGenesJava($num) {
+    $genes = [];
+    $pre = $this->getPre();
+    $path = getenv("PATH");        // save old value 
+    $java_home = "/booleanfs/sahoo/softwares/java/jdk1.8.0_45";
+    $path1 = "$java_home/bin";
+    if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
+    putenv("PATH=$path1");        // set new value 
+    putenv("JAVA_HOME=$java_home");        // set new value 
+    $cmd = "java tools.Hegemon topgenes \"$pre\" \"$num\"";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = rtrim($line, "\r\n");
+      $list = explode("\t", $line);
+      if (count($list) != 3) {
+        continue;
+      }
+      $genes[$list[1]] = $list[0];
+    }
+    pclose($fh);
+    return $genes;
+  }
+
   public function getBooleanRelations($id1, $sthr, $pthr) {
     $res = [];
     $pre = $this->getPre();

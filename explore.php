@@ -266,12 +266,17 @@ function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
   $res = $h->getCorrelation($bestid);
   $head = ["1.0 to 0.8", "0.8 to 0.5", "0.5 to -0.5", "-0.5 to -1.0"];
   $values = [0, 0, 0, 0];
+  $maxnum = 1000;
   $idlist = [[], [], [], []];
   foreach ($res as $k => $v) {
-    if ($v[0] >= 0.8) { array_push($idlist[0], $k); $values[0] ++;}
-    else if ($v[0] >= 0.5) { array_push($idlist[1], $k); $values[1] ++;}
-    else if ($v[0] >= -0.5) { array_push($idlist[2], $k); $values[2] ++;}
-    else { array_push($idlist[3], $k); $values[3] ++;}
+    if ($v[0] >= 0.8 && $values[0] < $maxnum) { 
+      array_push($idlist[0], $k); $values[0] ++;}
+    else if ($v[0] >= 0.5 && $values[1] < $maxnum) { 
+      array_push($idlist[1], $k); $values[1] ++;}
+    else if ($v[0] >= -0.5 && $values[2] < $maxnum) {
+      array_push($idlist[2], $k); $values[2] ++;}
+    else if ($values[3] < $maxnum) {
+      array_push($idlist[3], $k); $values[3] ++;}
   }
   setupDisplay($h, $id, $sthr, $pthr, $bestid,"", $head,
       $values, $idlist);
@@ -279,7 +284,7 @@ function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
 
 function topGenes($file, $id, $num) {
   $h = getHegemon($file, $id);
-  $ids = $h->topGenes($num);
+  $ids = $h->topGenesJava($num);
   echo "<table border=\"0\">\n";
   foreach ($ids as $k => $v) {
     echo "<tr>\n";
