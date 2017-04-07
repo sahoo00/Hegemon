@@ -22,14 +22,14 @@ $colors = array(
 
 if (array_key_exists("key", $_GET)) {
   $keys = array();
-  foreach (split(":", trim($_GET["key"])) as $v) { $keys[$v] = 1; }
+  foreach (explode(":", trim($_GET["key"])) as $v) { $keys[$v] = 1; }
 }
 if (array_key_exists("groups", $_GET)) {
   $groups = urldecode($_GET['groups']);
 }
 if (array_key_exists("key", $_POST)) {
   $keys = array();
-  foreach (split(":", trim($_POST["key"])) as $v) { $keys[$v] = 1; }
+  foreach (explode(":", trim($_POST["key"])) as $v) { $keys[$v] = 1; }
 }
 if (array_key_exists("groups", $_POST)) {
   $groups = urldecode($_POST['groups']);
@@ -89,8 +89,8 @@ else {
 
 function getParam($str) {
   $res = [];
-  foreach (split(";", $str) as $p) {
-    list($k, $v) = split(":", $p);
+  foreach (explode(";", $str) as $p) {
+    list($k, $v) = explode(":", $p);
     $res[$k] = $v;
   }
   return $res;
@@ -331,7 +331,7 @@ function getStats($file, $str1, $str2, $id, $sthr, $pthr) {
       $fun = function($x) { return sprintf("%.2f", $x); };
       foreach ($rhash as $k => $v) {
         if (strncmp($k, "box", 3) == 0) {
-          $vs = array_map($fun, split(" ", trim($v)));
+          $vs = array_map($fun, explode(" ", trim($v)));
           $v = join("|", $vs);
         }
         if ($i == 0) {

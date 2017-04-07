@@ -320,7 +320,7 @@ class U {
     $num = count($x_arr);
     $xa = array();
     for($i=$start; $i < $num; $i++){       
-      if (ereg("^\s*$", $x_arr[$i])) {
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
         continue;
       }
       array_push($xa, $x_arr[$i]);
@@ -377,10 +377,10 @@ class U {
     $xa = array();
     $ya = array();
     for($i=$start; $i < $num; $i++){       
-      if (ereg("^\s*$", $x_arr[$i])) {
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
         continue;
       }
-      if (ereg("^\s*$", $y_arr[$i])) {
+      if (preg_match('/^\s*$/', $y_arr[$i])) {
         continue;
       }
       array_push($xa, $x_arr[$i]);
@@ -557,7 +557,7 @@ class U {
     $min = 20000;
     $max = 0;
     for($i=$start; $i < ($start+$len); $i++){       
-      if (ereg("^\s*$", $arr[$i])) {
+      if (preg_match('/^\s*$/', $arr[$i])) {
         continue;
       }
       if ($min > $arr[$i]) {
@@ -610,15 +610,15 @@ fig.savefig('$outprefix.png', dpi=100)
       echo "Can't open file tmp.data <br>";
     }
     if ($groups) {
-      $list = split(";", $groups);
+      $list = explode(";", $groups);
       foreach ($list as $g) {
         if ($g != '') {
-          list($i, $nm, $v) = split("=", $g, 3);
-          $nmps = split(",", $nm);
+          list($i, $nm, $v) = explode("=", $g, 3);
+          $nmps = explode(",", $nm);
           if (count($nmps) > 1) {
             $nm = $nmps[0];
           }
-          foreach (split(":", $v) as $a) {
+          foreach (explode(":", $v) as $a) {
             $str = join("\t", [$a, $i, $nm])."\n";
             fwrite($fp, $str);
           }
@@ -634,10 +634,10 @@ fig.savefig('$outprefix.png', dpi=100)
       echo "Can't open file tmp.data <br>";
     }
     for($i=2; $i < $num; $i++){       
-      if (ereg("^\s*$", $x_arr[$i])) {
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
         continue;
       }
-      if (ereg("^\s*$", $y_arr[$i])) {
+      if (preg_match('/^\s*$/', $y_arr[$i])) {
         continue;
       }
       $c = self::getColor($p_arr[$i]);
@@ -665,7 +665,7 @@ fig.savefig('$outprefix.png', dpi=100)
     {
       $line = fgets($fp);
       $line = chop($line, "\r\n");
-      $items = split("\t", $line);
+      $items = explode("\t", $line);
       if (count($items) < 3) {
         continue;
       }
@@ -696,16 +696,16 @@ fig.savefig('$outprefix.png', dpi=100)
       }
     }
     if ($groups) {
-      $list = split(";", $groups);
+      $list = explode(";", $groups);
       foreach ($list as $g) {
         if ($g != '') {
-          list($i, $nm, $v) = split("=", $g, 3);
-          $nmps = split(",", $nm);
+          list($i, $nm, $v) = explode("=", $g, 3);
+          $nmps = explode(",", $nm);
           if (count($nmps) > 1) {
             $colors[($i+2) % count($colors)] = $nmps[1];
             $nm = $nmps[0];
           }
-          foreach (split(":", $v) as $a) {
+          foreach (explode(":", $v) as $a) {
             $p_arr[$a_hash[$a]] = $i + 2;
           }
         }
@@ -780,10 +780,10 @@ function countQs($x_arr, $y_arr, $thrx0, $thrx2, $thry0, $thry2) {
   $res = [0, 0, 0, 0, 0];
   $num = count($x_arr);
   for ($i = 2; $i < $num; $i++) {
-    if (ereg("^\s*$", $x_arr[$i])) {
+    if (preg_match('/^\s*$/', $x_arr[$i])) {
       continue;
     }
-    if (ereg("^\s*$", $y_arr[$i])) {
+    if (preg_match('/^\s*$/', $y_arr[$i])) {
       continue;
     }
     if ($x_arr[$i] < $thrx0  && $y_arr[$i] < $thry0) { $res[0] ++; }
@@ -850,8 +850,8 @@ function getFormula($xn, $yn, $rel) {
 function getSurvivalScript($outprefix, $sfile, $ct, $groups) {
   global $colors;
   $hashTable = self::readSurvival($sfile);
-  $list = split(";", $groups);
-  $parameters = split(",", $ct); 
+  $list = explode(";", $groups);
+  $parameters = explode(",", $ct); 
   $ct = $parameters[0];
   $xlimit = "";
   if (count($parameters) > 1) {
@@ -864,13 +864,13 @@ function getSurvivalScript($outprefix, $sfile, $ct, $groups) {
   $clrs = array();
   foreach ($list as $g) {
     if ($g != '') {
-      list($i, $nm, $v) = split("=", $g, 3);
-      $nmps = split(",", $nm);
+      list($i, $nm, $v) = explode("=", $g, 3);
+      $nmps = explode(",", $nm);
       if (count($nmps) > 1) {
         $colors[($i+2) % count($colors)] = $nmps[1];
         $nm = $nmps[0];
       }
-      foreach (split(":", $v) as $a) {
+      foreach (explode(":", $v) as $a) {
         if (array_key_exists($a, $hashTable[0]) && $hashTable[1][$a] != "") {
           if ($ct != "" && $hashTable[0][$a] > $ct) {
             array_push($surv, $ct);
@@ -929,7 +929,7 @@ function data_uri($file, $mime)
     $num = count($x_arr);
     $xa = array();
     for($i=$start; $i < $num; $i++){       
-      if (ereg("^\s*$", $x_arr[$i])) {
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
         continue;
       }
       array_push($xa, $x_arr[$i]);

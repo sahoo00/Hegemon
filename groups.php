@@ -99,7 +99,7 @@ function getSelectTool($file) {
   $head = fgets($fp);
   fclose($fp);
   $head = chop($head, "\r\n");
-  $headers = split("\t", $head);
+  $headers = explode("\t", $head);
   $str = "<select id=\"clinical0\" name=\"clinical\" onchange=\"callSelectTool();\">\n";
   $str .= "<option value=\"0\"> Select Patient Information </option>\n";
   for ($i = 1; $i < count($headers); $i++) {
@@ -221,10 +221,10 @@ function group($file, $expr, $id, $x, $y, $xn, $yn, $ox, $oy,
   $num = count($x_arr);
   $gsm_arr = array();
   for($i=2; $i < $num; $i++){       
-    if (ereg("^\s*$", $x_arr[$i])) {
+    if (preg_match('/^\s*$/', $x_arr[$i])) {
       continue;
     }
-    if (ereg("^\s*$", $y_arr[$i])) {
+    if (preg_match('/^\s*$/', $y_arr[$i])) {
       continue;
     }
     if ($x_arr[$i] >= $r_o_x && $x_arr[$i] <= $r_f_x && 
@@ -248,15 +248,18 @@ function getPatientGroup($file, $id, $clinical, $value) {
   }
   $head = fgets($fp);
   $head = chop($head, "\r\n");
-  $headers = split("\t", $head);
+  $headers = explode("\t", $head);
   $res = array();
   if ($clinical > 0 && $clinical < count($headers)) {
     $type = $headers[$clinical];
     while (!feof($fp))
     {
       $line = fgets($fp);
+      if ($line == "") {
+        continue;
+      }
       $line = chop($line, "\r\n");
-      $list = split("\t", $line);
+      $list = explode("\t", $line);
       $v = "";
       if ($clinical < count($list)) {
         $v = $list[$clinical];
@@ -267,7 +270,7 @@ function getPatientGroup($file, $id, $clinical, $value) {
         }
       }
       if (strcmp($type, "time") == 0 || strncmp($type, "n ", 2) == 0) {
-        list($min, $max) = split(":", $value);
+        list($min, $max) = explode(":", $value);
         if (is_numeric($v) && $v >= $min && $v <= $max) {
           $res[$list[0]] = $v;
         }
@@ -291,14 +294,17 @@ function getPatientInfo($file, $id, $clinical) {
   }
   $head = fgets($fp);
   $head = chop($head, "\r\n");
-  $headers = split("\t", $head);
+  $headers = explode("\t", $head);
   if ($clinical > 0 && $clinical < count($headers)) {
     $values = array();
     while (!feof($fp))
     {
       $line = fgets($fp);
+      if ($line == "") {
+        continue;
+      }
       $line = chop($line, "\r\n");
-      $list = split("\t", $line);
+      $list = explode("\t", $line);
       $v = "";
       if ($clinical < count($list)) {
         $v = $list[$clinical];
@@ -429,7 +435,7 @@ function getOutprefix() {
 }
 
 function getPlotType($value) {
-  $list = split(",", $value);
+  $list = explode(",", $value);
   $num = count($list);
   if ($num >= 3) {
     return $list[2];
@@ -442,16 +448,16 @@ function getPlotType($value) {
 function getThresholdValues($value) {
   list($thrx0, $thrx1, $thrx2) = array("", "", "");
   list($thry0, $thry1, $thry2) = array("", "", "");
-  $list = split(",", $value);
+  $list = explode(",", $value);
   $num = count($list);
   if ($num >= 1) {
-    $l = split(":", $list[0]);
+    $l = explode(":", $list[0]);
     if (count($l) == 1) { $thrx1 = $l[0]; }
     if (count($l) == 2) { $thrx0 = $l[0]; $thrx2 = $l[1]; }
     if (count($l) == 3) { $thrx0 = $l[0]; $thrx1 = $l[1]; $thrx2 = $l[2];}
   }
   if ($num >= 2) {
-    $l = split(":", $list[1]);
+    $l = explode(":", $list[1]);
     if (count($l) == 1) { $thry1 = $l[0]; }
     if (count($l) == 2) { $thry0 = $l[0]; $thry2 = $l[1]; }
     if (count($l) == 3) { $thry0 = $l[0]; $thry1 = $l[1]; $thry2 = $l[2];}
@@ -609,7 +615,7 @@ function getrectgroup($file, $f, $id, $x, $y, $xn, $yn, $value) {
   $res = array();
   $value = str_replace(" ", "", $value);
   if ($value != "") {
-    $list = split(",", $value);
+    $list = explode(",", $value);
     $num = count($h_arr);
     if (count($list) >= 1) {
       if ($list[0] == "") {
@@ -618,9 +624,9 @@ function getrectgroup($file, $f, $id, $x, $y, $xn, $yn, $value) {
         }
       }
       else {
-        $l = split(":", $list[0]);
+        $l = explode(":", $list[0]);
         for($i=2; $i < $num; $i++){       
-          if (ereg("^\s*$", $x_arr[$i])) {
+          if (preg_match('/^\s*$/', $x_arr[$i])) {
             continue;
           }
           if ($x_arr[$i] >= $l[0] && $x_arr[$i] <= $l[1]) {
@@ -631,9 +637,9 @@ function getrectgroup($file, $f, $id, $x, $y, $xn, $yn, $value) {
     }
     if (count($list) >= 2) {
       if ($list[1] != "") {
-        $l = split(":", $list[1]);
+        $l = explode(":", $list[1]);
         for($i=2; $i < $num; $i++){       
-          if (ereg("^\s*$", $y_arr[$i])) {
+          if (preg_match('/^\s*$/', $y_arr[$i])) {
             unset($res[$h_arr[$i]]);
             continue;
           }
@@ -684,22 +690,22 @@ function boxplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
   for ($i = 0; $i < count($h_arr); $i++) {
     $a_hash[$h_arr[$i]] = $i;
   }
-  $list = split(";", $groups);
+  $list = explode(";", $groups);
   $data = array();
   $labels = array();
   $names = array();
   $clrs = array();
   foreach ($list as $g) {
     if ($g != '') {
-      list($i, $nm, $v) = split("=", $g, 3);
-      $nmps = split(",", $nm);
+      list($i, $nm, $v) = explode("=", $g, 3);
+      $nmps = explode(",", $nm);
       if (count($nmps) > 1) {
         $colors[($i+2) % count($colors)] = $nmps[1];
         $nm = $nmps[0];
       }
-      foreach (split(":", $v) as $a) {
+      foreach (explode(":", $v) as $a) {
         if (array_key_exists($a, $a_hash)) {
-          if (!ereg("^\s*$", $z_arr[$a_hash[$a]])) {
+          if (!preg_match('/^\s*$/', $z_arr[$a_hash[$a]])) {
             array_push($data, $z_arr[$a_hash[$a]]);
             array_push($labels, $nm);
             $names[$i] = $nm;

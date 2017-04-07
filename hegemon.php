@@ -89,12 +89,12 @@ class Database {
         $index++;
       }
       elseif (!preg_match('/^\s*$/', $line) && strcmp($n_id, "") != 0) {
-        list($k, $v) = split("=", $line, 2);
+        list($k, $v) = explode("=", $line, 2);
         $v = trim($v);
         $set->set(trim($k), $v);
       }
       elseif (!preg_match('/^\s*$/', $line) && strcmp($n_id, "") == 0) {
-        list($k, $v) = split("=", $line, 2);
+        list($k, $v) = explode("=", $line, 2);
         $v = trim($v);
         $v = str_replace('"', '', $v);
         $this->global[trim($k)] = $v;
@@ -138,7 +138,7 @@ class Database {
       if ($n->has("key")) {
         $lkey = $n->get("key");
         $keyfound = 0;
-        foreach (split(":", $lkey) as $k) {
+        foreach (explode(":", $lkey) as $k) {
           if (array_key_exists($k, $keys)) {
             $keyfound = 1;
           }
@@ -317,8 +317,8 @@ class Hegemon {
     $count1 = 0;
     $count2 = 0;
     for ($i = $this->start; $i <= $this->end; $i++) {
-      if (ereg("^\s*$", $data1[$i])) { continue; }
-      if (ereg("^\s*$", $data2[$i])) { continue; }
+      if (preg_match('/^\s*$/', $data1[$i])) { continue; }
+      if (preg_match('/^\s*$/', $data2[$i])) { continue; }
       if ($data1[$i] < $thr1[3]) { continue; }
       if ($data2[$i] < $thr2[3]) { continue; }
       if ($data1[$i] >= $data2[$i]) {
@@ -489,7 +489,7 @@ class Hegemon {
 
   public static function matchWords($val, $desc) {
     $res = 1;
-    foreach (split(" ", $val) as $w) {
+    foreach (explode(" ", $val) as $w) {
       if (!preg_match("/$w/i", $desc)) {
         $res = 0;
       }

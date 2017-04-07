@@ -125,8 +125,8 @@ function printHistogram ($a, $b) {
   echo "<table border=\"0\">\n";
   echo "<tr><td>Breaks</td>";
   echo "<td>Counts</td></tr>";
-  $breaks = split(" ", $hista["breaks"]);
-  $counts = split(" ", $hista["counts"]);
+  $breaks = explode(" ", $hista["breaks"]);
+  $counts = explode(" ", $hista["counts"]);
   foreach (range(0, count($counts) - 2) as $i) {
     echo "<tr><td>".$breaks[$i]."</td>";
     echo "<td>".$counts[$i]."</td></tr>";
@@ -137,8 +137,8 @@ function printHistogram ($a, $b) {
   echo "<table border=\"0\">\n";
   echo "<tr><td>Breaks</td>";
   echo "<td>Counts</td></tr>";
-  $breaks = split(" ", $histb["breaks"]);
-  $counts = split(" ", $histb["counts"]);
+  $breaks = explode(" ", $histb["breaks"]);
+  $counts = explode(" ", $histb["counts"]);
   foreach (range(0, count($counts) - 2) as $i) {
     echo "<tr><td>".$breaks[$i]."</td>";
     echo "<td>".$counts[$i]."</td></tr>";
