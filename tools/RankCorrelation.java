@@ -243,6 +243,90 @@ class RankCorrelation {
     }
   }
 
+  Set<Integer> getNumbers(Random rnd, int n, int min, int max) {
+    Set<Integer> numbers = new HashSet<>(n);
+    int total = max - min + 1;
+    if (total <= n) {
+      for(int i=min; i<=max; i++){
+        numbers.add(i);
+      }
+    }
+    else {
+      while (numbers.size() < n) {
+        numbers.add(rnd.nextInt(max-min+1) + min);
+      }
+    }
+    return numbers;
+  }
+
+  public void printDistribution(String num) {
+    String exprFile = file;
+    if (exprFile == null) {
+      return;
+    }
+    try {
+      String line;
+      int count = Integer.parseInt(num);
+      int index1 = 0;
+      FileReader fileReader = new FileReader(exprFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      int total = 0;
+      while((line = bufferedReader.readLine()) != null) {
+        total++;
+      }
+      bufferedReader.close();         
+      System.err.println("Total number of lines = " + total);
+      while (index1 < count) { 
+        fileReader = new FileReader(exprFile);
+        bufferedReader = new BufferedReader(fileReader);
+        Random rnd = new Random(1);
+        Set<Integer> numbers = getNumbers(rnd, 100, 0, total - 1);
+        double[][] results = new double[numbers.size()][];
+        int index = 0;
+        int k = 0;
+        while((line = bufferedReader.readLine()) != null) {
+          if (numbers.contains(index)) {
+            String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+            double[] data = new double[result.length];
+            getExprData(result, data);
+            results[k] = data;
+            k++;
+          }
+          index++;
+        }
+        bufferedReader.close();         
+
+        for (int i = 0; i < results.length; i++) {
+          for (int j = i+1; j < results.length; j++) {
+            Correlation corr = new Correlation(results[i], results[j]);
+            LinearRegression reg = new LinearRegression(results[i], results[j]);
+            double slope = reg.slope();
+            if (slope > 1) { slope = 1/slope; }
+            double score = corr.coefficient() * corr.coefficient() +
+              slope * slope;
+            if (slope > 0 && corr.coefficient() > 0) {
+              System.out.println(score);
+              index1++;
+            }
+            if (index1 >= count) {
+              System.err.println("Progress = " + index1);
+              return;
+            }
+          }
+        }
+        System.err.println("Progress = " + index1);
+      }
+      System.err.println("Progress = " + index1);
+
+    }
+    catch(FileNotFoundException ex) {
+      System.out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java RankCorrelation <cmd> <args> ... <args>");
@@ -263,6 +347,16 @@ class RankCorrelation {
       }
       else {
         h.printRanks(args[2], args[3]);
+      }
+    }
+    if (cmd.equals("dist") && args.length < 3) {
+      System.out.println("Usage: java RankCorrelation dist exprFile num");
+      System.exit(1);
+    }
+    if (cmd.equals("dist")) {
+      RankCorrelation h = new RankCorrelation(args[1]);
+      if (args.length < 4) {
+        h.printDistribution(args[2]);
       }
     }
   }

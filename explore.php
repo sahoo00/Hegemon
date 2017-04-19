@@ -62,6 +62,9 @@ if (array_key_exists("go", $_GET)) {
     getStats($file, $_GET['A'], $_GET['B'], $_GET['id'], $_GET['sthr'],
         $_GET['pthr']);
   }
+  if (strcmp($_GET["go"], "getsource") == 0) {
+    getSource($file, $_GET['id']);
+  }
   if (strcmp($_GET["go"], "topgenes") == 0) {
     topGenes($file, $_GET['id'], $_GET['num']);
   }
@@ -280,6 +283,21 @@ function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
   }
   setupDisplay($h, $id, $sthr, $pthr, $bestid,"", $head,
       $values, $idlist);
+}
+
+function getSource($file, $id) {
+  $h = getHegemon($file, $id);
+  $str = $h->getSource();
+  if (preg_match('/(GSE\d+)/', $str, $matches)) {
+    foreach (range(1, count($matches) - 1) as $i) {
+      echo "<a
+href=\"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=$matches[$i]\"
+target=\"_blank\"> $matches[$i] </a> <br/>";
+    }
+  }
+  else {
+    echo "$str\n";
+  }
 }
 
 function topGenes($file, $id, $num) {
@@ -524,6 +542,18 @@ echo "
       <div id=\"lineresults\"> </div>
       </form>
     </div> <!-- end id exploreAll -->
+    <script type=\"text/javascript\">
+        var s1 = $('#dataset').val();
+        var url = 'explore.php?go=getsource&id=' + s1;
+        console.log(url);
+        \$('#results').load(url);
+        \$('#dataset').on('change', function() {
+            var s1 = $('#dataset').val();
+            var url = 'explore.php?go=getsource&id=' + s1;
+            console.log(url);
+            \$('#results').load(url);
+        })
+    </script>
 ";
 }
 

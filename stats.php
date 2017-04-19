@@ -35,7 +35,8 @@ else {
 }
 
 function getNumbers($a) {
-  preg_match_all('!\d+\.*\d*!', $a ,$match);
+  #preg_match_all('!\d+\.*\d*!', $a ,$match);
+  preg_match_all('![-+]?\d*\.?\d+([eE][-+]?\d+)?!', $a ,$match);
   if (count($match) > 0) {
     return $match[0];
   }

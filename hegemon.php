@@ -45,6 +45,12 @@ class Dataset {
   public function getPre() { 
     return str_replace("-expr.txt", "", $this->hash['expr']);
   }
+  public function getSource() {
+    if (array_key_exists('source', $this->hash)) {
+        return $this->hash['source'];
+    }
+    return "";
+  }
 }
 
 class Database {
@@ -210,6 +216,10 @@ class Hegemon {
 
   public function getExprFile() {
     return $this->rdataset->getExpr();
+  }
+
+  public function getSource() {
+    return $this->rdataset->getSource();
   }
 
   public function getSurv() {
