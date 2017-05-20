@@ -728,6 +728,30 @@ class Hegemon {
     echo "\n}";
   }
 
+  public function printInfoJSON($listFile) {
+    if ($listFile == null) {
+      echo "[]";
+      return;
+    }
+    $pre = $this->getPre();
+    $path = getenv("PATH");        // save old value 
+    $java_home = "/booleanfs/sahoo/softwares/java/jdk1.8.0_45";
+    $path1 = "$java_home/bin";
+    if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
+    putenv("PATH=$path1");        // set new value 
+    putenv("JAVA_HOME=$java_home");        // set new value 
+    $cmd = "java tools.Hegemon getinfojson $pre $listFile";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    $index = 0;
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      echo $line;
+      $index++;
+    }
+    pclose($fh);
+  }
 }
 
 ?>

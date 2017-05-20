@@ -180,6 +180,43 @@ function callCorr() {
   }
 }
 
+function callInfo() {
+  if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
+    $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
+    $('#results').css("visibility", "visible");
+    var s1 = $('#dataset').val();
+    var str1 = $('#Ab').val();
+    var str2 = $('#Bb').val();
+    var url = 'explore.php?go=getinfojson&id=' + s1 + 
+      "&A=" + encodeURIComponent(str1) + "&B=" + encodeURIComponent(str2);
+    var ident = function(d) { return d; };
+    d3.json(url, function (data) {
+      $("#results").html('');
+      var columns = ["AffyID", "name", "thr", "mean", "mean-thr", "perc",
+      "min", "max", "sd", "thrNum", "hi", "int", "lo"];
+      var columns = ["AffyID", "dr", "min", "mean", "thr", "max", "sd", "name"];
+      var table = d3.select('#results').append('table');
+      var thead = table.append('thead');
+      var tbody = table.append('tbody');
+      thead.append('tr')
+        .selectAll('th')
+        .data(columns).enter()
+        .append('th')
+        .text(ident);
+      var rows = tbody.selectAll('tr')
+        .data(data)
+        .enter()
+        .append('tr');
+      var cells = rows.selectAll('td')
+        .data(function (r) { return [r[0], (r[7] - r[6]).toFixed(2), 
+          r[6], r[3], r[2], r[7], r[8], r[1]]; })
+        .enter()
+        .append('td')
+        .text(ident);
+    });
+  }
+}
+
 function callGetIDs() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');

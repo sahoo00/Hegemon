@@ -605,6 +605,16 @@ fig.savefig('$outprefix.png', dpi=100)
     return $colors[$x % count($colors)];
   }
 
+  function setupIDListData($ids, $outprefix) {
+    if (($fp = fopen("$outprefix.data", "w")) === FALSE) {
+      echo "Can't open file tmp.data <br>";
+    }
+    foreach ($ids as $id => $n) {
+      fwrite($fp, "$id\t$n\n");
+    }
+    fclose($fp);
+  }
+
   function setupArrayListData($groups, $outprefix) {
     if (($fp = fopen("$outprefix.data", "w")) === FALSE) {
       echo "Can't open file tmp.data <br>";

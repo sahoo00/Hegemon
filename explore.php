@@ -45,6 +45,9 @@ if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "getids") == 0) {
     printAllIDs($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
+  if (strcmp($_GET["go"], "getidsjson") == 0) {
+    printAllIDsJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
   if (strcmp($_GET["go"], "getplots") == 0) {
     getPlots($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
@@ -76,7 +79,10 @@ if (array_key_exists("go", $_GET)) {
     printCorrelation($file, $_GET['A'], $_GET['B'], $_GET['id'], $_GET['sthr'],
         $_GET['pthr']);
   }
-  callGroupsCommands($file, $groups);
+  if (strcmp($_GET["go"], "getinfojson") == 0) {
+    printInfoJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
+  callGroupsCommands($file, $groups, $param);
 }
 elseif (array_key_exists("go", $_POST)) {
   if (strcmp($_POST["go"], "plot") == 0) {
@@ -84,7 +90,7 @@ elseif (array_key_exists("go", $_POST)) {
         $_POST['x'], $_POST['y'],$_POST['xn'],$_POST['yn'],
         $groups, $param);
   }
-  callGroupsPostCommands($file, $groups);
+  callGroupsPostCommands($file, $groups, $param);
 }
 else {
   printSummary($file);
@@ -285,6 +291,17 @@ function printCorrelation($file, $str1, $str2, $id, $sthr, $pthr) {
       $values, $idlist);
 }
 
+function printInfoJSON($file, $str1, $str2, $id) {
+  $h = getHegemon($file, $id);
+  $h->initPlatform();
+  $ids = $h->getIDs("$str1 $str2");
+  $better_token = md5(uniqid(rand(), true));
+  $outprefix = "tmpdir/tmp$better_token";
+  U::setupIDListData($ids, $outprefix);
+  $h->printInfoJSON("$outprefix.data");
+  U::cleanup($outprefix);
+}
+
 function getSource($file, $id) {
   $h = getHegemon($file, $id);
   $str = $h->getSource();
@@ -405,6 +422,13 @@ function printAllIDs($file, $str1, $str2, $id) {
     echo "</tr>\n";
   }
   echo "</table>\n";
+}
+
+function printAllIDsJSON($file, $str1, $str2, $id) {
+  $h = getHegemon($file, $id);
+  $h->initPlatform();
+  $ids = $h->getIDs("$str1 $str2");
+  echo json_encode($ids);
 }
 
 function getPlots($file, $str1, $str2, $id) {
@@ -532,6 +556,8 @@ echo "
               name=\"CT\" value=\"\" alt=\"Censor Time\"/>
           <input type=\"button\" name=\"getCorr\" value=\"getCorr\"
               onclick=\"callCorr();\"/>
+          <input type=\"button\" name=\"getInfo\" value=\"getInfo\"
+              onclick=\"callInfo();\"/>
           <input type=\"button\" name=\"Clear\" value=\"Clear\"
               onclick=\"callClear();\"/>
 ";

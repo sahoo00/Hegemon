@@ -1,6 +1,6 @@
 <?php
 
-function callGroupsPostCommands($file, $groups) {
+function callGroupsPostCommands($file, $groups, $param) {
   if (strcmp($_POST["go"], "survival") == 0) {
     survivalDataUri($file, $_POST['file'], $_POST['id'],
         $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
@@ -28,7 +28,7 @@ function callGroupsPostCommands($file, $groups) {
   }
 }
 
-function callGroupsCommands($file, $groups) {
+function callGroupsCommands($file, $groups, $param) {
   if (strcmp($_GET["go"], "explore") == 0) {
     explore($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
@@ -73,7 +73,7 @@ function callGroupsCommands($file, $groups) {
   if (strcmp($_GET["go"], "getthrgroup") == 0) {
     getthrgroup($file, $_GET['file'], $_GET['id'], 
         $_GET['x'], $_GET['y'],$_GET['xn'],$_GET['yn'], $_GET['value'],
-        $groups);
+        $groups, $param);
   }
   if (strcmp($_GET["go"], "boxplot") == 0) {
     boxplot($file, $_GET['file'], $_GET['id'],
@@ -495,7 +495,7 @@ ax.plot([0, len(tuples)], [$thr2, $thr2], linewidth=$w, color='c')
   }
 }
 
-function getthrgroup($file, $f, $id, $x, $y, $xn, $yn, $value, $groups) {
+function getthrgroup($file, $f, $id, $x, $y, $xn, $yn, $value, $groups, $param) {
   $value = str_replace(" ", "", $value);
   if ($value == "") {
     return;
@@ -510,7 +510,7 @@ function getthrgroup($file, $f, $id, $x, $y, $xn, $yn, $value, $groups) {
   list($minx, $maxx) = U::getMinMax($x_arr, 2, count($x_arr)-2);
   list($miny, $maxy) = U::getMinMax($y_arr, 2, count($y_arr)-2);
   $p_arr = U::getPArray($sfile, $h_arr, $groups);
-  U::setupMatData($x_arr, $y_arr, $p_arr, $outprefix);
+  U::setupMatData($x_arr, $y_arr, $p_arr, $outprefix, $param);
   $outfile = "$outprefix.py";
   if (($fp = fopen($outfile, "w")) === FALSE) {
     echo "Can't open file $outfile <br>";

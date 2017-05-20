@@ -280,6 +280,22 @@ class Hegemon {
     return sbStr.toString();
   }
 
+  public static String infoJSON(String[] aArr) {
+    String sSep = ",";
+    StringBuilder sbStr = new StringBuilder();
+    sbStr.append("[");
+    for (int i = 0, il = aArr.length; i < il; i++) {
+      if (i > 0)
+        sbStr.append(sSep);
+      if (i < 2) 
+        sbStr.append(String.format("\"%s\"", aArr[i]));
+      else
+        sbStr.append(String.format("%s", aArr[i]));
+    }
+    sbStr.append("]");
+    return sbStr.toString();
+  }
+
   public Set<String> getFilter() throws FileNotFoundException, Exception {
     if (!hasInfo()) {
       return null;
@@ -1262,6 +1278,69 @@ class Hegemon {
     }
   }
 
+  public void getInfoJSON(String listFile) {
+    try {
+      if (!hasInfo()) {
+        return;
+      }
+      String infoFile = getInfo();
+      String line;
+      ArrayList<String> idlist = new ArrayList<String>();
+      HashMap<String, Integer> listmap = new HashMap<String, Integer>();
+      FileReader fileReader = new FileReader(listFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        if (result.length < 1) {
+          continue;
+        }
+        if (!listmap.containsKey(result[0])) {
+          int i = idlist.size();
+          idlist.add(result[0]);
+          listmap.put(result[0], new Integer(i));
+        }
+      }
+      bufferedReader.close(); 
+      HashMap<Integer, String> infomap = new HashMap<Integer, String>();
+      HashMap<Integer, Double> drmap = new HashMap<Integer, Double>();
+      fileReader = new FileReader(infoFile);
+      bufferedReader = new BufferedReader(fileReader);
+      line = bufferedReader.readLine();
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2);
+        if (result.length < 9) {
+          continue;
+        }
+        double dr = Double.parseDouble(result[7]) - Double.parseDouble(result[6]);
+        if (listmap.containsKey(result[0])) {
+          Integer i = listmap.get(result[0]);
+          drmap.put(i, new Double(dr));
+          infomap.put(i, infoJSON(result));
+        }
+      }
+      bufferedReader.close(); 
+      Map<Integer, Double> map = sortByValuesDown(drmap); 
+      Set set2 = map.entrySet();
+      Iterator iterator2 = set2.iterator();
+      int index = 0;
+      out.print("[");
+      while(iterator2.hasNext()) {
+        Map.Entry me2 = (Map.Entry)iterator2.next();
+        Integer xi = (Integer) me2.getKey();
+        int x = xi.intValue();
+        if (index > 0) {
+            out.print(",\n");
+        }
+        out.print(infomap.get(xi));
+        index++;
+      }
+      out.println("]");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java Hegemon <cmd> <args> ... <args>");
@@ -1344,6 +1423,16 @@ class Hegemon {
       Hegemon h = new Hegemon(args[1]);
       if (args.length < 4) {
         h.topGenes(args[2]);
+      }
+    }
+    if (cmd.equals("getinfojson") && args.length < 3) {
+      System.out.println("Usage: java Hegemon getinfojson pre listfile");
+      System.exit(1);
+    }
+    if (cmd.equals("getinfojson")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.getInfoJSON(args[2]);
       }
     }
   }
