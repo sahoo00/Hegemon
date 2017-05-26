@@ -183,6 +183,8 @@ function explore($file, $str1, $str2, $id) {
            onclick=\"callGCorr();\"/>
       <input type=\"button\" name=\"Diff\" value=\"Diff\"
            onclick=\"callGDiff();\"/>
+      <input type=\"button\" name=\"Download\" value=\"Download\"
+           onclick=\"callDownload();\"/>
        <br/>
       $selectTool
     </div>

@@ -82,6 +82,11 @@ if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "getinfojson") == 0) {
     printInfoJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
+  if (strcmp($_GET["go"], "download") == 0) {
+    download($file, $_GET['file'], $_GET['id'], 
+        $_GET['x'], $_GET['y'],$_GET['xn'],$_GET['yn'],
+        urldecode($_GET['CT']), $groups, $param);
+  }
   callGroupsCommands($file, $groups, $param);
 }
 elseif (array_key_exists("go", $_POST)) {
@@ -89,6 +94,11 @@ elseif (array_key_exists("go", $_POST)) {
     plotDataUri($file, urldecode($_POST['file']), $_POST['id'], 
         $_POST['x'], $_POST['y'],$_POST['xn'],$_POST['yn'],
         $groups, $param);
+  }
+  if (strcmp($_POST["go"], "download") == 0) {
+    download($file, urldecode($_POST['file']), $_POST['id'], 
+        $_POST['x'], $_POST['y'],$_POST['xn'],$_POST['yn'],
+        urldecode($_POST['CT']), $groups, $param);
   }
   callGroupsPostCommands($file, $groups, $param);
 }
@@ -455,6 +465,37 @@ function plotids($file, $f, $id, $x, $y, $xn, $yn, $groups) {
   echo json_encode($res);
 }
 
+function download($file, $f, $id, $x, $y, $xn, $yn, $ct, $groups, $param) {
+  $h = getHegemon($file, $id);
+  $sfile = $h->getSurv();
+  $better_token = md5(uniqid(rand(), true));
+  $outprefix = "tmpdir/tmp$better_token";
+  $type = "png";
+  if (array_key_exists("type", $param)) {
+    $type = $param["type"];
+  }
+  if (strcmp($type, "png") == 0) {
+    U::generateMatPlot($f, $sfile, $x, $y, $xn, $yn, $groups,
+      0, $outprefix, $param);
+    header("Content-type: image/png");
+    echo file_get_contents("$outprefix.png");
+    U::cleanup($outprefix);
+  }
+  if (strcmp($type, "pdf") == 0) {
+    U::generateTikzPlot($f, $sfile, $x, $y, $xn, $yn, $ct, $groups,
+      0, $outprefix, $param);
+    $pdf_f = "$outprefix.pdf";
+    $fp = fopen($pdf_f, 'rb');
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="Hegemon-plots.pdf"');
+    header('Content-Length: ' . filesize($pdf_f));
+    fpassthru($fp);
+    // Final cleanup
+    U::cleanupfile($pdf_f);
+    U::cleanup($outprefix);
+  }
+}
+
 function plot($file, $f, $id, $x, $y, $xn, $yn, $groups, $param) {
   $h = getHegemon($file, $id);
   $sfile = $h->getSurv();
@@ -571,12 +612,10 @@ echo "
     <script type=\"text/javascript\">
         var s1 = $('#dataset').val();
         var url = 'explore.php?go=getsource&id=' + s1;
-        console.log(url);
         \$('#results').load(url);
         \$('#dataset').on('change', function() {
             var s1 = $('#dataset').val();
             var url = 'explore.php?go=getsource&id=' + s1;
-            console.log(url);
             \$('#results').load(url);
         })
     </script>

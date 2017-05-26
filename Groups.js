@@ -1070,10 +1070,9 @@ function callGCorr() {
   var url = document.getElementById('img0link').href;
   url = url.replace("go=plot", "go=getgcorr");
   url += '&groups=' + getGroupStr();
-  console.log(url);
   var list = url.split("?");
   var d = list[1].split('&').reduce(function(s,c){
-      var t=c.split('=');s[t[0]]=t[1];return s;},{})
+      var t=c.split('=');s[t[0]]=t[1];return s;},{});
   $.ajax({type: 'POST',
       data: d,
       url: list[0],
@@ -1085,14 +1084,31 @@ function callGDiff() {
   var url = document.getElementById('img0link').href;
   url = url.replace("go=plot", "go=getgdiff");
   url += '&groups=' + getGroupStr();
-  console.log(url);
   var list = url.split("?");
   var d = list[1].split('&').reduce(function(s,c){
-      var t=c.split('=');s[t[0]]=t[1];return s;},{})
+      var t=c.split('=');s[t[0]]=t[1];return s;},{});
   $.ajax({type: 'POST',
       data: d,
       url: list[0],
       success: function (data) { return displayGDiff(data, url);}});
   $('#lineresults').css("visibility", "visible");
+}
+
+function callDownload() {
+  var str1 = escape(document.getElementById('CT').value);
+  var url = document.getElementById('img0link').href;
+  url += '&CT=' + str1 + '&groups=' + getGroupStr() + "&param=type:pdf";
+  url = url.replace("go=plot", "go=download");
+  var list = url.split("?");
+  var d = list[1].split('&').reduce(function(s,c){
+      var t=c.split('=');s[t[0]]=t[1];return s;},{});
+  var urlAction = list[0];
+  var data = d;
+  var $form = $('<form target="_blank" method="POST" action="' + urlAction + '">');
+  $.each(data, function(k,v){
+    $form.append('<input type="hidden" name="' + k + '" value="' + v + '">');
+  });
+  $(document.body).append($form);
+  $form.submit();
 }
 
