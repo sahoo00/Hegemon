@@ -468,6 +468,8 @@ function plotids($file, $f, $id, $x, $y, $xn, $yn, $groups) {
 function download($file, $f, $id, $x, $y, $xn, $yn, $ct, $groups, $param) {
   $h = getHegemon($file, $id);
   $sfile = $h->getSurv();
+  $source = $h->getSource();
+  $param["source"] = $source;
   $better_token = md5(uniqid(rand(), true));
   $outprefix = "tmpdir/tmp$better_token";
   $type = "png";

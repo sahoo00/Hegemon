@@ -1000,8 +1000,6 @@ l <- names(s\$strata)
 x <- (max(s\$time) - min(s\$time)) * 0.7
 st <- survdiff(Surv(surv, status) ~ groups, data = d)
 g <- as.numeric(gsub(\"groups=\", \"\", names(st\$n)))
-nm <- nm[g]
-clr <- clr[g]
 p <- 1 - pchisq(st\$chisq, length(l)-1)
 nm <- paste(nm, \"(\", st\$obs, \"/\", st\$n, \")\",
     sprintf(rep(\"%.2f%%\", length(st\$n)), s\$surv[cumsum(s\$strata)]*100))
@@ -1069,6 +1067,10 @@ cat(\"end\", \"\\n\",  sep=\"\\t\")
       }
     }
     pclose($fh);
+    //echo "<pre>";
+    //print_r($res);
+    //print_r($rhash);
+    //echo "</pre>";
     return $rhash;
     
   }
@@ -1621,6 +1623,11 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     fwrite($fp, "\\begin{tikzpicture}\n");
     fwrite($fp, "\\node at (0,0) (a) {\\textbf{Information}};\n");
     fwrite($fp, "\\node[anchor=north, align=left] at (a.south) {\n");
+    $source = "";
+    if (array_key_exists("source", $param)) {
+      $source = $param["source"];
+    }
+    fwrite($fp, "Source: $source \\\\ \n");
     if ($boolean == 1) {
       fwrite($fp, "Automatic groups based on StepMiner \\\\ \n");
     }
@@ -1645,9 +1652,17 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     fwrite($fp, self::myescape($y_id)." & ".self::myescape($y_name).
       " & $y_thr\\\\\n");
     fwrite($fp, "\\end{tabular}\\\\\n");
-    $rhash = U::getXYStats($x_arr, $y_arr);
+    list($thrx0, $thrx1, $thrx2) = self::getThreshold($x_arr, 2, count($x_arr)-2);
+    list($thry0, $thry1, $thry2) = self::getThreshold($y_arr, 2, count($y_arr)-2);
+    $rhash = self::getXYStats($x_arr, $y_arr);
     fwrite($fp, "\\begin{tabular}{cl}\n");
     fwrite($fp, "Key & Value \\\\\n");
+    fwrite($fp, "MinX & $thrx0 \\\\\n");
+    fwrite($fp, "SThrX & $thrx1 \\\\\n");
+    fwrite($fp, "MaxX & $thrx2 \\\\\n");
+    fwrite($fp, "MinY & $thry0 \\\\\n");
+    fwrite($fp, "SThrY & $thry1 \\\\\n");
+    fwrite($fp, "MaxY & $thry2 \\\\\n");
     foreach ($rhash as $k => $v) {
       fwrite($fp, self::myescape($k)." & ".self::myescape($v). " \\\\\n");
     }
