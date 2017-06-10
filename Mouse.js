@@ -48,6 +48,7 @@ var mouse = {
     y: 0,
     startX: 0,
     startY: 0,
+    obj: null,
     getWidth: function() {
       return Math.abs(this.x - this.startX);
     },
@@ -60,6 +61,7 @@ var mouse = {
     getLeft: function() {
       return (this.x < this.startX) ? this.x : this.startX;
     },
+    getObj: function() { return this.obj; }
   };
 
 function getMouseXY(e) { 
@@ -91,6 +93,7 @@ function initDraw(canvas, loadDisp) {
     if (rectobj !== null) {
       mouse.startX = mouse.x;
       mouse.startY = mouse.y;
+      mouse.obj = canvas;
       rectobj.style.width = 0 + 'px';
       rectobj.style.height = 0 + 'px';
       rectobj.style.left = mouse.getLeft() + 'px';
@@ -118,7 +121,7 @@ function initDraw(canvas, loadDisp) {
         rectobj.style.height = 0 + "px";
         canvas.onmousemove = null;
         document.onmouseup = null;
-        loadDisp(mouse);
+        loadDisp(mouse, e);
       }
       return false;
     };

@@ -187,16 +187,20 @@ class Hegemon {
   public function __construct($rd) {
     $this->rdataset = $rd;
     $file = $this->rdataset->getExpr();
-    if (($fp = fopen($file, "r")) === FALSE) {
-      echo "Can't open file $file <br>\n";
-      exit;
-    }
-    $this->fp = $fp;
-    $this->getHeaders($file);
+    $this->end = 0;
     $this->start = 2;
-    $this->end = count($this->headers) - 1;
     $this->idhash = array();
     $this->namehash = array();
+    $this->headers = array();
+    if (file_exists($file)) {
+      if (($fp = fopen($file, "r")) === FALSE) {
+        echo "Can't open file $file <br>\n";
+        exit;
+      }
+      $this->fp = $fp;
+      $this->getHeaders($file);
+      $this->end = count($this->headers) - 1;
+    }
   }
 
   function __destruct() {

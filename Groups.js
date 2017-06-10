@@ -237,7 +237,7 @@ function submitMouseEvent() {
   }
 }
 
-function loadDisplay(mouse) {
+function loadDisplay(mouse, e) {
   var imgobj = document.getElementById('img0');
   var ori = getOffset(imgobj);
   var url = '';
