@@ -1121,7 +1121,12 @@ function callDownload() {
 }
 
 function callSearch() {
-  searchGroup = 1;
+  if (searchGroup == 0) {
+    searchGroup = 1;
+  }
+  else {
+    searchGroup = 0;
+  }
   updateGroupDisplay();
   return false;
 }
