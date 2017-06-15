@@ -3,6 +3,7 @@ var groups = new Array();
 var groupNames = new Array();
 var numGroups = 0;
 var numKeys = 0;
+var searchGroup = 0;
 var showVal = new Array();
 var showImVal = new Array();
 var maxarrayget = 200;
@@ -173,6 +174,7 @@ function callReset() {
   groupNames = new Array();
   numGroups = 0;
   numKeys = 0;
+  searchGroup = 0;
   showVal = new Array();
   showImVal = new Array();
   updateGroupDisplay();
@@ -217,6 +219,12 @@ function displayGroups() {
         "&aid=" + id + "\" target=\"_blank\">" + id + "</a><br/>\n";
     }
     str += "</div>\n";
+  }
+  if (searchGroup) {
+    str += '<textarea id="searchGroupArea" name="searchGroupArea" cols="20" rows="5">';
+    str += '</textarea><br/>';
+    str += '<input type="button" name="searchGroup" value="searchGroup"';
+    str += ' onclick="callSearchGroup();" />' ;
   }
   return str;
 }
@@ -1110,5 +1118,40 @@ function callDownload() {
   });
   $(document.body).append($form);
   $form.submit();
+}
+
+function callSearch() {
+  searchGroup = 1;
+  updateGroupDisplay();
+  return false;
+}
+
+function callSearchGroup() {
+  var url = document.getElementById('img0link').href;
+  url += '&groups=' + getGroupStr();
+  var str1 = escape(document.getElementById('clinical0').value);
+  url += '&clinical=' + str1;
+  url = url.replace("go=plot", "go=sga");
+  var list = url.split("?");
+  var d = list[1].split('&').reduce(function(s,c){
+      var t=c.split('=');s[t[0]]=t[1];return s;},{});
+  var str = $("#searchGroupArea").val();
+  d['sga'] = str;
+  $.ajax({type: 'POST',
+      data: d,
+      url: list[0],
+      success: function (data) {
+        if (str == "") {
+          $("#searchGroupArea").val(data);
+        }
+        else {
+          var list2 = data.split("\n");
+          if (list2[0] > 0) {
+            addGroups(createGroup(list2));
+          }
+          updateGroupDisplay();
+        }
+        }});
+  return false;
 }
 

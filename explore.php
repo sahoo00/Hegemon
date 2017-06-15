@@ -580,9 +580,9 @@ echo "
       nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
       <div id=\"box\">
       Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
-              name=\"Ab\" value=\"\" alt=\"Gene A\" />
+              name=\"Ab\" value=\"CDX2\" alt=\"Gene A\" />
       Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
-              name=\"Bb\" value=\"\" alt=\"Gene B\" />
+              name=\"Bb\" value=\"KRT20\" alt=\"Gene B\" />
           <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
               onclick=\"callGetIDs();\"/>
           <input type=\"button\" name=\"getPlots\" value=\"getPlots\"

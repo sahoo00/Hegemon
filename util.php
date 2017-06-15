@@ -1353,12 +1353,14 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     $censor = explode("\t", $shash["n.censor"], -1);
     $surv = explode("\t", $shash["surv"], -1);
     $index = 0;
+    $gnum = [];
     for ($g = 0; $g < count($strata); $g++) {
       $start = $index;
       $limit = $index + $strata[$g];
       $c = chr(ord('a')+$g);
       $clr = self::getPScolor("clr$g", $colors[$g % count($colors)]);
       fwrite($fp, "$clr\n");
+      $gnum[$g] = [1, 0];
       fwrite($fp, "\\pgfplotstableread{%\n");
       $s = 1.0;
       $t = 0;
@@ -1367,6 +1369,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
         fwrite($fp, $time[$i]." ".$surv[$i]."\n");
         $t = $time[$i];
         $s = $surv[$i];
+        $gnum[$g][0] ++;
       }
       fwrite($fp, "}\\g$c"."data%\n");
       $cname = "\\g$c"."censor";
@@ -1374,6 +1377,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
       for ($i = $start; $i < $limit; $i++) {
         if ($censor[$i] > 0) {
           fwrite($fp, $time[$i]." ".$surv[$i]."\n");
+          $gnum[$g][1] ++;
         }
       }
       fwrite($fp, "}$cname%\n");
@@ -1430,8 +1434,12 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
       $dname = "\\g$c"."data";
       $res = "
 \\addplot+[line width=1.3pt, color=clr$g, const plot, no marks]  table [x index=0, y index=1] {$dname};
+";
+      if ($gnum[$g][1] > 0) {
+        $res .= "
 \\addplot+[line width=0.75pt, color=clr$g, mark=+, only marks]  table [x index=0, y index=1] {$cname};
 ";
+      }
       fwrite($fp, $res);
     }
     fwrite($fp, "\\end{axis}\n");
@@ -1569,6 +1577,20 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
       if ($g != '') {
         list($i, $nm, $v) = explode("=", $g, 3);
         array_push($gr, [$i, $nm, explode(":", $v)]);
+      }
+    }
+    return $gr;
+  }
+
+  function joinGroupsArray($groups) {
+    $gr = [];
+    $list = explode(";", $groups);
+    foreach ($list as $g) {
+      if ($g != '') {
+        list($i, $nm, $v) = explode("=", $g, 3);
+        foreach (explode(":", $v) as $arr) {
+          $gr[$arr] = 1;
+        }
       }
     }
     return $gr;

@@ -26,6 +26,11 @@ function callGroupsPostCommands($file, $groups, $param) {
         $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
         $groups);
   }
+  if (strcmp($_POST["go"], "sga") == 0) {
+    searchGroupArea($file, $_POST['file'], $_POST['id'],
+        $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
+        $groups, $_POST['clinical'], $_POST['sga']);
+  }
 }
 
 function callGroupsCommands($file, $groups, $param) {
@@ -89,6 +94,11 @@ function callGroupsCommands($file, $groups, $param) {
     getgdiff($file, $_GET['file'], $_GET['id'],
         $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn'], 
         $groups);
+  }
+  if (strcmp($_GET["go"], "sga") == 0) {
+    searchGroupArea($file, $_GET['file'], $_GET['id'],
+        $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn'], 
+        $groups, $_GET['clinical'], $_GET['sga']);
   }
 }
 
@@ -185,6 +195,8 @@ function explore($file, $str1, $str2, $id) {
            onclick=\"callGDiff();\"/>
       <input type=\"button\" name=\"Download\" value=\"Download\"
            onclick=\"callDownload();\"/>
+      <input type=\"button\" name=\"Search\" value=\"Search\"
+           onclick=\"callSearch();\"/>
        <br/>
       $selectTool
     </div>
@@ -794,6 +806,85 @@ function getgdiff($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
     U::setupArrayListData($groups, $outprefix);
     $h->printJSONDiff("$outprefix.data");
     U::cleanup($outprefix);
+  }
+}
+
+function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn, 
+  $groups, $clinical, $sga) {
+  $h = getHegemon($file, $id);
+  $id1 = $h->readID($x);
+  $id2 = $h->readID($y);
+  $e1 = $h->getExprData($id1);
+  $e2 = $h->getExprData($id2);
+  if ($sga != '') {
+    $list = preg_split("/\s+/", $sga);
+    $res = array();
+    if (count($list) > 0 && $list[0] === "search") {
+      for ($i = $h->start; $i <= $h->end; $i++) {
+        $hdr = strtolower($h->headers[$i]);
+        for ($j = 1; $j < count($list); $j++) {
+          $k = strtolower($list[$j]);
+          if (strpos($hdr, $k) !== false) {
+            array_push($res, $i);
+            break;
+          }
+        }
+      }
+    }
+    else {
+      $hh = array();
+      for ($i = $h->start; $i <= $h->end; $i++) {
+        $hdr = $h->headers[$i];
+        $hh[strtolower($hdr)] = $i;
+      }
+      foreach ($list as $k) {
+        if (array_key_exists(strtolower($k), $hh)) {
+          array_push($res, $hh[strtolower($k)]);
+        }
+      }
+    }
+    echo count($res)."\n";
+    echo "ArrayID\t$xn\t$yn\n";
+    foreach ($res as $i) {
+      echo $h->headers[$i]."\t".$e1[$i]."\t".$e2[$i]."\n";
+    }
+  }
+  elseif ($groups != '') {
+    $ahash = U::joinGroupsArray($groups);
+    for ($i = $h->start; $i <= $h->end; $i++) {
+      $hdr = $h->headers[$i];
+      if (array_key_exists($hdr, $ahash)) {
+        $ahash[$hdr] = $i;
+      }
+    }
+    $sfile = $h->getSurv();
+    if ($sfile == null || ($fp = fopen($sfile, "r")) === FALSE) {
+      return;
+    }
+    echo count($ahash)."\n";
+    echo "ArrayID\tValue\t$xn\t$yn\n";
+    $head = fgets($fp);
+    $head = chop($head, "\r\n");
+    $headers = explode("\t", $head);
+    if ($clinical > 0 && $clinical < count($headers)) {
+      $type = $headers[$clinical];
+      while (!feof($fp)) {
+        $line = fgets($fp);
+        if ($line == "") {
+          continue;
+        }
+        $line = chop($line, "\r\n");
+        $list = explode("\t", $line);
+        $arr = $list[0];
+        $v = "";
+        if (array_key_exists($arr, $ahash) && $clinical < count($list)) {
+          $v = $list[$clinical];
+          $i = $ahash[$arr];
+          echo "$arr\t$v\t".$e1[$i]."\t".$e2[$i]."\n";
+        }
+      }
+    }
+    fclose($fp);
   }
 }
 
