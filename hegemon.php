@@ -396,6 +396,10 @@ class Hegemon {
       echo "Can't open file $file <br>\n";
       exit;
     }
+    $genes = [];
+    if ($val != null) {
+      $genes = preg_split("/\s+/", $val);
+    }
     $line = fgets($fp);
     $index = 0;
     while (!feof($fp))
@@ -429,39 +433,34 @@ class Hegemon {
         $index++;
       }
       else {
-        $res = array();
-        $genes = preg_split("/\s+/", $val);
         foreach ($genes as $g) {
           $name = trim($g);
-          if (!array_key_exists($name, $this->idhash) &&
-            !array_key_exists(strtoupper($name), $this->namehash)) {
-            $found = 0;
-            if (strcmp($id, $name) == 0) {
+          $found = 0;
+          if (strcmp($id, $name) == 0) {
+            $found = 1;
+          }
+          foreach ($lp as $pn) {
+            $pn = strtoupper(trim($pn));
+            if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
+              continue;
+            }
+            if (strcmp($pn, strtoupper($name)) == 0) {
               $found = 1;
             }
+          }
+          if ($found == 1) {
+            $this->idhash[$id] = array($ptr, trim($lp[0]), $desc);
+            $this->namehash[strtoupper($id)] = array($id);
             foreach ($lp as $pn) {
               $pn = strtoupper(trim($pn));
               if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
                 continue;
               }
-              if (strcmp($pn, strtoupper($name)) == 0) {
-                $found = 1;
+              if (!array_key_exists($pn, $this->namehash)) {
+                $this->namehash[$pn] = array();
               }
-            }
-            if ($found == 1) {
-              $this->idhash[$id] = array($ptr, trim($lp[0]), $desc);
-              $this->namehash[strtoupper($id)] = array($id);
-              foreach ($lp as $pn) {
-                $pn = strtoupper(trim($pn));
-                if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
-                  continue;
-                }
-                if (!array_key_exists($pn, $this->namehash)) {
-                  $this->namehash[$pn] = array();
-                }
-                if (array_search($id, $this->namehash[$pn]) === false) {
-                  array_push($this->namehash[$pn], $id);
-                }
+              if (array_search($id, $this->namehash[$pn]) === false) {
+                array_push($this->namehash[$pn], $id);
               }
             }
           }
