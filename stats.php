@@ -2,12 +2,20 @@
 
 include "util.php";
 
+$params = null;
+if (array_key_exists("params", $_GET)) {
+  $params = getParams($_GET["params"]);
+}
+if (array_key_exists("params", $_POST)) {
+  $params = getParams($_POST["params"]);
+}
+
 if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "StepMiner") == 0) {
     printStepMiner($_GET['A'], $_GET['B']);
   }
   if (strcmp($_GET["go"], "hist") == 0) {
-    printHistogram($_GET['A'], $_GET['B']);
+    printHistogram($_GET['A'], $_GET['B'], $params);
   }
 }
 elseif (array_key_exists("go", $_POST)) {
@@ -15,7 +23,7 @@ elseif (array_key_exists("go", $_POST)) {
     printStepMiner($_POST['A'], $_POST['B']);
   }
   if (strcmp($_POST["go"], "hist") == 0) {
-    printHistogram($_POST['A'], $_POST['B']);
+    printHistogram($_POST['A'], $_POST['B'], $params);
   }
   if (strcmp($_POST["go"], "intersect") == 0) {
     printIntersect($_POST['A'], $_POST['B']);
@@ -32,6 +40,15 @@ elseif (array_key_exists("go", $_POST)) {
 }
 else {
   printSummary();
+}
+
+function getParams($str) {
+  $res = [];
+  foreach (explode(";", urldecode($str)) as $p) {
+    list($k, $v) = explode("=", $p);
+    $res[$k] = $v;
+  }
+  return $res;
 }
 
 function getNumbers($a) {
@@ -116,11 +133,11 @@ function printDiff ($a, $b) {
   printTabular($res, 6);
 }
 
-function printHistogram ($a, $b) {
+function printHistogram ($a, $b, $params = null) {
   $numa = getNumbers(urldecode($a));
   $numb = getNumbers(urldecode($b));
-  $hista = U::plotHistogram($numa, 0);
-  $histb = U::plotHistogram($numb, 0);
+  $hista = U::plotHistogram($numa, 0, $params);
+  $histb = U::plotHistogram($numb, 0, $params);
   echo "<table border=\"0\">\n";
   echo "<tr><td>A</td><td><img src=\"".$hista["img"]."\"/></td><td>\n";
   echo "<table border=\"0\">\n";
@@ -197,6 +214,9 @@ echo "
               onclick=\"callDiffAB();\"/>
           <input type=\"button\" name=\"Diff-B-A\" value=\"Diff-B-A\"
               onclick=\"callDiffBA();\"/>
+      <br clear=\"all\"/>
+      Parameters: 
+          <input type=\"text\"  size=\"20\" id=\"params\" value=\"\"/>
       <br clear=\"all\"/>
       <div id=\"results\"> </div>
       <div id=\"lineresults\"> </div>

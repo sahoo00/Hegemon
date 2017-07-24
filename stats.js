@@ -8,8 +8,10 @@ function callGeneric(cmd) {
   $('#results').css("visibility", "visible");
   var str1 = $('#Ab').val();
   var str2 = $('#Bb').val();
+  var params = $('#params').val();
   var d = { go: cmd, A: encodeURIComponent(str1),
-    B: encodeURIComponent(str2) };
+    B: encodeURIComponent(str2),
+    params: encodeURIComponent(params)};
   $.ajax({type: 'POST',
       data: d,
       url: "stats.php",

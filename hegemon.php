@@ -362,6 +362,21 @@ class Hegemon {
         }
       }
     }
+    if (count($res) == 0) {
+      $file = $this->rdataset->getIdx();
+      $this->readIndexFile($file, $name);
+      foreach ($genes as $g) {
+        $name = trim($g);
+        if (array_key_exists($name, $this->idhash)) {
+          $res[$name] = $name;
+        }
+        if (array_key_exists(strtoupper($name), $this->namehash)) {
+          foreach ($this->namehash[strtoupper($name)] as $id) {
+            $res[$id] = $name;
+          }
+        }
+      }
+    }
     return $res;
   }
 
@@ -376,12 +391,13 @@ class Hegemon {
     return $list[0];
   }
 
-  public function readIndexFile($file) {
+  public function readIndexFile($file, $val = null) {
     if (($fp = fopen($file, "r")) === FALSE) {
       echo "Can't open file $file <br>\n";
       exit;
     }
     $line = fgets($fp);
+    $index = 0;
     while (!feof($fp))
     {
       $line = fgets($fp);
@@ -392,18 +408,63 @@ class Hegemon {
       }
       list($id, $ptr, $p_name, $desc) = $ll;
       $lp = explode(" /// ", $p_name);
-      $this->idhash[$id] = array($ptr, trim($lp[0]), $desc);
-      $this->namehash[strtoupper($id)] = array($id);
-      foreach ($lp as $pn) {
-        $pn = strtoupper(trim($pn));
-        if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
+      if ($val == null) {
+        $this->idhash[$id] = array($ptr, trim($lp[0]), $desc);
+        $this->namehash[strtoupper($id)] = array($id);
+        foreach ($lp as $pn) {
+          $pn = strtoupper(trim($pn));
+          if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
             continue;
+          }
+          if (!array_key_exists($pn, $this->namehash)) {
+            $this->namehash[$pn] = array();
+          }
+          if (array_search($id, $this->namehash[$pn]) === false) {
+            array_push($this->namehash[$pn], $id);
+          }
         }
-        if (!array_key_exists($pn, $this->namehash)) {
-          $this->namehash[$pn] = array();
+        if ($index >= 100000) {
+          break;
         }
-        if (array_search($id, $this->namehash[$pn]) === false) {
-          array_push($this->namehash[$pn], $id);
+        $index++;
+      }
+      else {
+        $res = array();
+        $genes = preg_split("/\s+/", $val);
+        foreach ($genes as $g) {
+          $name = trim($g);
+          if (!array_key_exists($name, $this->idhash) &&
+            !array_key_exists(strtoupper($name), $this->namehash)) {
+            $found = 0;
+            if (strcmp($id, $name) == 0) {
+              $found = 1;
+            }
+            foreach ($lp as $pn) {
+              $pn = strtoupper(trim($pn));
+              if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
+                continue;
+              }
+              if (strcmp($pn, strtoupper($name)) == 0) {
+                $found = 1;
+              }
+            }
+            if ($found == 1) {
+              $this->idhash[$id] = array($ptr, trim($lp[0]), $desc);
+              $this->namehash[strtoupper($id)] = array($id);
+              foreach ($lp as $pn) {
+                $pn = strtoupper(trim($pn));
+                if (strcmp($pn, "") == 0 || strcmp($pn, "---") == 0 ) {
+                  continue;
+                }
+                if (!array_key_exists($pn, $this->namehash)) {
+                  $this->namehash[$pn] = array();
+                }
+                if (array_search($id, $this->namehash[$pn]) === false) {
+                  array_push($this->namehash[$pn], $id);
+                }
+              }
+            }
+          }
         }
       }
     }

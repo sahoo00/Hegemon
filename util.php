@@ -1082,7 +1082,11 @@ cat(\"end\", \"\\n\",  sep=\"\\t\")
     return ('data:' . $mime . ';base64,' . $base64);
   }
 
-  public function plotHistogram($x_arr, $start = 2) {
+  public function plotHistogram($x_arr, $start = 2, $params = null) {
+    $breaks = "\"Sturges\"";
+    if ($params && array_key_exists("breaks", $params)) {
+      $breaks = $params["breaks"];
+    }
     $better_token = md5(uniqid(rand(), true));
     $outprefix = "tmpdir/tmp$better_token";
     if (($fp = fopen("$outprefix.R", "w")) === FALSE) {
@@ -1103,7 +1107,7 @@ cat(\"end\", \"\\n\",  sep=\"\\t\")
     $res .= "
 png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
 h <- hist(x, freq=TRUE, main=\"Histogram\", xlab=\"value\", 
-    ylab=\"count\")
+    ylab=\"count\", breaks=$breaks)
 n <- length(h\$counts)
 plot(h\$breaks[1:n], h\$counts, type=\"h\",
     main=\"Histogram\", xlab=\"value\",
