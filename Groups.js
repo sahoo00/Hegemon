@@ -1053,6 +1053,11 @@ function displayGDiff(data, url) {
     .attr("cx", xMap)
     .attr("cy", yMap)
     .style("fill", "#555");
+  var pvalueThresholdBonferroni = 1.3 + Math.log10(keys.length);
+  svg.append("svg:line").attr("x1", mn.l).attr("x2", width-mn.r).
+    attr("y1", y(pvalueThresholdBonferroni))
+    .attr("y2", y(pvalueThresholdBonferroni))
+    .style("stroke", "#e5e");
   svg.append("svg:line").attr("x1", mn.l).attr("x2", width-mn.r).
     attr("y1", y(1.3)).attr("y2", y(1.3))
     .style("stroke", "#5e5");

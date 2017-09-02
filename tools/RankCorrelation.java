@@ -304,6 +304,8 @@ class RankCorrelation {
             if (slope > 1) { slope = 1/slope; }
             double score = corr.coefficient() * corr.coefficient() +
               slope * slope;
+            //System.out.println(score + "\t" + slope + "\t" +
+            //    corr.coefficient());
             if (slope > 0 && corr.coefficient() > 0) {
               System.out.println(score);
               index1++;

@@ -2,6 +2,7 @@ package tools;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.*;
 
 class Hegemon {
   String pre;
@@ -639,7 +640,9 @@ class Hegemon {
     } 
     return sortedHashMap;
   }
-*/
+
+  // Following sort by value functions have a bug: when values are equal
+  // it collapses them
   public static <K, V extends Comparable<? super V>> Map<K, V> sortByValuesUp(
       Map<K, V> tempMap) {
     TreeMap<K, V> map = new TreeMap<>(buildComparatorUp(tempMap));
@@ -663,6 +666,32 @@ class Hegemon {
     buildComparatorUp(final Map<K, V> tempMap) {
       return (o1, o2) -> tempMap.get(o1).compareTo(tempMap.get(o2));
     }
+*/
+
+  public static <K, V extends Comparable<? super V>> Map<K, V> sortByValuesUp(Map<K
+, V> map) {
+    return map.entrySet()
+      .stream()
+      .sorted(Map.Entry.comparingByValue(/*Collections.reverseOrder()*/))
+      .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (e1, e2) -> e1,
+            LinkedHashMap::new
+            ));
+  }
+  public static <K, V extends Comparable<? super V>> Map<K, V> sortByValuesDown(Map<K
+, V> map) {
+    return map.entrySet()
+      .stream()
+      .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
+      .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (e1, e2) -> e1,
+            LinkedHashMap::new
+            ));
+  }
 
   public void printCorrelation(String id) {
     printCorrelation(id, null);
@@ -949,12 +978,14 @@ class Hegemon {
       Map<String, Double> map = sortByValuesDown(hmap0); 
       Set set2 = map.entrySet();
       Iterator iterator2 = set2.iterator();
+      int index = 0;
       while(iterator2.hasNext()) {
         Map.Entry me2 = (Map.Entry)iterator2.next();
         int[] counts = hmap3.get(me2.getKey());
         out.println(me2.getValue() + "\t" + hmap1.get(me2.getKey())
             + "\t" + counts[0] + "\t" + counts[1]
             + "\t" + me2.getKey() + "\t" + hmap2.get(me2.getKey())); 
+        index++;
       }
     }
     catch(FileNotFoundException ex) {
