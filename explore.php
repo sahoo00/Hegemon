@@ -315,11 +315,12 @@ function printInfoJSON($file, $str1, $str2, $id) {
 function getSource($file, $id) {
   $h = getHegemon($file, $id);
   $str = $h->getSource();
-  if (preg_match('/(GSE\d+)/', $str, $matches)) {
-    foreach (range(1, count($matches) - 1) as $i) {
+  if (preg_match_all('/(GSE\d+)/', $str, $matches)) {
+    foreach (range(0, count($matches[0]) - 1) as $i) {
       echo "<a
-href=\"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=$matches[$i]\"
-target=\"_blank\"> $matches[$i] </a> <br/>";
+href=\"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=".$matches[0][$i].
+"\"
+target=\"_blank\"> ".$matches[0][$i]." </a> <br/>";
     }
   }
   else {
