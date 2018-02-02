@@ -714,7 +714,7 @@ function boxplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
       list($i, $nm, $v) = explode("=", $g, 3);
       $nmps = explode(",", $nm);
       if (count($nmps) > 1) {
-        $colors[($i+2) % count($colors)] = $nmps[1];
+        $colors[($i+2) % count($colors)] = trim($nmps[1]);
         $nm = $nmps[0];
       }
       foreach (explode(":", $v) as $a) {
@@ -819,34 +819,53 @@ function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn,
   if ($sga != '') {
     $list = preg_split("/\s+/", $sga);
     $res = array();
-    if (count($list) > 0 && $list[0] === "search") {
-      for ($i = $h->start; $i <= $h->end; $i++) {
-        $hdr = strtolower($h->headers[$i]);
-        for ($j = 1; $j < count($list); $j++) {
-          $k = strtolower($list[$j]);
-          if (strpos($hdr, $k) !== false) {
-            array_push($res, $i);
-            break;
-          }
+    if (count($list) > 0 && $list[0] === "Boolean") {
+      $f = $h->getExprFile();
+      $x_t = FALSE;
+      $y_t = FALSE;
+      if (count($list) > 1) { $x_t = $list[1]; }
+      if (count($list) > 2) { $y_t = $list[2]; }
+      list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
+      $gr = U::generateBooleanGroups($file, $xn, $yn, $x_arr, $y_arr, $h_arr,
+        $x_t, $y_t);
+      foreach ($gr as $g) {
+        echo count($g[2])."\n";
+        echo "$g[1]\n";
+        foreach ($g[2] as $i) {
+          echo "$i\n";
         }
       }
     }
     else {
-      $hh = array();
-      for ($i = $h->start; $i <= $h->end; $i++) {
-        $hdr = $h->headers[$i];
-        $hh[strtolower($hdr)] = $i;
-      }
-      foreach ($list as $k) {
-        if (array_key_exists(strtolower($k), $hh)) {
-          array_push($res, $hh[strtolower($k)]);
+      if (count($list) > 0 && $list[0] === "search") {
+        for ($i = $h->start; $i <= $h->end; $i++) {
+          $hdr = strtolower($h->headers[$i]);
+          for ($j = 1; $j < count($list); $j++) {
+            $k = strtolower($list[$j]);
+            if (strpos($hdr, $k) !== false) {
+              array_push($res, $i);
+              break;
+            }
+          }
         }
       }
-    }
-    echo count($res)."\n";
-    echo "ArrayID\t$xn\t$yn\n";
-    foreach ($res as $i) {
-      echo $h->headers[$i]."\t".$e1[$i]."\t".$e2[$i]."\n";
+      else {
+        $hh = array();
+        for ($i = $h->start; $i <= $h->end; $i++) {
+          $hdr = $h->headers[$i];
+          $hh[strtolower($hdr)] = $i;
+        }
+        foreach ($list as $k) {
+          if (array_key_exists(strtolower($k), $hh)) {
+            array_push($res, $hh[strtolower($k)]);
+          }
+        }
+      }
+      echo count($res)."\n";
+      echo "ArrayID\t$xn\t$yn\n";
+      foreach ($res as $i) {
+        echo $h->headers[$i]."\t".$e1[$i]."\t".$e2[$i]."\n";
+      }
     }
   }
   elseif ($groups != '') {

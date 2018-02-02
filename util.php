@@ -117,6 +117,30 @@ class U {
     return $result / ($end - $start + 1);
   }
 
+  function stddev ($arr, $start = FALSE, $end = FALSE) {
+    if ($start == FALSE) {
+      $start = 0;
+    }
+    if ($end == FALSE) {
+      $end = count($arr) - 1;
+    }
+    $sum = 0;
+    if ($start >= $end) {
+      return $sum;
+    }
+    $sumsq = 0;
+    for ($i = $start; $i <= $end; $i++) {
+      $sum += $arr[$i];
+      $sumsq += $arr[$i] * $arr[$i];
+    }
+    $m = $sum / ($end - $start + 1);
+    $msq = $sumsq / ($end - $start + 1);
+    $factor = ($end - $start + 1) / ($end - $start);
+    $res = $factor * ($msq - $m * $m);
+    if ($res < 0) { $res = 0; }
+    return sqrt($res);
+  }
+
   public function covariance($array1ref, $array2ref) {
     $result = 0;
     for ($i = 0; $i < count($array1ref); $i++) {
@@ -718,7 +742,7 @@ fig.savefig('$outprefix.png', dpi=100)
           list($i, $nm, $v) = explode("=", $g, 3);
           $nmps = explode(",", $nm);
           if (count($nmps) > 1) {
-            $colors[($i+2) % count($colors)] = $nmps[1];
+            $colors[($i+2) % count($colors)] = trim($nmps[1]);
             $nm = $nmps[0];
           }
           foreach (explode(":", $v) as $a) {
@@ -954,7 +978,11 @@ legend(\"topright\", sprintf(\"pvalue = %.4f\", p), inset=c(0.02, length(l)*0.04
           $nm = $nmps[0];
         }
         foreach (explode(":", $v) as $a) {
-          if (array_key_exists($a, $hashTable[0]) && $hashTable[1][$a] != "") {
+          if (array_key_exists($a, $hashTable[0])
+            && $hashTable[0][$a] != ""
+            && $hashTable[1][$a] != ""
+            && $hashTable[0][$a] != "NA"
+            && $hashTable[1][$a] != "NA") {
             if ($ct != "" && $hashTable[0][$a] > $ct) {
               array_push($surv, $ct);
               array_push($status, 0);
@@ -1202,6 +1230,8 @@ cat(\"END\\n\")
 \\usepackage{pgfplots}
 \\usepackage{pgfplotstable}
 \\pgfplotsset{compat=1.11} 
+\\usepgfplotslibrary{statistics}
+\\usetikzlibrary{arrows,chains,matrix,positioning,scopes}
 
 \\begin{document}
 ";
@@ -1219,26 +1249,36 @@ cat(\"END\\n\")
     global $colors;
     $a_hash = array();
     for ($i = 2; $i < count($h_arr); $i++) {
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
+        continue;
+      }
+      if (preg_match('/^\s*$/', $y_arr[$i])) {
+        continue;
+      }
       if (!array_key_exists($p_arr[$i], $a_hash)) {
         $a_hash[$p_arr[$i]] = array();
       }
       array_push($a_hash[$p_arr[$i]], $i);
     }
+    $dindex = 0;
     foreach ($a_hash as $g => $v) {
-      $c = chr(ord('a')+$g);
+      $c = chr(ord('a')+$dindex);
       $clr = self::getPScolor("clr$g", $colors[$g % count($colors)]);
       fwrite($fp, "$clr\n");
-      fwrite($fp, "\\pgfplotstableread{%\n");
-      foreach ($v as $i) {
-        if (preg_match('/^\s*$/', $x_arr[$i])) {
-          continue;
+      if (count($v) > 0) {
+        fwrite($fp, "\\pgfplotstableread{%\n");
+        foreach ($v as $i) {
+          if (preg_match('/^\s*$/', $x_arr[$i])) {
+            continue;
+          }
+          if (preg_match('/^\s*$/', $y_arr[$i])) {
+            continue;
+          }
+          fwrite($fp, $x_arr[$i]." ".$y_arr[$i]."\n");
         }
-        if (preg_match('/^\s*$/', $y_arr[$i])) {
-          continue;
-        }
-        fwrite($fp, $x_arr[$i]." ".$y_arr[$i]."\n");
+        fwrite($fp, "}\\g$c"."data%\n");
       }
-      fwrite($fp, "}\\g$c"."data%\n");
+      $dindex++;
     }
     krsort($a_hash);
     return $a_hash;
@@ -1273,8 +1313,7 @@ cat(\"END\\n\")
 \\def\\ttsizec{\\fontsize{7pt}{7pt}\\selectfont}%
 \\def\\pshlabel#1{\\ttsize #1}%
 \\def\\psvlabel#1{\\ttsize #1}%
-\\begin{tikzpicture}[x=$xunit in, y=$yunit in]
-\\begin{axis}[x=$xunit in, y=$yunit in,
+\\begin{axis}[x=$xunit in, y=$yunit in,name=pair1,
   axis x line = bottom,axis y line = left,
   ticklabel style={font=\\tiny},
   ymin=$miny, ymax=$maxy, xmin=$minx, xmax=$maxx,
@@ -1285,13 +1324,16 @@ cat(\"END\\n\")
 \\draw[black,line width=0.75pt] ($minx, $miny) rectangle ($maxx, $maxy);
 ";
     fwrite($fp, $str);
+    $dindex = 0;
     foreach ($a_hash as $g => $v) {
-      $c = chr(ord('a')+$g);
+      $c = chr(ord('a')+$dindex);
       $dname = "\\g".$c."data";
-      fwrite($fp, "\\addplot+[line width=1.3pt, color=clr$g, mark=*, only marks,mark options={color=clr$g}]  table [x index=0, y index=1] {$dname};\n");
+      if (count($v) > 0) {
+        fwrite($fp, "\\addplot+[line width=1.3pt, color=clr$g, mark=*, only marks,mark options={color=clr$g}]  table [x index=0, y index=1] {$dname};\n");
+      }
+      $dindex++;
     }
     fwrite($fp, "\\end{axis}\n");
-    fwrite($fp, "\\end{tikzpicture}\n");
   }
 
   function writeTikzPDF($fp, $x_id, $x_name, $y_id, $y_name, $outprefix) {
@@ -1534,12 +1576,34 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     return array($x_thr, $y_thr);
   }
 
-  function generateBooleanGroups ($file, $x_arr, $y_arr, $h_arr) {
+  function updateThresholdXY($x_thr, $y_thr, $x_t = FALSE, $y_t = FALSE) {
+    if ($x_t) {
+      if ($x_t == "thr0") { $x_thr = $x_thr - 0.5; }
+      elseif ($x_t == "thr2") { $x_thr = $x_thr + 0.5; }
+      elseif ($x_t == "thr1") { $x_thr = $x_thr; }
+      else { $x_thr = $x_t; }
+    }
+    if ($y_t) {
+      if ($y_t == "thr0") { $y_thr = $y_thr - 0.5; }
+      elseif ($y_t == "thr2") { $y_thr = $y_thr + 0.5; }
+      elseif ($y_t == "thr1") { $y_thr = $y_thr; }
+      else { $y_thr = $y_t; }
+    }
+    return array($x_thr, $y_thr);
+  }
+
+  function generateBooleanGroups ($file, $x_name, $y_name, $x_arr, $y_arr, $h_arr, $x_t = FALSE, $y_t = FALSE) {
     list($x_thr, $y_thr) = self::getThresholdXY($file, $x_arr, $y_arr);
+    list($x_thr, $y_thr) = self::updateThresholdXY($x_thr, $y_thr, $x_t, $y_t);
     $gr = [[0, "lolo", []], 
       [1, "lohi", []],
       [2, "hilo", []],
-      [3, "hihi", []]];
+      [3, "hihi", []],
+      [4, "$x_name lo", []],
+      [5, "$x_name hi", []],
+      [6, "$y_name lo", []],
+      [7, "$y_name hi", []]
+    ];
     $num = count($x_arr);
     for($i=2; $i < $num; $i++){       
       if (preg_match('/^\s*$/', $x_arr[$i])) {
@@ -1561,14 +1625,40 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
         array_push($gr[3][2], $h_arr[$i]);
       }
     }
+    for($i=2; $i < $num; $i++){       
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
+        continue;
+      }
+      if ($x_arr[$i] < $x_thr) {
+        array_push($gr[4][2], $h_arr[$i]);
+      }
+      if ($x_arr[$i] >= $x_thr) {
+        array_push($gr[5][2], $h_arr[$i]);
+      }
+    }
+    for($i=2; $i < $num; $i++){       
+      if (preg_match('/^\s*$/', $y_arr[$i])) {
+        continue;
+      }
+      if ($y_arr[$i] < $y_thr) {
+        array_push($gr[6][2], $h_arr[$i]);
+      }
+      if ($y_arr[$i] >= $y_thr) {
+        array_push($gr[7][2], $h_arr[$i]);
+      }
+    }
     return $gr;
   }
 
-  function convertGroups($gr) {
+  function convertGroups($gr, $list = FALSE) {
     $groups = "";
-    for ($i = 0; $i < 4; $i++) {
-      if (count($gr[$i][2]) > 0) {
-        $groups .= "$i=".$gr[$i][1]."=". join(":", $gr[$i][2]) . ";";
+    if (!$list) {
+      $list = range(0, 3);
+    }
+    for ($i = 0; $i < count($list); $i++) {
+      $id = $list[$i];
+      if (count($gr[$id][2]) > 0) {
+        $groups .= "$i=".$gr[$id][1]."=". join(":", $gr[$id][2]) . ";";
       }
     }
     return $groups;
@@ -1600,6 +1690,324 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     return $gr;
   }
 
+  function box_plot_values($array) {
+    $return = array(
+      'lower_outlier'  => 0,
+      'min'            => 0,
+      'q1'             => 0,
+      'median'         => 0,
+      'q3'             => 0,
+      'max'            => 0,
+      'higher_outlier' => 0,
+      'mean'           => 0,
+      'stddev'         => 0,
+      'size'           => 0,
+    );
+
+    $array_count = count($array);
+    sort($array, SORT_NUMERIC);
+
+    $return['size']           = $array_count;
+    $return['min']            = $array[0];
+    $return['lower_outlier']  = array();
+    $return['max']            = $array[$array_count - 1];
+    $return['higher_outlier'] = array();
+    $middle_index             = floor($array_count / 2);
+    $return['median']         = $array[$middle_index]; // Assume an odd # of items
+    $lower_values             = array();
+    $higher_values            = array();
+    $return['mean']           = self::mean($array);
+    $return['stddev']           = self::stddev($array);
+
+    // If we have an even number of values, we need some special rules
+    if ($array_count % 2 == 0)
+    {
+      // Handle the even case by averaging the middle 2 items
+      $return['median'] = (($return['median'] + $array[$middle_index - 1]) / 2);
+
+      foreach ($array as $idx => $value)
+      {
+	if ($idx < ($middle_index - 1)) $lower_values[]  = $value; // We need to remove both of the values we used for the median from the lower values
+	elseif ($idx > $middle_index)   $higher_values[] = $value;
+      }
+    }
+    else
+    {
+      foreach ($array as $idx => $value)
+      {
+	if ($idx < $middle_index)     $lower_values[]  = $value;
+	elseif ($idx > $middle_index) $higher_values[] = $value;
+      }
+    }
+
+    $lower_values_count = count($lower_values);
+    $lower_middle_index = floor($lower_values_count / 2);
+    $return['q1']       = $lower_values[$lower_middle_index];
+    if ($lower_values_count % 2 == 0)
+      $return['q1'] = round(($return['q1'] + $lower_values[$lower_middle_index - 1]) / 2);
+
+    $higher_values_count = count($higher_values);
+    $higher_middle_index = floor($higher_values_count / 2);
+    $return['q3']        = $higher_values[$higher_middle_index];
+    if ($higher_values_count % 2 == 0)
+      $return['q3'] = round(($return['q3'] + $higher_values[$higher_middle_index - 1]) / 2);
+
+    // Check if min and max should be capped
+    $iqr = $return['q3'] - $return['q1']; // Calculate the Inner Quartile Range (iqr)
+
+    $return['min'] = $return['q1'] - 1.5*$iqr; // This ( q1 - 1.5*IQR ) is actually the lower bound,
+    // We must compare every value in the lower half to this.
+    // Those less than the bound are outliers, whereas
+    // The least one that greater than this bound is the 'min'
+    // for the boxplot.
+    foreach( $lower_values as  $idx => $value )
+    {
+      if( $value < $return['min'] )  // when values are less than the bound
+      {
+	$return['lower_outlier'][$idx] = $value ; // keep the index here seems unnecessary
+	// but those who are interested in which values are outliers 
+	// can take advantage of this and asort to identify the outliers
+      }else
+      {
+	$return['min'] = $value; // when values that greater than the bound
+	break;  // we should break the loop to keep the 'min' as the least that greater than the bound
+      }
+    }
+
+    $return['max'] = $return['q3'] + 1.5*$iqr; // This ( q3 + 1.5*IQR ) is the same as previous.
+    foreach( array_reverse($higher_values) as  $idx => $value )
+    {
+      if( $value > $return['max'] )
+      {
+	$return['higher_outlier'][$idx] = $value ;
+      }else
+      {
+	$return['max'] = $value;
+	break;
+      }
+    }
+    return $return;
+  }
+
+  function getGroupData($x_arr, $h_arr, $groups) {
+    global $colors;
+    $xldata = array();
+    $a_hash = array();
+    for ($i = 0; $i < count($h_arr); $i++) {
+      $a_hash[$h_arr[$i]] = $i;
+    }
+    $list = explode(";", $groups);
+    $g_hash = array();
+    foreach ($list as $g) {
+      if ($g != '') {
+        list($index, $nm, $v) = explode("=", $g, 3);
+        $nmps = explode(",", $nm);
+        $nm = $nmps[0];
+        $xa = array();
+        foreach (explode(":", $v) as $a) {
+          if (!array_key_exists($a, $a_hash)) {
+            continue;
+          }
+          $i = $a_hash[$a];
+          if (preg_match('/^\s*$/', $x_arr[$i])) {
+            continue;
+          }
+          array_push($xa, $x_arr[$i]);
+        }
+        if (count($xa) > 0) {
+          $clr = $colors[($index + 2) % count($colors)];
+          array_push($xldata, array(count($xldata), $nm, $clr));
+          array_push($g_hash, $xa);
+        }
+      }
+    }
+    if (count($xldata) > 0) {
+      usort($xldata,function($a,$b){ return strcmp($a[1],$b[1]); });
+    }
+    return array($xldata, $g_hash);
+  }
+
+  function getBoxStats($x_arr, $h_arr, $groups) {
+    list($xldata, $g_hash) = self::getGroupData($x_arr, $h_arr, $groups);
+    if (count($xldata) <= 0) {
+      return;
+    }
+    $better_token = md5(uniqid(rand(), true));
+    $outprefix = "tmpdir/tmp$better_token";
+    if (($fp = fopen("$outprefix.R", "w")) === FALSE) {
+      echo "Can't open file tmp.R <br>";
+    }
+    $num = count($xldata);
+    $res = "cat(\"BEGIN\\n\")\n";
+    $res .= "x <- list()\n";
+    for($i=1; $i <= $num; $i++){
+      $xa = $g_hash[$xldata[$i - 1][0]];
+      $res .= "x[[$i]] <- c(" . join(",", $xa) . ");\n";
+      $res .= "
+  ex <- x[[$i]]
+  if (sd(ex) <= 0) {
+    cat(paste('info', $i, 1, ex[1], sd(ex), ex[1], ex[1], '\\n', sep='\\t')) 
+  } else {
+    st <- t.test(ex)
+    cat(paste('info', $i, length(ex), st\$estimate, sd(ex), 
+        st\$conf.int[1], st\$conf.int[2], '\\n', sep='\\t')) 
+  }
+";
+    }
+    for($i=1; $i <= $num; $i++){
+      $res .= "ex <- x[[$i]]\n";
+      for($j= ($i + 1); $j <= $num; $j++){
+        $res .= "
+    ey <- x[[$j]]
+    if (sd(ey) <= 0 && sd(ex) <= 0) {
+      if (ex[1] != ey[1]) {
+        cat(paste('pvalue', $i, $j, Inf, 0, '\\n', sep='\\t'))
+      } else {
+        cat(paste('pvalue', $i, $j, Inf, 1, '\\n', sep='\\t'))
+      }
+    } else {
+      st <- t.test(ex, ey)
+      cat(paste('pvalue', $i, $j, st\$statistic, st\$p.value, '\\n', sep='\\t'))
+    }
+";
+      }
+    }
+    $res .= "cat('END\\n')\n";
+    fwrite($fp, $res);
+    fclose($fp);
+    if (($fp = fopen("$outprefix.sh", "w")) === FALSE) {
+      echo "Can't open file tmp.sh <br>";
+    }
+    fwrite($fp, "/usr/bin/R --slave < $outprefix.R\n");
+    fclose($fp);
+
+    $ihash = array();
+    $phash = array();
+    $cmd = "bash $outprefix.sh";
+    if ( ($fh = popen($cmd, 'r')) === false )
+      die("Open failed: ${php_errormsg}\n");
+    while (!feof($fh))
+    {
+      $line = fgets($fh);
+      $line = chop($line, "\r\n");
+      $arr = explode("\t", $line);
+      if (count($arr) > 0 && $arr[0] == "END") {
+        break;
+      }
+      if (count($arr) > 0 && $arr[0] == "info") {
+        array_push($ihash, $arr);
+      }
+      if (count($arr) > 0 && $arr[0] == "pvalue") {
+        array_push($phash, $arr);
+      }
+    }
+    pclose($fh);
+    self::cleanup($outprefix);
+    return array($ihash, $phash);
+  }
+
+  function writeTikzBoxplot($fp, $x_id, $x_name, $x_arr, $h_arr, $groups, $param) {
+    list($xldata, $g_hash) = self::getGroupData($x_arr, $h_arr, $groups);
+    $bplots = array();
+    foreach ($g_hash as $xa) {
+      if (count($xa) > 0) {
+        array_push($bplots, self::box_plot_values($xa));
+      }
+    }
+    $binfo = self::getBoxStats($x_arr, $h_arr, $groups);
+    if (count($xldata) <= 0) {
+      return;
+    }
+    usort($xldata,function($a,$b){ return strcmp($a[1],$b[1]); });
+    foreach ($xldata as $x) {
+      $clr = self::getPScolor("clr$x[0]", $x[2]);
+      fwrite($fp, "$clr\n");
+    }
+
+    $yl = self::myescape("$x_id: $x_name");
+    $res = "
+\\begin{axis}[
+name=plot1, at={(0,0)},
+boxplot/draw direction=y,
+x axis line style={opacity=0},
+axis x line*=bottom,
+axis y line=left,
+enlarge y limits,
+ylabel=$yl,
+ymajorgrids,
+";
+    fwrite($fp, $res);
+    $res = join(",", range(1, count($xldata)));
+    fwrite($fp, "xtick={".$res."},\n");
+    $res = join(",", array_column($xldata, 1));
+    fwrite($fp, "xticklabels={".$res."}]\n");
+    $index = 1;
+    foreach ($xldata as $x) {
+      $b = $bplots[$x[0]];
+      $out = array_merge($b["lower_outlier"], $b["higher_outlier"]);
+      list($a1, $a2, $a3, $a4, $a5) = array($b["min"], $b["q1"], $b["median"],
+        $b["q3"], $b["max"]);
+      $res = "
+    \\addplot+ [ color=clr$x[0],fill=clr$x[0]!20, mark=o,
+      boxplot prepared={
+        lower whisker=$a1, lower quartile=$a2,
+        median=$a3,
+        upper quartile=$a4, upper whisker=$a5,
+      },
+    ] ";
+      fwrite($fp, $res);
+      if (count($out) > 0) {
+        $res = join("\\\\ ", $out) . "\\\\ ";
+        fwrite($fp, "table [row sep=\\\\,y index=0] { $res};\n");
+      }
+      else {
+        fwrite($fp, "coordinates {};\n");
+      }
+      list($a1, $a2, $a3) = array($b["mean"], $b["stddev"], $b["size"]);
+      $f = 1.96 * $a2 / sqrt($a3);
+      list($a3, $a4) = array($a1 - $f, $a1 + $f);
+      $res = "
+    \\node at ($index,$a1) [color=clr$x[0]!50,circle,draw]{};
+    \\draw[color=clr$x[0]!50] [<-] ($index,$a3) -- ($index,$a1);
+    \\draw[color=clr$x[0]!50] [->] ($index,$a1) -- ($index,$a4);
+";
+      fwrite($fp, $res);
+      $index++;
+    }
+    fwrite($fp, "\\end{axis}\n");
+    $res = "
+\matrix[anchor=north west, xshift=1cm, name=iH] at (plot1.north east)
+[matrix of nodes,row sep=0em, column sep=0em] {
+info & Group & n & mean & sd & 95\% CI & \\\\
+";
+    fwrite($fp, $res);
+    foreach ($binfo[0] as $a) {
+      $a[1] = $xldata[$a[1] - 1][1];
+      foreach (range(3, 6) as $i) {
+        $a[$i] = sprintf("%.3g", $a[$i]);
+      }
+      $res = join(" & ", $a)." \\\\\n";
+      fwrite($fp, $res);
+    }
+    fwrite($fp, "};\n");
+    $res = "
+\matrix[anchor=north west, name=iP] at (iH.south west)
+[matrix of nodes,row sep=0em, column sep=0em] {
+pvalue & Group 1 & Group 2 & statistic & pvalue \\\\
+";
+    fwrite($fp, $res);
+    foreach ($binfo[1] as $a) {
+      $a[1] = $xldata[$a[1] - 1][1];
+      $a[2] = $xldata[$a[2] - 1][1];
+      $a[3] = sprintf("%.3g", $a[3]);
+      $a[4] = sprintf("%.3g", $a[4]);
+      $res = join(" & ", $a)." \\\\\n";
+      fwrite($fp, $res);
+    }
+    fwrite($fp, "};\n");
+
+  }
+
   function generateTikzPlot($file, $sfile, $x, $y, $x_name, $y_name, $ct, 
     $groups, $debug, $outprefix, $param) {
 
@@ -1607,7 +2015,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     $boolean = 0;
     $group_array = self::convertGroupsArray($groups);
     if ($groups == "") {
-      $group_array = self::generateBooleanGroups($file, $x_arr, $y_arr, $h_arr);
+      $group_array = self::generateBooleanGroups($file, $x_name, $y_name, $x_arr, $y_arr, $h_arr);
       $groups = self::convertGroups($group_array);
       $boolean = 1;
     }
@@ -1621,12 +2029,31 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
       echo "Can't open file $outfile <br>";
     }
     self::writeTikzHeader($fp);
-    if (0) {
+    if (1) {
+      fwrite($fp, "\\begin{tikzpicture}\n");
       $a_hash = self::writeTikzData($fp, $x_arr, $y_arr, $p_arr, $h_arr);
       self::writeTikzPair($fp, $a_hash, $x_id, $x_name, $y_id, $y_name, 
         $x_min - 0.5 , $x_max + 0.5, $y_min - 0.5, $y_max + 0.5);
-    }
-    else {
+      fwrite($fp, "\\end{tikzpicture}\n");
+      if ($boolean) {
+        $gr1 = self::convertGroups($group_array, [4, 5]);
+        fwrite($fp, "\\begin{tikzpicture}\n");
+        self::writeTikzBoxplot($fp, $y_id, $y_name, $y_arr, $h_arr, $gr1, $param);
+        fwrite($fp, "\\end{tikzpicture}\n");
+        $gr1 = self::convertGroups($group_array, [6, 7]);
+        fwrite($fp, "\\begin{tikzpicture}\n");
+        self::writeTikzBoxplot($fp, $x_id, $x_name, $x_arr, $h_arr, $gr1, $param);
+        fwrite($fp, "\\end{tikzpicture}\n");
+      }
+      else {
+        $gr1 = $groups;
+        fwrite($fp, "\\begin{tikzpicture}\n");
+        self::writeTikzBoxplot($fp, $x_id, $x_name, $x_arr, $h_arr, $gr1, $param);
+        fwrite($fp, "\\end{tikzpicture}\n");
+        fwrite($fp, "\\begin{tikzpicture}\n");
+        self::writeTikzBoxplot($fp, $y_id, $y_name, $y_arr, $h_arr, $gr1, $param);
+        fwrite($fp, "\\end{tikzpicture}\n");
+      }
       $ofile = "$outprefix.py";
       self::setupMatData($x_arr, $y_arr, $p_arr, $outprefix, $param);
       if (($fp1 = fopen($ofile, "w")) === FALSE) {
@@ -1663,7 +2090,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     fwrite($fp, "\\begin{tabular}{ccc}\n");
     fwrite($fp, "Group ID & Name & Number\\\\\n");
     foreach ($group_array as $g) {
-      fwrite($fp, $g[0]." & ".$g[1]." & ".count($g[2])."\\\\\n");
+      fwrite($fp, $g[0]." & ".self::myescape($g[1])." & ".count($g[2])."\\\\\n");
     }
     fwrite($fp, "\\end{tabular}\\\\\n");
     list($x_thr, $y_thr) = self::getThresholdXY($file, $x_arr, $y_arr);
@@ -1702,11 +2129,14 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     if ( ($fh = popen($cmd, 'w')) === false )
       die("Open failed: ${php_errormsg}\n");
     pclose($fh);
-    self::cleanupfile("$outprefix.log");
-    self::cleanupfile("$outprefix.aux");
-    self::cleanupfile("$outprefix.tex");
-    self::cleanupfile("$outprefix-1.pdf");
-    self::cleanupfile("$outprefix-2.pdf");
+    if (!$debug) {
+      // Final cleanup
+      self::cleanupfile("$outprefix.log");
+      self::cleanupfile("$outprefix.aux");
+      self::cleanupfile("$outprefix.tex");
+      self::cleanupfile("$outprefix-1.pdf");
+      self::cleanupfile("$outprefix-2.pdf");
+    }
   }
 
 }

@@ -474,28 +474,34 @@ function download($file, $f, $id, $x, $y, $xn, $yn, $ct, $groups, $param) {
   $better_token = md5(uniqid(rand(), true));
   $outprefix = "tmpdir/tmp$better_token";
   $type = "png";
+  $debug = 0;
   if (array_key_exists("type", $param)) {
     $type = $param["type"];
   }
+  if (array_key_exists("debug", $param)) {
+    $debug = $param["debug"];
+  }
   if (strcmp($type, "png") == 0) {
     U::generateMatPlot($f, $sfile, $x, $y, $xn, $yn, $groups,
-      0, $outprefix, $param);
+      $debug, $outprefix, $param);
     header("Content-type: image/png");
     echo file_get_contents("$outprefix.png");
     U::cleanup($outprefix);
   }
   if (strcmp($type, "pdf") == 0) {
     U::generateTikzPlot($f, $sfile, $x, $y, $xn, $yn, $ct, $groups,
-      0, $outprefix, $param);
+      $debug, $outprefix, $param);
     $pdf_f = "$outprefix.pdf";
     $fp = fopen($pdf_f, 'rb');
     header('Content-Type: application/pdf');
     header('Content-Disposition: inline; filename="Hegemon-plots.pdf"');
     header('Content-Length: ' . filesize($pdf_f));
     fpassthru($fp);
-    // Final cleanup
-    U::cleanupfile($pdf_f);
-    U::cleanup($outprefix);
+    if (!$debug) {
+      // Final cleanup
+      U::cleanupfile($pdf_f);
+      U::cleanup($outprefix);
+    }
   }
 }
 
@@ -552,6 +558,7 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <script src=\"explore.js\" type=\"text/javascript\"></script>
   <script src=\"Mouse.js\" type=\"text/javascript\"></script>
   <script src=\"Groups.js\" type=\"text/javascript\"></script>
+  <script src=\"gtag.js\" type=\"text/javascript\"> </script>
   </head>
   <body>
 ";

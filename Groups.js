@@ -10,9 +10,27 @@ var maxarrayget = 200;
 
 function createGroup(str) {
   var g = new Array();
-  for (var i = 2; i < (str.length-1); i++) {
-    var list = str[i].split("\t");
-    g[i-2] = list[0];
+  var i = 0;
+  var index = 0;
+  while ( (i+1) < str.length && str[i] && str[i] != "") {
+    var count = +str[i];
+    if (count > 0) {
+      g[index] = ["", [] ];
+      var list = str[i + 1].split("\t");
+      g[index][0] = list[0];
+    }
+    for (var j = 0; j < count; j++) {
+      var k = i + 2 + j;
+      if (k >= str.length) {
+        return g;
+      }
+      var list = str[k].split("\t");
+      g[index][1][j] = list[0];
+    }
+    if (count > 0) {
+      index++;
+    }
+    i = i + 2 + count;
   }
   return g;
 }
@@ -25,12 +43,19 @@ function removeGroups(id) {
   }
 }
 
-function addGroups(g) {
+function addGroups(g, updateName) {
   if (g && g.length > 0) {
-    groups[numKeys] = g;
-    groupNames[numKeys] = 'Group ' + numKeys;
-    numKeys++;
-    numGroups++;
+    for (var i = 0; i < g.length; i++) {
+      if (g[i] && g[i][1] && g[i][1].length > 0) {
+        groups[numKeys] = g[i][1];
+        groupNames[numKeys] = 'Group ' + numKeys;
+        if (updateName) {
+          groupNames[numKeys] = g[i][0];
+        }
+        numKeys++;
+        numGroups++;
+      }
+    }
   }
 }
 
@@ -65,7 +90,7 @@ function callDiffBA() {
         res.push(x);
       }
     }
-    addGroups(res);
+    addGroups([["DiffBA", res]]);
     updateGroupDisplay();
   }
   return false;
@@ -102,7 +127,7 @@ function callDiffAB() {
         res.push(x);
       }
     }
-    addGroups(res);
+    addGroups([["DiffAB", res]]);
     updateGroupDisplay();
   }
   return false;
@@ -132,7 +157,7 @@ function callIntersection() {
       res.push(x);
     }
   }
-  addGroups(res);
+  addGroups([["Intersect", res]]);
   updateGroupDisplay();
   return false;
 }
@@ -152,7 +177,7 @@ function callUnion() {
   for (x in g) {
     res.push(x);
   }
-  addGroups(res);
+  addGroups([["Union", res]]);
   updateGroupDisplay();
   return false;
 }
@@ -1157,7 +1182,12 @@ function callSearchGroup() {
         else {
           var list2 = data.split("\n");
           if (list2[0] > 0) {
-            addGroups(createGroup(list2));
+            if (str.startsWith("Boolean")) {
+              addGroups(createGroup(list2), 1);
+            }
+            else {
+              addGroups(createGroup(list2));
+            }
           }
           updateGroupDisplay();
         }
