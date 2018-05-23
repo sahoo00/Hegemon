@@ -2,6 +2,23 @@
 
 class U {
 
+  public function a2n($str) {
+    $num = 0;
+    for ($i = 0; $i < strlen($str); $i++) {
+      $num = $num * 26 + (ord($str[$i]) & 0x1f);
+    }
+    return $num;
+  }
+
+  public function n2a($num) {
+    $str = '';
+    while ($num > 0) {
+      $str = chr( ord('a') + ($num - 1) % 26) . $str;
+      $num = (int) ( ($num - 1) / 26);
+    }
+    return $str;
+  } 
+
   public function intersection($a, $b) {
     $hash = array();
     $res = array();
@@ -1260,9 +1277,9 @@ cat(\"END\\n\")
       }
       array_push($a_hash[$p_arr[$i]], $i);
     }
-    $dindex = 0;
+    $dindex = 1;
     foreach ($a_hash as $g => $v) {
-      $c = chr(ord('a')+$dindex);
+      $c = self::n2a($dindex);
       $clr = self::getPScolor("clr$g", $colors[$g % count($colors)]);
       fwrite($fp, "$clr\n");
       if (count($v) > 0) {
@@ -1324,9 +1341,9 @@ cat(\"END\\n\")
 \\draw[black,line width=0.75pt] ($minx, $miny) rectangle ($maxx, $maxy);
 ";
     fwrite($fp, $str);
-    $dindex = 0;
+    $dindex = 1;
     foreach ($a_hash as $g => $v) {
-      $c = chr(ord('a')+$dindex);
+      $c = self::n2a($dindex);
       $dname = "\\g".$c."data";
       if (count($v) > 0) {
         fwrite($fp, "\\addplot+[line width=1.3pt, color=clr$g, mark=*, only marks,mark options={color=clr$g}]  table [x index=0, y index=1] {$dname};\n");
@@ -1475,7 +1492,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
 ";
     fwrite($fp, $res);
     for ($g = 0; $g < count($strata); $g++) {
-      $c = chr(ord('a')+$g);
+      $c = self::n2a($g+1);
       $cname = "\\g$c"."censor";
       $dname = "\\g$c"."data";
       $res = "
@@ -1744,13 +1761,13 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     $lower_middle_index = floor($lower_values_count / 2);
     $return['q1']       = $lower_values[$lower_middle_index];
     if ($lower_values_count % 2 == 0)
-      $return['q1'] = round(($return['q1'] + $lower_values[$lower_middle_index - 1]) / 2);
+      $return['q1'] = (($return['q1'] + $lower_values[$lower_middle_index - 1]) / 2);
 
     $higher_values_count = count($higher_values);
     $higher_middle_index = floor($higher_values_count / 2);
     $return['q3']        = $higher_values[$higher_middle_index];
     if ($higher_values_count % 2 == 0)
-      $return['q3'] = round(($return['q3'] + $higher_values[$higher_middle_index - 1]) / 2);
+      $return['q3'] = (($return['q3'] + $higher_values[$higher_middle_index - 1]) / 2);
 
     // Check if min and max should be capped
     $iqr = $return['q3'] - $return['q1']; // Calculate the Inner Quartile Range (iqr)
@@ -1840,8 +1857,13 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     $num = count($xldata);
     $res = "cat(\"BEGIN\\n\")\n";
     $res .= "x <- list()\n";
+    $gxa = array();
+    $groups = array();
     for($i=1; $i <= $num; $i++){
       $xa = $g_hash[$xldata[$i - 1][0]];
+      array_push($gxa, ...$xa);
+      $rr = array_fill(0, count($xa), $i);
+      array_push($groups, ...$rr);
       $res .= "x[[$i]] <- c(" . join(",", $xa) . ");\n";
       $res .= "
   ex <- x[[$i]]
@@ -1872,6 +1894,12 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
 ";
       }
     }
+    $res .= "values <- c(" . join(",", $gxa) . ");\n";
+    $res .= "groups <- c(" . join(",", $groups) . ");\n";
+    $res .= "
+        s <- anova(lm(values ~ groups))
+        cat(paste('anova', s$'Pr(>F)'[1], s$'F value'[1], '\\n', sep='\\t'))
+";
     $res .= "cat('END\\n')\n";
     fwrite($fp, $res);
     fclose($fp);
@@ -1883,6 +1911,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
 
     $ihash = array();
     $phash = array();
+    $ahash = array();
     $cmd = "bash $outprefix.sh";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
@@ -1900,10 +1929,13 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
       if (count($arr) > 0 && $arr[0] == "pvalue") {
         array_push($phash, $arr);
       }
+      if (count($arr) > 0 && $arr[0] == "anova") {
+        array_push($ahash, $arr);
+      }
     }
     pclose($fh);
     self::cleanup($outprefix);
-    return array($ihash, $phash);
+    return array($ihash, $phash, $ahash);
   }
 
   function writeTikzBoxplot($fp, $x_id, $x_name, $x_arr, $h_arr, $groups, $param) {
@@ -1976,9 +2008,9 @@ ymajorgrids,
     }
     fwrite($fp, "\\end{axis}\n");
     $res = "
-\matrix[anchor=north west, xshift=1cm, name=iH] at (plot1.north east)
+\\matrix[anchor=north west, xshift=1cm, name=iH] at (plot1.north east)
 [matrix of nodes,row sep=0em, column sep=0em] {
-info & Group & n & mean & sd & 95\% CI & \\\\
+info & Group & n & mean & sd & 95\\% CI & \\\\
 ";
     fwrite($fp, $res);
     foreach ($binfo[0] as $a) {
@@ -1991,7 +2023,7 @@ info & Group & n & mean & sd & 95\% CI & \\\\
     }
     fwrite($fp, "};\n");
     $res = "
-\matrix[anchor=north west, name=iP] at (iH.south west)
+\\matrix[anchor=north west, name=iP] at (iH.south west)
 [matrix of nodes,row sep=0em, column sep=0em] {
 pvalue & Group 1 & Group 2 & statistic & pvalue \\\\
 ";
@@ -2001,6 +2033,19 @@ pvalue & Group 1 & Group 2 & statistic & pvalue \\\\
       $a[2] = $xldata[$a[2] - 1][1];
       $a[3] = sprintf("%.3g", $a[3]);
       $a[4] = sprintf("%.3g", $a[4]);
+      $res = join(" & ", $a)." \\\\\n";
+      fwrite($fp, $res);
+    }
+    fwrite($fp, "};\n");
+    $res = "
+\\matrix[anchor=north west, name=iA] at (iP.south west)
+[matrix of nodes,row sep=0em, column sep=0em] {
+anova & Pr(\$>\$F) & F Value \\\\
+";
+    fwrite($fp, $res);
+    foreach ($binfo[2] as $a) {
+      $a[1] = sprintf("%.3g", $a[1]);
+      $a[2] = sprintf("%.3g", $a[2]);
       $res = join(" & ", $a)." \\\\\n";
       fwrite($fp, $res);
     }
