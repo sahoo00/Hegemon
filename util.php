@@ -1297,7 +1297,7 @@ cat(\"END\\n\")
       }
       $dindex++;
     }
-    krsort($a_hash);
+    //krsort($a_hash);
     return $a_hash;
   }
 
