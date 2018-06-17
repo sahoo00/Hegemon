@@ -558,7 +558,9 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <script src=\"explore.js\" type=\"text/javascript\"></script>
   <script src=\"Mouse.js\" type=\"text/javascript\"></script>
   <script src=\"Groups.js\" type=\"text/javascript\"></script>
-  <script src=\"gtag.js\" type=\"text/javascript\"> </script>
+";
+  echo file_get_contents("gtag.html");
+echo "
   </head>
   <body>
 ";
@@ -566,6 +568,22 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 
 function printBody($db) {
   global $keys;
+  $gid = "";
+  $gA = "CDX2";
+  $gB = "KRT20";
+  $cmd = "";
+  if (array_key_exists("id", $_GET)) {
+    $gid = $_GET['id'];
+  }
+  if (array_key_exists("A", $_GET)) {
+    $gA = $_GET['A'];
+  }
+  if (array_key_exists("B", $_GET)) {
+    $gB = $_GET['B'];
+  }
+  if (array_key_exists("cmd", $_GET)) {
+    $cmd = $_GET['cmd'];
+  }
 echo "
     <div id=\"exploreAll\">
       <form name=\"exploreForm\" action=\"\">
@@ -576,9 +594,16 @@ echo "
     $h = new Hegemon($n);
     $num = $h->getNum();
     if ($num > 0) {
+      if (strcmp($id, $gid) == 0) {
+echo "
+      <option value=\"$id\" selected> ".$n->getName()." (n = $num) </option>
+";
+      }
+      else {
 echo "
       <option value=\"$id\"> ".$n->getName()." (n = $num) </option>
 ";
+      }
     }
   }
 echo "
@@ -588,9 +613,9 @@ echo "
       nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
       <div id=\"box\">
       Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
-              name=\"Ab\" value=\"CDX2\" alt=\"Gene A\" />
+              name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
       Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
-              name=\"Bb\" value=\"KRT20\" alt=\"Gene B\" />
+              name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
           <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
               onclick=\"callGetIDs();\"/>
           <input type=\"button\" name=\"getPlots\" value=\"getPlots\"
@@ -611,9 +636,9 @@ echo "
               onclick=\"callInfo();\"/>
           <input type=\"button\" name=\"Clear\" value=\"Clear\"
               onclick=\"callClear();\"/>
+      </div> <!-- end id box -->
 ";
 echo "
-      </div> <!-- end id box -->
       <br clear=\"all\"/>
       <div id=\"results\"> </div>
       <div id=\"lineresults\"> </div>
@@ -627,7 +652,12 @@ echo "
             var s1 = $('#dataset').val();
             var url = 'explore.php?go=getsource&id=' + s1;
             \$('#results').load(url);
-        })
+        });
+";
+      if (strcmp($cmd, "explore") == 0) {
+        echo "callExplore();\n";
+      }
+echo "
     </script>
 ";
 }
