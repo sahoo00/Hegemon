@@ -345,6 +345,73 @@ class Hegemon {
     return res;
   }
 
+  public void printHiDr() {
+    String infoFile = getInfo();
+    try {
+      Set<String> keys = getFilter();
+      for (String id : keys) {
+        out.println(id);
+      }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + infoFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void printBalanced(String singleCutoff, String singleThr) {
+    if (!hasBv()) {
+      return;
+    }
+    String bvFile = getBv();
+    String line;
+    try {
+      double single_threshold_ = Double.parseDouble(singleThr);
+      int single_cutoff_ = Integer.parseInt(singleCutoff);
+      FileReader fileReader = new FileReader(bvFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        if (result.length < 2) {
+          continue;
+        }
+        int numArr = result[2].length();
+        BitSet vb = stringToBitSet(result[2], 0);
+        BitSet vb_thr = stringToBitSet(result[2], 1);
+        if (!haveGoodDynamicRange(numArr, vb_thr)) {
+          continue;
+        }
+        int outside = vb_thr.cardinality();
+        int c1 = vb.cardinality();
+        BitSet tmp = (BitSet) vb_thr.clone();
+        tmp.andNot(vb);
+        int c0 = tmp.cardinality();
+        int total = c0 + c1;
+        if (total <= 0) {
+          continue;
+        }
+        double p = (c0/(c0+c1+0.0));
+        if (c0 < single_cutoff_ && p < single_threshold_ ) {
+          continue;
+        }
+        if (c1 < single_cutoff_ && (1-p) < single_threshold_ ) {
+          continue;
+        }
+        out.println(result[0] + "\t" + numArr + "\t" + outside +
+            "\t" + total + "\t" + c0 + "\t" + c1 + "\t" + p);
+      }   
+      bufferedReader.close();         
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + bvFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public BitSet getGroups(String listFile)  {
     if (listFile == null) {
       return null;
@@ -484,7 +551,6 @@ class Hegemon {
       // Always close files.
       bufferedReader.close();         
       for (String id : keys) {
-        out.println("BooleanFile " + id);
         printBoolean(id, listFile, keys);
       }
     }
@@ -1432,6 +1498,22 @@ class Hegemon {
       System.exit(1);
     }
     String cmd = args[0];
+    if (cmd.equals("balanced") && args.length < 3) {
+      System.out.println("Usage: java Hegemon balanced pre singleCutoff singleThr");
+      System.exit(1);
+    }
+    if (cmd.equals("balanced")) {
+      Hegemon h = new Hegemon(args[1]);
+      h.printBalanced(args[2], args[3]);
+    }
+    if (cmd.equals("hidr") && args.length < 2) {
+      System.out.println("Usage: java Hegemon hidr pre");
+      System.exit(1);
+    }
+    if (cmd.equals("hidr")) {
+      Hegemon h = new Hegemon(args[1]);
+      h.printHiDr();
+    }
     if (cmd.equals("boolean") && args.length < 3) {
       System.out.println("Usage: java Hegemon boolean pre id <listFile>");
       System.exit(1);
