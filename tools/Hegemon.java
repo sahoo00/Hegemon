@@ -377,14 +377,13 @@ class Hegemon {
     }
   }
 
-  public void printBoolean(String id, String listFile) {
+  public void printBoolean(String id, String listFile, Set<String> keys) {
     if (!hasBv()) {
       return;
     }
     String bvFile = getBv();
     String line;
     try {
-      Set<String> keys = getFilter();
       BitSet groups = getGroups(listFile);
       String line1 = getLine(bvFile, id);
       if (line1 == null) {
@@ -427,7 +426,7 @@ class Hegemon {
         getEstNum(estnum, bnum);
         getSnum(snum, bnum, estnum);
         getPnum(pnum, bnum);
-        out.println(result[0] + "\t" + strJoin("\t", bnum) + "\t" +
+        out.println(id + "\t" + result[0] + "\t" + strJoin("\t", bnum) + "\t" +
             strJoin("\t", snum) + "\t" + strJoin("\t", pnum));
       }   
 
@@ -442,8 +441,63 @@ class Hegemon {
     }
   }
 
+  public void printBoolean(String id, String listFile) {
+    if (!hasBv()) {
+      return;
+    }
+    String infoFile = getInfo();
+    try {
+      Set<String> keys = getFilter();
+      printBoolean(id, listFile, keys);
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + infoFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public void printBoolean(String id) {
     printBoolean(id, null);
+  }
+
+  public void printBooleanFile(String idfile, String listFile) {
+    if (!hasBv()) {
+      return;
+    }
+    String line;
+    try {
+      HashSet<String> keys = new HashSet<String>();
+      FileReader fileReader = new FileReader(idfile);
+      // Always wrap FileReader in BufferedReader.
+      BufferedReader bufferedReader = 
+        new BufferedReader(fileReader);
+
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        if (result.length < 1) {
+          continue;
+        }
+        keys.add(result[0]);
+      }   
+      // Always close files.
+      bufferedReader.close();         
+      for (String id : keys) {
+        out.println("BooleanFile " + id);
+        printBoolean(id, listFile, keys);
+      }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + idfile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void printBooleanFile(String idfile) {
+    printBooleanFile(idfile, null);
   }
 
   public static double sum(double[] data, int start, int end) {
@@ -1389,6 +1443,19 @@ class Hegemon {
       }
       else {
         h.printBoolean(args[2], args[3]);
+      }
+    }
+    if (cmd.equals("Boolean") && args.length < 3) {
+      System.out.println("Usage: java Hegemon Boolean pre idfile <listFile>");
+      System.exit(1);
+    }
+    if (cmd.equals("Boolean")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.printBooleanFile(args[2]);
+      }
+      else {
+        h.printBooleanFile(args[2], args[3]);
       }
     }
     if (cmd.equals("corr") && args.length < 3) {

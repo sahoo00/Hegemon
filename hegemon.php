@@ -661,12 +661,12 @@ class Hegemon {
       $line = fgets($fh);
       $line = rtrim($line, "\r\n");
       $list = explode("\t", $line);
-      if (count($list) != 13) {
+      if (count($list) != 14) {
         continue;
       }
-      $bs = [[], [], array_slice($list, 5, 4), array_slice($list, 9, 4)];
+      $bs = [[], [], array_slice($list, 6, 4), array_slice($list, 10, 4)];
       $rel = U::getBooleanRelations($bs, $sthr, $pthr);
-      $res[$list[0]] = $rel;
+      $res[$list[1]] = $rel;
     }
     pclose($fh);
     return $res;
