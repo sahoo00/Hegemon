@@ -707,6 +707,28 @@ fig.savefig('$outprefix.png', dpi=100)
     fclose($fp);
   }
 
+  function setupMatDataArray($x_arr, $y_arr, $p_arr, $h_arr, $outprefix, $param) {
+    $num = count($x_arr);
+    if (($fp = fopen("$outprefix.data", "w")) === FALSE) {
+      echo "Can't open file tmp.data <br>";
+    }
+    for($i=2; $i < $num; $i++){       
+      if (preg_match('/^\s*$/', $x_arr[$i])) {
+        continue;
+      }
+      if (preg_match('/^\s*$/', $y_arr[$i])) {
+        continue;
+      }
+      $c = self::getColor($p_arr[$i]);
+      if (array_key_exists("color", $param)) {
+        $c = $param["color"];
+      }
+      $str = $x_arr[$i]." ".$y_arr[$i]." $c ".$h_arr[$i]."\n";
+      fwrite($fp, $str);
+    }
+    fclose($fp);
+  }
+
   function readSurvival($file) {
     $timehash = array();
     $statushash = array();

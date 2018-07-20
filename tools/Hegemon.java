@@ -551,6 +551,7 @@ class Hegemon {
       // Always close files.
       bufferedReader.close();         
       for (String id : keys) {
+        System.err.println(id);
         printBoolean(id, listFile, keys);
       }
     }

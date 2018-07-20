@@ -25,13 +25,15 @@ if (array_key_exists("key", $_GET)) {
   foreach (explode(":", trim($_GET["key"])) as $v) { $keys[$v] = 1; }
 }
 if (array_key_exists("groups", $_GET)) {
-  $groups = urldecode($_GET['groups']);
+  $groups = $_GET['groups'];
+  //$groups = urldecode($_GET['groups']);
 }
 if (array_key_exists("key", $_POST)) {
   $keys = array();
   foreach (explode(":", trim($_POST["key"])) as $v) { $keys[$v] = 1; }
 }
 if (array_key_exists("groups", $_POST)) {
+  //$groups = $_POST['groups'];
   $groups = urldecode($_POST['groups']);
 }
 if (array_key_exists("param", $_GET)) {

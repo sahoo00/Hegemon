@@ -8,6 +8,19 @@ var showVal = new Array();
 var showImVal = new Array();
 var maxarrayget = 200;
 
+function urlencode(str) {
+   var symbols = {
+      '@': '%40',
+      '&amp;': '%26',
+      '*': '%2A',
+      '+': '%2B',
+      '/': '%2F',
+      '&lt;': '%3C',
+      '&gt;': '%3E'
+   };
+   return escape(str).replace(/([@*+/]|%26(amp|lt|gt)%3B)/g, function (m) { return symbols[m]; });
+}
+
 function createGroup(str) {
   var g = new Array();
   var i = 0;
@@ -300,7 +313,7 @@ function getGroupStr() {
       str += i + '=' + groupNames[id] + '=' + groups[id].join(':') + ';' ;
     }
   }
-  return escape(str);
+  return urlencode(str);
 }
 
 function getNumArrays() {
