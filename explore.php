@@ -44,6 +44,12 @@ if (array_key_exists("param", $_POST)) {
 }
 
 if (array_key_exists("go", $_GET)) {
+  if (strcmp($_GET["go"], "getpatientinfojson") == 0) {
+    printPatientInfoJSON($file, $_GET['id']);
+  }
+  if (strcmp($_GET["go"], "getdatasetsjson") == 0) {
+    printAllDatasetsJSON($file);
+  }
   if (strcmp($_GET["go"], "getids") == 0) {
     printAllIDs($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
@@ -52,6 +58,9 @@ if (array_key_exists("go", $_GET)) {
   }
   if (strcmp($_GET["go"], "getplots") == 0) {
     getPlots($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
+  if (strcmp($_GET["go"], "getplotsjson") == 0) {
+    getPlotsJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
   if (strcmp($_GET["go"], "plotids") == 0) {
     plotids($file, $_GET['file'], $_GET['id'], 
@@ -108,6 +117,22 @@ else {
   printSummary($file);
 }
 
+function printAllDatasetsJSON($file) {
+  global $keys;
+  $db = new Database($file);
+  $res = [];
+  foreach ($db->getListKey($keys) as $n) {
+    $id = $n->getID();
+    $h = new Hegemon($n);
+    $num = $h->getNum();
+    if ($num > 0) {
+      $k = [$id, $n->getName(), $num];
+      array_push($res, $k);
+    }
+  }
+  echo json_encode($res);
+}
+
 function getParam($str) {
   $res = [];
   foreach (explode(";", $str) as $p) {
@@ -136,6 +161,21 @@ function getImgUrl($h, $id, $id1, $id2) {
   return $src;
 }
   
+function printPatientInfoJSON($file, $id) {
+  $h = getHegemon($file, $id);
+  $h->initPlatform();
+  $sfile = $h->getSurv();
+  if ($sfile == null || ($fp = fopen($sfile, "r")) === FALSE) {
+    return;
+  }
+  $head = fgets($fp);
+  fclose($fp);
+  $head = chop($head, "\r\n");
+  $headers = explode("\t", $head);
+  $headers[0] = "Select Patient Information";
+  echo json_encode($headers);
+}
+
 function setupDisplay($h, $id, $sthr, $pthr, $bestid1, $bestid2, $head,
     $values, $idlist) {
   echo "
@@ -458,6 +498,23 @@ function getPlots($file, $str1, $str2, $id) {
         "&x=$ptr1&y=$ptr2\n";
     }
   }
+}
+
+function getPlotsJSON($file, $str1, $str2, $id) {
+  $h = getHegemon($file, $id);
+  $h->initPlatform();
+  $exprFile = $h->getExprFile();
+  $res = [];
+  foreach ($h->getIDs($str1) as $v1 => $n1) {
+    $ptr1 = $h->getPtr($v1);
+    foreach ($h->getIDs($str2) as $v2 => $n2) {
+      $ptr2 = $h->getPtr($v2);
+      $k = [$v1, $h->getName($v1), $v2, $h->getName($v2),
+            $exprFile, $id, $n1, $n2, $ptr1, $ptr2];
+      array_push($res, $k);
+    }
+  }
+  echo json_encode($res);
 }
 
 function plotids($file, $f, $id, $x, $y, $xn, $yn, $groups) {

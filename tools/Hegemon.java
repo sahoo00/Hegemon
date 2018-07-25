@@ -431,7 +431,7 @@ class Hegemon {
       }
       BitSet res = new BitSet(headers.length - start);
       //System.out.println(str.length());
-      for (int i =start; i < end; i++) {
+      for (int i =start; i <= end; i++) {
         res.clear(i - start);
         if (idlist.contains(headers[i])) {
           res.set(i - start);
@@ -565,6 +565,18 @@ class Hegemon {
 
   public void printBooleanFile(String idfile) {
     printBooleanFile(idfile, null);
+  }
+
+  public static double min(double[] data, int start, int end) {
+    double res = Double.MAX_VALUE;
+    for (int i = start; i <= end; i++) {
+      if (!Double.isNaN(data[i])) {
+        if (res > data[i]) {
+          res = data[i];
+        }
+      }
+    }
+    return res;
   }
 
   public static double sum(double[] data, int start, int end) {
@@ -876,17 +888,21 @@ class Hegemon {
   }
 
   public void printCorrelation2(String id1, String id2) {
-    printCorrelation2(id1, id2, null);
+    printCorrelation2(id1, id2, (String) null);
   }
 
   public void printCorrelation2(String id1, String id2, String listFile) {
+    BitSet groups = getGroups(listFile);
+    printCorrelation2(id1, id2, groups);
+  }
+
+  public void printCorrelation2(String id1, String id2, BitSet groups) {
     String exprFile = getExprFile();
     if (exprFile == null) {
       return;
     }
     String line;
     try {
-      BitSet groups = getGroups(listFile);
       String[] lines = get2Lines(exprFile, id1, id2);
       if (lines[0] == null && lines[1] == null) {
         return;
@@ -951,6 +967,234 @@ class Hegemon {
             + "\t" + counts[0] + "\t" + counts[1]
             + "\t" + me2.getKey() + "\t" + hmap2.get(me2.getKey())); 
       }
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void printCorrelation3(String id1, String id2) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
+      return;
+    }
+    String line;
+    try {
+      String[] lines = get2Lines(exprFile, id1, id2);
+      if (lines[0] == null && lines[1] == null) {
+        return;
+      }
+      double[] data0 = null;
+      double[] data1 = null;
+
+      int num = 0;
+      if (lines[0] != null) {
+        String[] result = lines[0].split("\\t", -2); // -2 : Don't discard trailing nulls
+        data0 = new double[result.length];
+        num = result.length;
+        getExprData(result, data0, null); 
+      }
+      if (lines[1] != null) {
+        String[] result = lines[1].split("\\t", -2); // -2 : Don't discard trailing nulls
+        data1 = new double[result.length];
+        if (result.length > num) {
+          num = result.length;
+        }
+        getExprData(result, data1, null); 
+      }
+      if (num == 0) {
+        return;
+      } 
+      ArrayList<Double> dlist = new ArrayList<Double>();
+      for (int i =start; i <= end; i++) {
+        if (!Double.isNaN(data0[i])) {
+          dlist.add(new Double(data0[i]));
+        }
+      }
+      double[] ddata = new double[dlist.size()];
+      for (int x=0; x<dlist.size(); x++) {
+        ddata[x] = dlist.get(x);
+      }
+      Arrays.sort(ddata);
+      double thr0 = fitStep(ddata, 0, ddata.length-1);
+      double v_min = ddata[0];
+      double v_thr = (thr0 + v_min) / 2;
+      dlist = new ArrayList<Double>();
+      for (int i =start; i <= end; i++) {
+        if (!Double.isNaN(data1[i])) {
+          dlist.add(new Double(data1[i]));
+        }
+      }
+      ddata = new double[dlist.size()];
+      for (int x=0; x<dlist.size(); x++) {
+        ddata[x] = dlist.get(x);
+      }
+      Arrays.sort(ddata);
+      double thr1 = fitStep(ddata, 0, ddata.length-1);
+      double h_min = ddata[0];
+      double h_thr = (thr1 + h_min) / 2;
+      int v_size = 0;
+      for (int i =start; i <= end; i++) {
+        if (!Double.isNaN(data0[i]) && !Double.isNaN(data1[i])) {
+          if (data0[i] > v_thr && data1[i] > h_thr) {
+            v_size++;
+          }
+        }
+      }
+      double[] vdata0 = new double[v_size];
+      double[] vdata1 = new double[v_size];
+      int index = 0;
+      int count1 = 0;
+      int count2 = 0;
+      int count3 = 0;
+      int count4 = 0;
+      for (int i =start; i <= end; i++) {
+        if (!Double.isNaN(data0[i]) && !Double.isNaN(data1[i])) {
+          if (data0[i] > v_thr && data1[i] > h_thr) {
+            vdata0[index] = data0[i];
+            vdata1[index] = data1[i];
+            index++;
+          }
+          if (data0[i] <= v_thr && data1[i] > thr1) {
+            count1++;
+          }
+          if (data0[i] <= v_thr) {
+            count2++;
+          }
+          if (data1[i] <= h_thr && data0[i] > thr0) {
+            count3++;
+          }
+          if (data1[i] <= h_thr) {
+            count4++;
+          }
+        }
+      }
+      int[] counts = new int[] {0, 0};
+      double res1 = getCorrelation(vdata0, vdata1, counts);
+      double res2 = getCorrelation(data0, data1, counts);
+      out.println(id1 + "\t" + id2 + "\t" + res2 + "\t" + res1 + "\t" +
+          thr0 + "\t" + thr1 + "\t" + v_min + "\t" + v_thr + "\t" + 
+          h_min + "\t" + h_thr + "\t" + 
+          count1 + "\t" + count2 + "\t" + (count1 /(count2 + 1.0)) + "\t" +
+          count3 + "\t" + count4 + "\t" + (count3 /(count4 + 1.0)));
+    }
+    catch(FileNotFoundException ex) {
+      out.println( "Unable to open file '" + exprFile + "'");
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  public void printCorrelation3(String id) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
+      return;
+    }
+    String line;
+    try {
+      String line1 = getLine(exprFile, id);
+      if (line1 == null) {
+        return;
+      }
+      String[] result1 = line1.split("\\t", -2); // -2 : Don't discard trailing nulls
+      double[] data1 = new double[result1.length];
+      getExprData(result1, data1, null); 
+      
+      ArrayList<Double> dlist = new ArrayList<Double>();
+      for (int i =start; i <= end; i++) {
+        if (!Double.isNaN(data1[i])) {
+          dlist.add(new Double(data1[i]));
+        }
+      }
+      double[] ddata = new double[dlist.size()];
+      for (int x=0; x<dlist.size(); x++) {
+        ddata[x] = dlist.get(x);
+      }
+      Arrays.sort(ddata);
+      double thr1 = fitStep(ddata, 0, ddata.length-1);
+      double v_min = ddata[0];
+      double v_thr = (thr1 + v_min) / 2;
+      // FileReader reads text files in the default encoding.
+      FileReader fileReader = 
+        new FileReader(exprFile);
+
+      // Always wrap FileReader in BufferedReader.
+      BufferedReader bufferedReader = 
+        new BufferedReader(fileReader);
+
+      double[] data2 = new double[result1.length];
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        getExprData(result, data2, null); 
+        dlist = new ArrayList<Double>();
+        for (int i =start; i <= end; i++) {
+          if (!Double.isNaN(data2[i])) {
+            dlist.add(new Double(data2[i]));
+          }
+        }
+        if (dlist.size() <= 0) {
+          continue;
+        }
+        ddata = new double[dlist.size()];
+        for (int x=0; x<dlist.size(); x++) {
+          ddata[x] = dlist.get(x);
+        }
+        Arrays.sort(ddata);
+        double thr2 = fitStep(ddata, 0, ddata.length-1);
+        double h_min = ddata[0];
+        double h_thr = (thr2 + h_min) / 2;
+        int v_size = 0;
+        for (int i =start; i <= end; i++) {
+          if (!Double.isNaN(data1[i]) && !Double.isNaN(data2[i])) {
+            if (data1[i] > v_thr && data2[i] > h_thr) {
+              v_size++;
+            }
+          }
+        }
+        double[] vdata1 = new double[v_size];
+        double[] vdata2 = new double[v_size];
+        int index = 0;
+        int count1 = 0;
+        int count2 = 0;
+        int count3 = 0;
+        int count4 = 0;
+        for (int i =start; i <= end; i++) {
+          if (!Double.isNaN(data1[i]) && !Double.isNaN(data2[i])) {
+            if (data1[i] > v_thr && data2[i] > h_thr) {
+              vdata1[index] = data1[i];
+              vdata2[index] = data2[i];
+              index++;
+            }
+            if (data1[i] <= v_thr && data2[i] > thr2) {
+              count1++;
+            }
+            if (data1[i] <= v_thr) {
+              count2++;
+            }
+            if (data2[i] <= h_thr && data1[i] > thr1) {
+              count3++;
+            }
+            if (data2[i] <= h_thr) {
+              count4++;
+            }
+          }
+        }
+        int[] counts = new int[] {0, 0};
+        double res1 = getCorrelation(vdata1, vdata2, counts);
+        double res2 = getCorrelation(data1, data2, counts);
+        String id2 = result[0];
+        out.println(id + "\t" + id2 + "\t" + res2 + "\t" + res1 + "\t" +
+            thr1 + "\t" + thr2 + "\t" + v_min + "\t" + v_thr + "\t" + 
+            h_min + "\t" + h_thr + "\t" + 
+            count1 + "\t" + count2 + "\t" + (count1 /(count2 + 1.0)) + "\t" +
+            count3 + "\t" + count4 + "\t" + (count3 /(count4 + 1.0)));
+      }
+      // Always close files.
+      bufferedReader.close();         
     }
     catch(FileNotFoundException ex) {
       out.println( "Unable to open file '" + exprFile + "'");
@@ -1565,6 +1809,19 @@ class Hegemon {
       }
       else {
         h.printCorrelation2(args[2], args[3], args[4]);
+      }
+    }
+    if (cmd.equals("corr3") && args.length < 3) {
+      System.out.println("Usage: java Hegemon corr3 pre id1 [id2]");
+      System.exit(1);
+    }
+    if (cmd.equals("corr3")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.printCorrelation3(args[2]);
+      }
+      else {
+        h.printCorrelation3(args[2], args[3]);
       }
     }
     if (cmd.equals("diff") && args.length < 3) {

@@ -443,7 +443,9 @@ function callSelectLineTool() {
 function callSelectTool() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     var s1 = escape(getDatasetID('dataset'));
-    var url = 'explore.php?go=selectPatientInfo';
+    var url = document.getElementById('img0link').href;
+    var list = url.split("?");
+    url = list[0] + '?go=selectPatientInfo';
     url += '&id=' + s1;
     var str1 = escape(document.getElementById('clinical0').value);
     url += '&clinical=' + str1;
@@ -464,7 +466,9 @@ function handleSelectTool() {
 function callPatientGroup(id, num) {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     var s1 = escape(getDatasetID('dataset'));
-    var url = 'explore.php?go=getPatients&id=' + s1;
+    var url = document.getElementById('img0link').href;
+    var list = url.split("?");
+    url = list[0] + '?go=getPatients&id=' + s1;
     url += '&clinical=' + num;
     var str1 = escape(document.getElementById(id).value);
     str1 = str1.replace(/\+/g, "%2B");
@@ -551,7 +555,9 @@ function callGetLinePlots() {
       return;
     }
     var params = "go=getlineplots&id=" + s1 + "&gList=" + str1;
-    xmlHttp.open("POST", "explore.php", true);
+    var url = document.getElementById('img0link').href;
+    var list = url.split("?");
+    xmlHttp.open("POST", list[0], true);
     //Send the proper header information along with the request
     xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     xmlHttp.setRequestHeader("Content-length", params.length);
