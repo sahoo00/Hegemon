@@ -44,11 +44,23 @@ if (array_key_exists("param", $_POST)) {
 }
 
 if (array_key_exists("go", $_GET)) {
+  if (strcmp($_GET["go"], "getthrjson") == 0) {
+    printThrJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
+  if (strcmp($_GET["go"], "getptrjson") == 0) {
+    printPtrJSON($_GET['file'], $_GET['x']);
+  }
+  if (strcmp($_GET["go"], "getdatajson") == 0) {
+    printDataJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
+  }
   if (strcmp($_GET["go"], "getpatientinfojson") == 0) {
     printPatientInfoJSON($file, $_GET['id']);
   }
   if (strcmp($_GET["go"], "getdatasetsjson") == 0) {
     printAllDatasetsJSON($file);
+  }
+  if (strcmp($_GET["go"], "getdatasetjson") == 0) {
+    printDatasetJSON($file, $_GET['id']);
   }
   if (strcmp($_GET["go"], "getids") == 0) {
     printAllIDs($file, $_GET['A'], $_GET['B'], $_GET['id']);
@@ -117,6 +129,18 @@ else {
   printSummary($file);
 }
 
+function printDatasetJSON($file, $id) {
+  $db = new Database($file);
+  $n = $db->getDataset($id);
+  $res = [$id, "", 0];
+  if ($n != null) {
+    $h = new Hegemon($n);
+    $num = $h->getNum();
+    $res = [$id, $n->getName(), $num];
+  }
+  echo json_encode($res);
+}
+
 function printAllDatasetsJSON($file) {
   global $keys;
   $db = new Database($file);
@@ -148,6 +172,74 @@ function getHegemon($file, $id) {
   $h = new Hegemon($d);
   $h->init();
   return $h;
+}
+
+function printPtrJSON($exprFile, $ptr1) {
+  $res = [];
+  list($x_arr, $h_arr) = U::getX($exprFile, $ptr1, 0);
+  array_push($res, $h_arr);
+  array_push($res, $x_arr);
+  echo json_encode($res);
+}
+
+function printThrJSON($file, $str1, $str2, $id) {
+  $h = getHegemon($file, $id);
+  $h->initPlatform();
+  $exprFile = $h->getExprFile();
+  $pre = $h->getPre();
+  $idhash = $h->getIDs("$str1 $str2");
+  $res = [];
+  if (file_exists("$pre-thr.txt")) {
+    if (($fp = fopen("$pre-thr.txt", "r")) === FALSE) {
+      echo "Can't open file $pre-thr.txt <br>";
+      exit;
+    }
+    while (1) {
+      $line = fgets($fp);
+      if (feof($fp)) {
+        break;
+      }
+      $l = explode("\t", $line);
+      if (count($l) > 0 && array_key_exists($l[0], $idhash)) {
+        $ptr1 = $h->getPtr($l[0]);
+        array_push($l, $exprFile);
+        array_push($l, $ptr1);
+        array_push($l, $idhash[$l[0]]);
+        array_push($res, $l);
+      }
+    }
+    fclose($fp);
+  }
+  else {
+    foreach ($idhash as $v1 => $n1) {
+      $ptr1 = $h->getPtr($v1);
+      list($x_arr, $h_arr) = U::getX($exprFile, $ptr1, 0);
+      $l = U::getThrData($x_arr, 2, count($x_arr)-2);
+      array_push($l, $exprFile);
+      array_push($l, $ptr1);
+      array_push($l, $n1);
+      array_push($res, $l);
+    }
+  }
+  echo json_encode($res);
+}
+
+function printDataJSON($file, $str1, $str2, $id) {
+  $h = getHegemon($file, $id);
+  $h->initPlatform();
+  $exprFile = $h->getExprFile();
+  $res = [];
+  $header = 0;
+  foreach ($h->getIDs("$str1 $str2") as $v1 => $n1) {
+    $ptr1 = $h->getPtr($v1);
+    list($x_arr, $h_arr) = U::getX($exprFile, $ptr1, 0);
+    if ($header == 0) {
+      array_push($res, $h_arr);
+      $header = 1;
+    }
+    array_push($res, $x_arr);
+  }
+  echo json_encode($res);
 }
 
 function getImgUrl($h, $id, $id1, $id2) {

@@ -483,7 +483,7 @@ class Hegemon {
       $ll = explode("\t", $line);
       $id = $ll[0];
       for ($i = 1; $i < count($ll); $i++) {
-        if ($id == 2) {
+        if ($i == 2) {
           continue;
         }
         $p_name = $ll[$i];
