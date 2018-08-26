@@ -7,6 +7,14 @@ from PIL import Image
 import StringIO
 import pandas as pd
 import seaborn as sns
+import numpy as np
+from matplotlib import pyplot as plt
+from lifelines import KaplanMeierFitter
+
+def uniq(mylist):
+  used = set()
+  unique = [x for x in mylist if x not in used and (used.add(x) or True)]
+  return unique
 
 def sumf(arr):
   s = 0
@@ -15,7 +23,10 @@ def sumf(arr):
   return s
 
 def meanf(arr):
-  return sum(arr)/len(arr)
+  if len(arr) == 0:
+    return 0
+  else:
+    return sum(arr)/len(arr)
 
 def variancef(arr):
   sq = 0.0
@@ -36,6 +47,8 @@ def msef(arr):
   return result
 
 def fitstep(arr):
+  if len(arr) <= 0:
+    return None
   #start = 0    # start and end are indices in arr  
   #end = count - 1
   sseArray = [0 for i in range(len(arr))] 
@@ -96,7 +109,6 @@ def fitstep(arr):
     label = 1
   else:
     label = 2
-
 
   statistic = 0
   if bestSse > 0 :
@@ -179,6 +191,24 @@ def getHegemonPatients(dbid, clinical, value):
     pHash[l[0]] = l[1]
   return  pHash
 
+def getHegemonPatientInfo(dbid):
+  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getpatientinfojson" + \
+        "&id=" + dbid
+  response = requests.get(url)
+  obj = json.loads(response.text)
+  return  obj
+
+def getHegemonPatientData(dbid, name):
+  hdr = getHegemonPatientInfo(dbid)
+  clinical = 0
+  if name in hdr:
+    clinical = hdr.index(name)
+  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getpatientdatajson" + \
+        "&id=" + dbid + "&clinical=" + str(clinical)
+  response = requests.get(url)
+  obj = json.loads(response.text)
+  return  obj
+
 def getHegemonPtr(exprFile, ptr):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getptrjson&file=" + \
           exprFile + "&x=" + ptr
@@ -214,7 +244,7 @@ def plotPair(obj):
   ax.set_title("{0} (n = {1})".format(info[1], info[2]))
   return ax
 
-def plotBooleanPair(obj, pHash=None):
+def plotBooleanSelect(obj, pHash=None):
   info = getHegemonDataset(obj[5]);
   thr = getHegemonThr(obj[5], obj[0], obj[2]);
   thash = {}
@@ -245,6 +275,172 @@ def plotBooleanPair(obj, pHash=None):
   ax.axvline(x=thrx[3], color='cyan')
   ax.axvline(x=thrx[4], color='cyan')
   return ax
+
+def plotBooleanPair(obj, pGroups=None):
+  info = getHegemonDataset(obj[5]);
+  thr = getHegemonThr(obj[5], obj[0], obj[2]);
+  thash = {}
+  for v in thr:
+    thash[v[0]] = v
+  datax = getHegemonPtr(obj[4], obj[8])
+  datay = getHegemonPtr(obj[4], obj[9])
+  thrx = thash[str(obj[0])]
+  thry = thash[str(obj[2])]
+  w,h = (6.4, 4.8)
+  dpi = 100
+  fig = plt.figure(figsize=(w,h))
+  ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
+  if pGroups is None:
+    df = pd.DataFrame()
+    df["x"] = pd.to_numeric(pd.Series(datax[1][2:]))
+    df["y"] = pd.to_numeric(pd.Series(datay[1][2:]))
+    #ax = df.plot.scatter(x='x', y='y')
+    ax.plot(df["x"], df["y"], ls='None', marker='.', color='blue')
+  else:
+    for k in range(len(pGroups)):
+      df = pd.DataFrame()
+      order = pGroups[k][2]
+      val = [datax[1][i] for i in order]
+      df["x"] = pd.to_numeric(pd.Series(val))
+      val = [datay[1][i] for i in order]
+      df["y"] = pd.to_numeric(pd.Series(val))
+      ax.plot(df["x"], df["y"], ls='None', marker='.', color=pGroups[k][1])
+  ax.set_xlabel(obj[6])
+  ax.set_ylabel(obj[7])
+  ax.set_title("{0} (n = {1})".format(info[1], info[2]))
+  ax.axhline(y=thry[1], color='r')
+  ax.axhline(y=thry[3], color='cyan')
+  ax.axhline(y=thry[4], color='cyan')
+  ax.axvline(x=thrx[1], color='r')
+  ax.axvline(x=thrx[3], color='cyan')
+  ax.axvline(x=thrx[4], color='cyan')
+  return ax
+
+def boxplotArray(data, pGroups=None, thr=None, ax=None):
+  if ax is None:
+    w,h = (6.4, 4.8)
+    dpi = 100
+    fig = plt.figure(figsize=(w,h))
+    ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
+  if pGroups is None:
+    df = pd.DataFrame()
+    df["x"] = pd.to_numeric(pd.Series(data[2:]))
+    ax.boxplot(df["x"])
+  else:
+    bdata = []
+    for k in range(len(pGroups)):
+      df = pd.DataFrame()
+      order = pGroups[k][2]
+      val = [data[i] for i in order if data[i] != ""]
+      df["x"] = pd.to_numeric(pd.Series(val))
+      bdata.append(df["x"])      
+    bp = ax.boxplot(bdata, patch_artist=True)
+    ax.set_xticklabels([ g[0] for g in pGroups ])
+    for k in range(len(pGroups)):
+      bp['boxes'][k].set(color = pGroups[k][1])
+      bp['boxes'][k].set(facecolor = pGroups[k][1], alpha=0.2)
+      bp['fliers'][k].set(color = pGroups[k][1])
+      bp['medians'][k].set(color = pGroups[k][1])
+    for k in range(2*len(pGroups)):
+      bp['whiskers'][k].set(color = pGroups[k/2][1])
+      bp['caps'][k].set(color = pGroups[k/2][1])
+  ax.set_ylabel(data[1])
+  if thr is not None:
+    ax.axhline(y=thr[1], color='r')
+    ax.axhline(y=thr[3], color='cyan')
+    ax.axhline(y=thr[4], color='cyan')
+
+def boxplot(obj, pGroups=None):
+  info = getHegemonDataset(obj[5]);
+  thr = getHegemonThr(obj[5], obj[0], obj[2]);
+  thash = {}
+  for v in thr:
+    thash[v[0]] = v
+  datax = getHegemonPtr(obj[4], obj[8])
+  datay = getHegemonPtr(obj[4], obj[9])
+  thrx = thash[str(obj[0])]
+  thry = thash[str(obj[2])]
+  w,h = (12, 4.8)
+  dpi = 100
+  fig = plt.figure(figsize=(w,h))
+  ax = plt.subplot(1, 2, 1)
+  datax[1][1] = obj[6]
+  boxplotArray(datax[1], pGroups, thrx, ax)
+  ax.set_title("{0} (n = {1})".format(info[1], info[2]))
+  ax = plt.subplot(1, 2, 2)
+  datay[1][1] = obj[7]
+  boxplotArray(datay[1], pGroups, thry, ax)
+  ax.set_title("{0} (n = {1})".format(info[1], info[2]))
+  return ax
+
+def survival(time, status, pGroups=None):
+  kmf = KaplanMeierFitter()
+  if pGroups is None:
+    order = [i for i in range(2, len(time)) 
+		if time[i] != "" and status[i] != ""]
+    t = [float(time[i]) for i in order]
+    s = [int(status[i]) for i in order]
+    kmf.fit(t, s)
+    ax = kmf.plot(color='red')
+    return ax
+  else:
+    ax = None
+    groups = [ "" for i in time]
+    for k in range(len(pGroups)):
+      df = pd.DataFrame()
+      order = [i for i in pGroups[k][2]
+               if time[i] != "" and status[i] != ""]
+      if len(order) <= 0:
+          continue
+      for i in order:
+        groups[i] = k
+      t = [float(time[i]) for i in order]
+      s = [int(status[i]) for i in order]
+      kmf.fit(t, s, label = pGroups[k][0])
+      if ax is None:
+        ax = kmf.plot(color=pGroups[k][1], ci_show=False, show_censors=True)
+      else:
+        ax = kmf.plot(ax = ax, color=pGroups[k][1], ci_show=False, show_censors=True)
+    order = [i for i in range(len(groups)) if groups[i] != ""]
+    if len(order) > 0:
+      t = [float(time[i]) for i in order]
+      s = [int(status[i]) for i in order]
+      g = [int(groups[i]) for i in order]
+      from lifelines.statistics import multivariate_logrank_test
+      from matplotlib.legend import Legend
+      res = multivariate_logrank_test(t, g, s)
+      leg = Legend(ax, [], [], title = "p = %.2g" % res.p_value,
+                   loc='lower left', frameon=False)
+      ax.add_artist(leg);
+
+def multivariate(df):
+    from lifelines import CoxPHFitter
+    cph = CoxPHFitter()
+    cph.fit(df, duration_col='time', event_col='status',
+            show_progress=True)
+    cph.print_summary()  # access the results using cph.summary
+
+def Multivariate(df):
+    import rpy2.robjects as ro
+    ro.r('library(survival)')
+    ro.r("time <- c(" + ",".join(df["time"]) + ")")
+    ro.r("status <- c(" + ",".join(df["status"]) + ")")
+    columns = []
+    for k in df.columns:
+      if k == "time":
+        continue
+      if k == "status":
+        continue
+      columns.append(k)
+      ro.r(k + " <- c(" + ",".join([str(i) for i in df[k]]) + ")")
+    ro.r('x <- coxph(Surv(time, status) ~ ' + '+'.join(columns) + ')')
+    ro.r('s <- summary(x)')
+    print ro.r('s')
+    for k in columns:
+        ro.r('x <- coxph(Surv(time, status) ~ ' + k + ')')
+        ro.r('s <- summary(x)')
+        print ro.r('s')
+
 
 class Dataset:
 
@@ -736,6 +932,9 @@ def main():
   obj = getHegemonPlots("LK21", "CD96", "CA1")
   print obj
   img = getHegemonImg(obj[0])
+  obj = getHegemonPatientInfo("LK21")
+  print obj
+  obj = getHegemonPatientData("LK21", 'c Title')
 
 if __name__ == "__main__":
   main()

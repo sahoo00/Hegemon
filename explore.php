@@ -56,6 +56,9 @@ if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "getpatientinfojson") == 0) {
     printPatientInfoJSON($file, $_GET['id']);
   }
+  if (strcmp($_GET["go"], "getpatientdatajson") == 0) {
+    printPatientDataJSON($file, $_GET['id'], $_GET['clinical']);
+  }
   if (strcmp($_GET["go"], "getdatasetsjson") == 0) {
     printAllDatasetsJSON($file);
   }
@@ -255,7 +258,6 @@ function getImgUrl($h, $id, $id1, $id2) {
   
 function printPatientInfoJSON($file, $id) {
   $h = getHegemon($file, $id);
-  $h->initPlatform();
   $sfile = $h->getSurv();
   if ($sfile == null || ($fp = fopen($sfile, "r")) === FALSE) {
     return;
@@ -266,6 +268,52 @@ function printPatientInfoJSON($file, $id) {
   $headers = explode("\t", $head);
   $headers[0] = "Select Patient Information";
   echo json_encode($headers);
+}
+
+function printPatientDataJSON($file, $id, $clinical) {
+  $h = getHegemon($file, $id);
+  $sfile = $h->getSurv();
+  if ($sfile == null || ($fp = fopen($sfile, "r")) === FALSE) {
+    return;
+  }
+  $head = fgets($fp);
+  $head = chop($head, "\r\n");
+  $headers = explode("\t", $head);
+  $headers[0] = "Select Patient Information";
+  $exprFile = $h->getExprFile();
+  $h_arr = U::getH($exprFile, 0);
+  if ($clinical >= 0 && $clinical < count($headers)) {
+    $vhash = [];
+    while (!feof($fp))
+    {
+      $line = fgets($fp);
+      if ($line == "") {
+        continue;
+      }
+      $line = chop($line, "\r\n");
+      $list = explode("\t", $line);
+      if (count($list) < 1) {
+        continue;
+      }
+      $v = "";
+      if ($clinical < count($list)) {
+        $v = $list[$clinical];
+      }
+      $vhash[$list[0]] = $v;
+    }
+    $type = $headers[$clinical];
+    $v_arr = [$clinical, $type];
+    for ($i = 2; $i < count($h_arr); $i++) {
+      if (array_key_exists($h_arr[$i], $vhash)) {
+        array_push($v_arr, $vhash[$h_arr[$i]]);
+      }
+      else {
+        array_push($v_arr, "");
+      }
+    }
+    echo json_encode([$h_arr, $v_arr]);
+  }
+  fclose($fp);
 }
 
 function setupDisplay($h, $id, $sthr, $pthr, $bestid1, $bestid2, $head,
