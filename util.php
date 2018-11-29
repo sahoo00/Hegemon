@@ -1337,12 +1337,20 @@ cat(\"END\\n\")
     $lmaxy = ($maxy - $miny);
     if ($lmaxx <= 0) { $lmaxx = 1; }
     if ($lmaxy <= 0) { $lmaxy = 1; }
-    $xunit = (640 - 2 * 70)/$lmaxx/100;
-    $yunit = (480 - 2 * 54)/$lmaxy/100;
-    $ox = 70/100/$xunit;
-    $oy = 54/100/$yunit;
-    $tx = (640 - 70)/100/$xunit;
-    $ty = (480 - 54)/100/$yunit;
+    $width = 600;
+    $height = 600;
+    $xsp = 70;
+    $ysp = 70;
+    $width = 640;
+    $height = 480;
+    $xsp = 70;
+    $ysp = 54;
+    $xunit = ($width - 2 * $xsp)/$lmaxx/100;
+    $yunit = ($height - 2 * $ysp)/$lmaxy/100;
+    $ox = $xsp/100/$xunit;
+    $oy = $ysp/100/$yunit;
+    $tx = ($width - $xsp)/100/$xunit;
+    $ty = ($height - $ysp)/100/$yunit;
     $xl = self::myescape("$x_id: $x_name");
     $yl = self::myescape("$y_id: $y_name");
     $str = "

@@ -17,6 +17,9 @@ if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "hist") == 0) {
     printHistogram($_GET['A'], $_GET['B'], $params);
   }
+  if (strcmp($_GET["go"], "BooleanNet") == 0) {
+    printBooleanNet($_GET['A'], $_GET['B']);
+  }
 }
 elseif (array_key_exists("go", $_POST)) {
   if (strcmp($_POST["go"], "StepMiner") == 0) {
@@ -36,6 +39,9 @@ elseif (array_key_exists("go", $_POST)) {
   }
   if (strcmp($_POST["go"], "diffba") == 0) {
     printDiff($_POST['B'], $_POST['A']);
+  }
+  if (strcmp($_POST["go"], "BooleanNet") == 0) {
+    printBooleanNet($_POST['A'], $_POST['B']);
   }
 }
 else {
@@ -58,6 +64,32 @@ function getNumbers($a) {
     return $match[0];
   }
   return [];
+}
+
+function printBooleanNet($a, $b) {
+  $numa = getNumbers(urldecode($a));
+  $numb = getNumbers(urldecode($b));
+  $fun = function($x) { return sprintf("%.2f", $x); };
+  if (count($numa) >= 4) {
+    $bs = U::convertBooleanStats($numa[0], $numa[1], $numa[2], $numa[3]);
+    echo "<table border=\"0\">\n";
+    echo "<tr> <td> BooleanNet Stats </td> <td> A </td> </tr>\n";
+    echo "<tr> <td> bnum </td> <td>". join("|", $numa) ."</td> </tr>\n";
+    echo "<tr> <td> enum </td> <td>". join("|", array_map($fun, $bs[0])) ."</td> </tr>\n";
+    echo "<tr> <td> snum </td> <td>". join("|", array_map($fun, $bs[1])) ."</td></tr>\n";
+    echo "<tr> <td> pnum </td> <td>". join("|", array_map($fun, $bs[2])) ."</td> </tr>\n";
+    echo "</table>\n";
+  }
+  if (count($numb) >= 4) {
+    $bs = U::convertBooleanStats($numb[0], $numb[1], $numb[2], $numb[3]);
+    echo "<table border=\"0\">\n";
+    echo "<tr> <td> BooleanNet Stats </td> <td> A </td> </tr>\n";
+    echo "<tr> <td> bnum </td> <td>". join("|", $numb) ."</td> </tr>\n";
+    echo "<tr> <td> enum </td> <td>". join("|", array_map($fun, $bs[0])) ."</td> </tr>\n";
+    echo "<tr> <td> snum </td> <td>". join("|", array_map($fun, $bs[1])) ."</td></tr>\n";
+    echo "<tr> <td> pnum </td> <td>". join("|", array_map($fun, $bs[2])) ."</td> </tr>\n";
+    echo "</table>\n";
+  }
 }
 
 function printStepMiner ($a, $b) {
@@ -215,6 +247,8 @@ echo "
           <input type=\"button\" name=\"Diff-B-A\" value=\"Diff-B-A\"
               onclick=\"callDiffBA();\"/>
       <br clear=\"all\"/>
+          <input type=\"button\" name=\"BooleanNet\" value=\"BooleanNet\"
+              onclick=\"callBooleanNet();\"/>
       Parameters: 
           <input type=\"text\"  size=\"20\" id=\"params\" value=\"\"/>
       <br clear=\"all\"/>

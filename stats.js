@@ -42,3 +42,7 @@ function callDiffBA() {
   callGeneric("diffba");
 }
 
+function callBooleanNet() {
+  callGeneric("BooleanNet");
+}
+

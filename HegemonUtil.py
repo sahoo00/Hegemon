@@ -8,6 +8,8 @@ import StringIO
 import pandas as pd
 import seaborn as sns
 import numpy as np
+import bitarray
+import math
 from matplotlib import pyplot as plt
 from lifelines import KaplanMeierFitter
 
@@ -133,6 +135,20 @@ def getX(filename, x, debug):
   x_arr = in_x.split("\t")
   h_arr = header.split("\t")
   return (x_arr, h_arr);
+
+def getHash(filename, index=None):
+  if index is None:
+      index = 0
+  if not os.path.isfile(filename):
+    print "Can't open file {0} <br>".format(filename);
+    exit()
+  res = {}
+  fp = open(filename, "r")
+  for line in fp:
+      line = line.strip()
+      ll = line.split("\t");
+      res[ll[index]] = ll
+  return res
 
 def getStepMinerThr(data, start=None, end=None):
   if (start is None):
@@ -349,6 +365,7 @@ def boxplotArray(data, pGroups=None, thr=None, ax=None):
     ax.axhline(y=thr[1], color='r')
     ax.axhline(y=thr[3], color='cyan')
     ax.axhline(y=thr[4], color='cyan')
+  return ax
 
 def boxplot(obj, pGroups=None):
   info = getHegemonDataset(obj[5]);
@@ -412,6 +429,7 @@ def survival(time, status, pGroups=None):
       leg = Legend(ax, [], [], title = "p = %.2g" % res.p_value,
                    loc='lower left', frameon=False)
       ax.add_artist(leg);
+    return ax
 
 def multivariate(df):
     from lifelines import CoxPHFitter
@@ -440,6 +458,87 @@ def Multivariate(df):
         ro.r('x <- coxph(Surv(time, status) ~ ' + k + ')')
         ro.r('s <- summary(x)')
         print ro.r('s')
+
+def getCounts(a_high, a_med, b_high, b_med):
+    c0 = (~a_high & ~b_high) & ~(a_med | b_med)
+    c1 = (~a_high & b_high) & ~(a_med | b_med)
+    c2 = (a_high & ~b_high) & ~(a_med | b_med)
+    c3 = (a_high & b_high) & ~(a_med | b_med)
+    res = [c0.count(), c1.count(), c2.count(), c3.count()]
+    return res
+def getEnum(c):
+    res = [0, 0, 0, 0]
+    total = sum(c)
+    if total > 0:
+        c0, c1, c2, c3 = c
+        res[0] = 1.0 * (c0 + c1) * (c0 + c2)/total;
+        res[1] = 1.0 * (c1 + c0) * (c1 + c3)/total;
+        res[2] = 1.0 * (c2 + c0) * (c2 + c3)/total;
+        res[3] = 1.0 * (c3 + c1) * (c3 + c2)/total;
+    return res
+def getSnum(e, c):
+    res = [0, 0, 0, 0]
+    total = sum(c)
+    if total > 0:
+        c0, c1, c2, c3 = c
+        e0, e1, e2, e3 = e
+        res[0] = (e0 - c0 + 1)/math.sqrt(e0 + 1);
+        res[1] = (e1 - c1 + 1)/math.sqrt(e1 + 1);
+        res[2] = (e2 - c2 + 1)/math.sqrt(e2 + 1);
+        res[3] = (e3 - c3 + 1)/math.sqrt(e3 + 1);
+    return res
+def getPnum(c):
+    res = [0, 0, 0, 0]
+    c0, c1, c2, c3 = c
+    res[0] = 0.5 * c0 / (c0 + c1 + 1) + 0.5 * c0/(c0 + c2 + 1);
+    res[1] = 0.5 * c1 / (c1 + c0 + 1) + 0.5 * c1/(c1 + c3 + 1);
+    res[2] = 0.5 * c2 / (c2 + c0 + 1) + 0.5 * c2/(c2 + c3 + 1);
+    res[3] = 0.5 * c3 / (c3 + c1 + 1) + 0.5 * c3/(c3 + c2 + 1);
+    return res
+def getBooleanStats(a_high, a_med, b_high, b_med):
+    c = getCounts(a_high, a_med, b_high, b_med)
+    e = getEnum(c)
+    s = getSnum(e, c)
+    p = getPnum(c)
+    return [c, e, s, p]
+def getBooleanRelationType(bs, sthr, pthr):
+    rel = 0
+    snum = bs[2]
+    pnum = bs[3]
+    stats = []
+    for i in range(4):
+        if (snum[i] > sthr and pnum[i] < pthr):
+            if (rel == 0):
+                rel = i + 1;
+                stats += [snum[i], pnum[i]]
+            if (rel == 2 and i == 2):
+                rel = 5
+                stats += [snum[i], pnum[i]]
+            if (rel == 1 and i == 3):
+                rel = 6
+                stats += [snum[i], pnum[i]]
+    return rel, stats
+def getBooleanRelations(bs_arr, sthr, pthr):
+    res = []
+    for k in bs_arr:
+        rel, stats = getBooleanRelationType(k[2], sthr, pthr)
+        if rel != 0:
+            res.append([k[0], k[1], rel] + stats)
+    return res
+
+def getThrCode (thr_step, value, code = None):
+  if (code is None):
+      return value 
+  thr = value;
+  if (code == "thr1"):
+    thr = thr_step[0];
+  elif (code == "thr0"):
+    thr = thr_step[2];
+  elif (code == "thr2"):
+    thr = thr_step[3];
+  else:
+    thr = code;
+  return float(thr);
 
 
 class Dataset:
@@ -472,6 +571,16 @@ class Dataset:
   def getIndex(self):
       return self.index
 
+  def getNum(self):
+    if (self.hasExpr() and os.path.isfile(self.getExpr())):
+      fp = open(self.getExpr(), "r")
+      head = fp.readline();
+      head = head.strip()
+      headers = head.split("\t")
+      return len(headers) - 2;
+    else:
+      return 0
+
   def details(self):
     print '#{0}'.format(self.index)
     print "[{0}]".format(self.id)
@@ -493,7 +602,15 @@ class Dataset:
       return self.hash['platform']
   def getInfo(self):
       return self.hash['info']
-  def hasIH(self):
+  def getThr(self):
+      return self.hash['expr'].replace("-expr.txt", "-thr.txt")
+  def getBv(self):
+      return self.hash['expr'].replace("-expr.txt", "-bv.txt")
+  def getVInfo(self):
+      return self.hash['expr'].replace("-expr.txt", "-vinfo.txt")
+  def hasExpr(self):
+      return 'expr' in self.hash
+  def hasIh(self):
       return 'indexHeader' in self.hash
   def hasSurv(self):
       return 'survival' in self.hash
@@ -501,6 +618,15 @@ class Dataset:
       return 'platform' in self.hash
   def hasInfo(self):
       return 'info' in self.hash
+  @staticmethod
+  def hasFile(f):
+      return os.path.isfile(f)
+  def hasThr(self):
+      return Dataset.hasFile(self.getThr())
+  def hasBv(self):
+      return Dataset.hasFile(self.getBv())
+  def hasVInfo(self):
+      return Dataset.hasFile(self.getVInfo())
   def getPre(self):
       return self.hash['expr'].replace("-expr.txt", "")
   def getSource(self):
@@ -566,7 +692,7 @@ class Database:
     return self.list;
   def getListKey(self, keys):
     res = [];
-    for k,n in self.list.iteritems():
+    for k,n in sorted(self.list.iteritems(), key=lambda (k,v): v.getIndex()):
       keyfound = 1;
       if (n.has("key")):
         lkey = n.get("key");
@@ -595,8 +721,13 @@ class Hegemon:
     f = self.rdataset.getExpr();
     self.end = 0;
     self.start = 2;
+    self.ids = [];
     self.idhash = {};
     self.namehash = {};
+    self.thrhash = {};
+    self.survhash = {};
+    self.survhdrs = [];
+    self.survhdrh = {};
     self.headers = [];
     self.fp = None
     if (os.path.isfile(f)):
@@ -634,10 +765,23 @@ class Hegemon:
     return self.rdataset.getPre();
 
   def init(self):
+    self.ids = []
     self.idhash = {}
     self.namehash = {}
     f = self.rdataset.getIdx();
     self.readIndexFile(f);
+
+  def initThr(self):
+    if (self.rdataset.hasThr()):
+        f = self.rdataset.getThr();
+        self.thrhash = Hegemon.readThrFile(f);
+
+  def initSurv(self):
+    if (self.rdataset.hasSurv()):
+        f = self.rdataset.getSurv();
+        self.survhdrs, self.survhash = Hegemon.readSurvFile(f);
+        for i in range(len(self.survhdrs)):
+            self.survhdrh[self.survhdrs[i]] = i
 
   def initPlatform(self):
       if (self.rdataset.hasPlatform()):
@@ -652,6 +796,9 @@ class Hegemon:
 
   def getEnd(self):
     return self.end;
+
+  def aRange(self):
+    return range(self.start, self.end + 1)
 
   def getPtr(self, id):
     if (id in self.idhash):
@@ -670,6 +817,12 @@ class Hegemon:
         if (id in self.idhash):
             return self.idhash[id][1];
     return None
+
+  def getSimpleName(self, id):
+    name = self.getName(id)
+    name = name.split(":")[0]
+    name = name.split(" /// ")[0]
+    return name;
 
   def getDesc(self, id):
     if (id in self.idhash):
@@ -690,12 +843,29 @@ class Hegemon:
     return x_arr;
 
   def getThrData(self, id):
+    if id in self.thrhash:
+        return self.thrhash[id]
     exprFile = self.getExprFile();
     ptr1 = self.getPtr(id);
     if (ptr1 is None):
       return None
     x_arr, h_arr = getX(exprFile, ptr1, 0);
     return getThrData(x_arr, self.start, self.getNum());
+
+  def getSurvData(self, index):
+    res = ["" for i in self.headers];
+    res[0] = index
+    res[1] = self.survhdrs[index]
+    if self.survhash:
+        for i in self.aRange():
+            arr = self.headers[i]
+            if arr in self.survhash:
+                if index < len(self.survhash[arr]):
+                  res[i] = self.survhash[arr][index]
+    return res
+
+  def getSurvName(self, name):
+    return self.getSurvData(self.survhdrh[name])
 
   def compareIds(self, id1, id2):
     data1 = self.getExprData(id1);
@@ -706,7 +876,7 @@ class Hegemon:
     thr2 = getThrData(data2, self.start, self.getNum());
     count1 = 0;
     count2 = 0;
-    for i in range(self.start, self.end + 1):
+    for i in self.aRange():
         if (re.search('^\s*$', data1[i])):
             continue
         if (re.search('^\s*$', data2[i])):
@@ -740,7 +910,7 @@ class Hegemon:
       self.readIndexFile(f, name);
       for g in genes:
         name = g.strip()
-        print name in self.namehash
+        #print name in self.namehash
         if name in self.namehash:
           res[name] = name;
         if (name.upper() in self.namehash):
@@ -770,13 +940,17 @@ class Hegemon:
     for line in fp:
         line = line.strip();
         ll = line.split("\t");
+        if (len(ll) == 3):
+            ll.append("")
         if (len(ll) != 4):
             continue;
-        id, ptr, p_name, desc = ll;
+        id1, ptr, p_name, desc = ll;
         lp = p_name.split(" /// ");
         if (val is None):
-            self.idhash[id] = [ptr, lp[0].strip(), desc];
-            self.namehash[id.upper()] = [id];
+            if id1 not in self.idhash:
+                self.ids.append(id1)
+            self.idhash[id1] = [ptr, lp[0].strip(), desc];
+            self.namehash[id1.upper()] = [id1];
             for pn in lp:
               pn = pn.strip().upper();
               if (pn == "" or pn == "---"):
@@ -784,7 +958,7 @@ class Hegemon:
               if (pn not in self.namehash):
                 self.namehash[pn] = []
               if (id not in self.namehash[pn]):
-                self.namehash[pn].append(id);
+                self.namehash[pn].append(id1);
             if (index >= 100000):
               break;
             index += 1
@@ -802,8 +976,10 @@ class Hegemon:
                   found = 1;
 
               if (found == 1):
-                self.idhash[id] = [ptr, lp[0].upper(), desc];
-                self.namehash[id.upper()] = [id];
+                if id1 not in self.idhash:
+                    self.ids.append(id1)
+                self.idhash[id1] = [ptr, lp[0].upper(), desc];
+                self.namehash[id1.upper()] = [id1];
                 for pn in lp:
                   pn = pn.strip().upper();
                   if (pn == "" or pn == "---"):
@@ -811,7 +987,7 @@ class Hegemon:
                   if not (pn in self.namehash):
                     self.namehash[pn] = []
                   if not (id in self.namehash[pn]):
-                    self.namehash[pn].append(id);
+                    self.namehash[pn].append(id1);
     fp.close();
 
 
@@ -839,6 +1015,39 @@ class Hegemon:
             if (id not in self.namehash[pn]):
               self.namehash[pn].append(id);
     fp.close();
+
+  @staticmethod
+  def readThrFile(f):
+    if not os.path.isfile(f):
+      print "Can't open file {0} <br>".format(f);
+      exit()
+    fp = open(f, "r")
+    thrhash = {}
+    for line in fp:
+        line = line.strip();
+        ll = line.split("\t");
+        id = ll[0];
+        thrhash[id] = [float(i) for i in ll[1:]]
+    fp.close();
+    return thrhash
+
+  @staticmethod
+  def readSurvFile(f):
+    if not os.path.isfile(f):
+      print "Can't open file {0} <br>".format(f);
+      exit()
+    fp = open(f, "r")
+    head = fp.readline()
+    head = head.strip()
+    headers = head.split("\t")
+    survhash = {}
+    for line in fp:
+        line = line.strip();
+        ll = line.split("\t");
+        id = ll[0];
+        survhash[id] = ll
+    fp.close();
+    return (headers, survhash)
 
   @staticmethod
   def matchWords(val, desc):
@@ -902,7 +1111,135 @@ class Hegemon:
     id = fp.readline(1024).split("\t")[0]
     return id;
 
-def main():
+  def getTopGenes(self, order=None):
+    if (order is None):
+      order = self.aRange()
+    fp = self.fp;
+    fp.seek(0, 0);
+    h = fp.readline();
+    res = []
+    for line in fp:
+      line = line.strip();
+      ll = line.split("\t")
+      e = np.array([float(ll[i]) for i in order])
+      df = pd.DataFrame()
+      df['a'] = e
+      res.append([ll[0], self.getSimpleName(ll[0]), np.mean(e), np.std(e), \
+              np.percentile(e, 75) - np.percentile(e, 25), df['a'].mad() ])
+    res.sort(key=lambda x: x[5], reverse=True)
+    return res
+
+  def getCorrelation(self, id1, id2, order=None):
+    ref = self.getExprData(id1)
+    ex = self.getExprData(id2)
+    if (order is None):
+      order = self.aRange()
+    refe = np.array([float(ref[i]) for i in order])
+    e = np.array([float(ex[i]) for i in order])
+    corr = np.corrcoef(e, refe)
+    return corr[0][1]
+
+  def getCorrelations(self, id1, order=None):
+    ref = self.getExprData(id1)
+    if (order is None):
+      order = self.aRange()
+    fp = self.fp;
+    fp.seek(0, 0);
+    h = fp.readline();
+    res = []
+    refe = np.array([float(ref[i]) for i in order])
+    for line in fp:
+      line = line.strip();
+      ll = line.split("\t")
+      e = np.array([float(ll[i]) for i in order])
+      corr = np.corrcoef(e, refe)
+      res.append([ll[0], self.getSimpleName(ll[0]), corr[0][1]])
+    return res
+
+  def getBitVector(self, low, high, arr=None):
+    a_high = bitarray.bitarray(self.getNum())
+    a_med = bitarray.bitarray(self.getNum())
+    a_high.setall(False)
+    a_med.setall(True)
+    if arr is not None:
+        low = list(set(low) & set(arr))
+        high = list(set(high) & set(arr))
+    for i in high:
+        a_med[i - self.start] = 0
+        a_high[i - self.start] = 1
+    for i in low:
+        a_med[i - self.start] = 0
+    return a_high, a_med
+
+  def getBooleanRelationsBv(self, a_high, a_med):
+    bvfile = self.rdataset.getBv();
+    fp = open(bvfile, "r")
+    head = fp.readline()
+    res = []
+    for line in fp:
+        line = line.strip()
+        ll = line.split("\t")
+	b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2", "1"))
+        b_med = bitarray.bitarray(ll[2].replace("2", "0"))
+        bs = getBooleanStats(a_high, a_med, b_high, b_med)
+        res.append([ll[0], self.getSimpleName(ll[0]), bs])
+    fp.close()
+    return res
+
+  def getArraysThr (self, id1, thr = None, type1 = None):
+    res = []
+    expr = self.getExprData(id1);
+    thr_step = self.getThrData(id1);
+    thr = getThrCode(thr_step, thr_step[0], thr);
+    for i in self.aRange():
+      if (thr is None):
+         res.append(i)
+      elif (expr[i] == ""):
+         continue
+      elif (type1 == "hi" and float(expr[i]) >= thr):
+         res.append(i)
+      elif (type1 == "lo" and float(expr[i]) < thr):
+         res.append(i)
+      elif (type1 is not None and type1 != "lo" and type1 != "hi" \
+              and float(expr[i]) >= thr and float(expr[i]) <= float(type1)): 
+         res.append(i)
+    return res
+
+  def getArraysAll (self, *data):
+    res = self.aRange()
+    for i in range(0, len(data), 3):
+      r = self.getArraysThr(data[i], data[i+1], data[i+2])
+      res = list(set(res) & set(r))
+    return res;
+
+  def getBitVectorID(self, id1, arr=None):
+    low = self.getArraysAll(id1, "thr0", "lo")
+    high = self.getArraysAll(id1, "thr2", "hi")
+    return self.getBitVector(low, high, arr)
+
+  def getBooleanRelation(self, id1, id2, arr=None):
+    a_high, a_med = self.getBitVectorID(id1, arr)
+    b_high, b_med = self.getBitVectorID(id2, arr)
+    bs = getBooleanStats(a_high, a_med, b_high, b_med)
+    return bs
+
+  def getBooleanRelations(self, id1, arr=None):
+    a_high, a_med = self.getBitVectorID(id1, arr)
+    bvfile = self.rdataset.getBv();
+    fp = open(bvfile, "r")
+    head = fp.readline()
+    res = []
+    for line in fp:
+        line = line.strip()
+        ll = line.split("\t")
+	b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2", "1"))
+        b_med = bitarray.bitarray(ll[2].replace("2", "0"))
+        bs = getBooleanStats(a_high, a_med, b_high, b_med)
+        res.append([ll[0], self.getSimpleName(ll[0]), bs])
+    fp.close()
+    return res
+
+def test1():
   inputarr = [1.2, 3, 5.6, 4, 10, 12, 7]
   print "input is: " + ', '.join([str(s) for s in inputarr])
   print "mean is: " + str(meanf(inputarr))
@@ -910,6 +1247,8 @@ def main():
   print "mse is "+ str(msef(inputarr))
   print "standard deviation is " + str(stdevf(inputarr))
   print "fit step is: " + str(fitstep(inputarr))
+
+def test2():
   db = Database("explore.conf")
   keys = { "bm" : 1, "leukemia" : 1 }
   for n in db.getListKey(keys):
@@ -929,12 +1268,29 @@ def main():
   print h.getIDs("CA1")
   print h.getBestID(h.getIDs("CA1").keys())
   print h.getBestID(h.getIDs("CD96 FLT3").keys())
+
+def test3():
   obj = getHegemonPlots("LK21", "CD96", "CA1")
   print obj
   img = getHegemonImg(obj[0])
   obj = getHegemonPatientInfo("LK21")
   print obj
   obj = getHegemonPatientData("LK21", 'c Title')
+
+def test4():
+  db = Database("explore.conf")
+  h = Hegemon(db.getDataset("PLP7"))
+  h.init()
+  h.initPlatform()
+  print h.rdataset.hasThr()
+  h.initSurv()
+  print h.getSurvName("c clinical condition")
+
+def main():
+  #test1()
+  #test2()
+  #test3()
+  test4()
 
 if __name__ == "__main__":
   main()

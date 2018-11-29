@@ -1772,6 +1772,19 @@ class Hegemon {
         h.printBoolean(args[2], args[3]);
       }
     }
+    if (cmd.equals("bool") && args.length < 3) {
+      System.out.println("Usage: java Hegemon bool pre id <listFile>");
+      System.exit(1);
+    }
+    if (cmd.equals("bool")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.printBoolean(args[2], null, null);
+      }
+      else {
+        h.printBoolean(args[2], args[3], null);
+      }
+    }
     if (cmd.equals("Boolean") && args.length < 3) {
       System.out.println("Usage: java Hegemon Boolean pre idfile <listFile>");
       System.exit(1);
