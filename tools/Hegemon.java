@@ -1075,11 +1075,20 @@ class Hegemon {
       int[] counts = new int[] {0, 0};
       double res1 = getCorrelation(vdata0, vdata1, counts);
       double res2 = getCorrelation(data0, data1, counts);
+      LinearRegression reg = new LinearRegression(vdata0, vdata1);
+      double slope1 = reg.slope();
+      if (slope1 > 1) { slope1 = 1/slope1; }
+      double score1 = res1 * res1 + slope1 * slope1;
+      reg = new LinearRegression(data0, data1);
+      double slope2 = reg.slope();
+      if (slope2 > 1) { slope2 = 1/slope2; }
+      double score2 = res2 * res2 + slope2 * slope2;
       out.println(id1 + "\t" + id2 + "\t" + res2 + "\t" + res1 + "\t" +
           thr0 + "\t" + thr1 + "\t" + v_min + "\t" + v_thr + "\t" + 
           h_min + "\t" + h_thr + "\t" + 
           count1 + "\t" + count2 + "\t" + (count1 /(count2 + 1.0)) + "\t" +
-          count3 + "\t" + count4 + "\t" + (count3 /(count4 + 1.0)));
+          count3 + "\t" + count4 + "\t" + (count3 /(count4 + 1.0)) + "\t" +
+          score1 + "\t" + score2 + "\t" + slope1 + "\t" + slope2);
     }
     catch(FileNotFoundException ex) {
       out.println( "Unable to open file '" + exprFile + "'");
@@ -1183,15 +1192,24 @@ class Hegemon {
             }
           }
         }
+        String id2 = result[0];
         int[] counts = new int[] {0, 0};
         double res1 = getCorrelation(vdata1, vdata2, counts);
         double res2 = getCorrelation(data1, data2, counts);
-        String id2 = result[0];
+        LinearRegression reg = new LinearRegression(vdata1, vdata2);
+        double slope1 = reg.slope();
+        if (slope1 > 1) { slope1 = 1/slope1; }
+        double score1 = res1 * res1 + slope1 * slope1;
+        reg = new LinearRegression(data1, data2);
+        double slope2 = reg.slope();
+        if (slope2 > 1) { slope2 = 1/slope2; }
+        double score2 = res2 * res2 + slope2 * slope2;
         out.println(id + "\t" + id2 + "\t" + res2 + "\t" + res1 + "\t" +
             thr1 + "\t" + thr2 + "\t" + v_min + "\t" + v_thr + "\t" + 
             h_min + "\t" + h_thr + "\t" + 
             count1 + "\t" + count2 + "\t" + (count1 /(count2 + 1.0)) + "\t" +
-            count3 + "\t" + count4 + "\t" + (count3 /(count4 + 1.0)));
+            count3 + "\t" + count4 + "\t" + (count3 /(count4 + 1.0)) + "\t" +
+            score1 + "\t" + score2 + "\t" + slope1 + "\t" + slope2);
       }
       // Always close files.
       bufferedReader.close();         

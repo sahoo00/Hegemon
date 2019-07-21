@@ -12,6 +12,7 @@ import bitarray
 import math
 from matplotlib import pyplot as plt
 from lifelines import KaplanMeierFitter
+from scipy import stats
 
 def uniq(mylist):
   used = set()
@@ -128,12 +129,13 @@ def getX(filename, x, debug):
   fp = open(filename, "r")
   header = fp.readline().strip()
   fp.seek(long(x), 0)
-  in_x = fp.readline().strip()
+  in_x = fp.readline()
   if (debug == 1):
     print "Line 1:<br/>",in_x,":<br>";
   fp.close()
   x_arr = in_x.split("\t")
   h_arr = header.split("\t")
+  x_arr[-1] = x_arr[-1].strip()
   return (x_arr, h_arr);
 
 def getHash(filename, index=None):
@@ -169,6 +171,8 @@ def getThrData(arr, start = None, length = None):
   if length is None:
     length = len(arr)
   s_thr = getStepMinerThr(arr, start, start+length-1)
+  if s_thr is None:
+      return None
   thr = s_thr["threshold"]
   stat = s_thr["statistic"]
   return [thr, stat, thr-0.5, thr+0.5]
@@ -284,12 +288,12 @@ def plotBooleanSelect(obj, pHash=None):
   ax.set_xlabel(obj[6])
   ax.set_ylabel(obj[7])
   ax.set_title("{0} (n = {1})".format(info[1], info[2]))
-  ax.axhline(y=thry[1], color='r')
-  ax.axhline(y=thry[3], color='cyan')
-  ax.axhline(y=thry[4], color='cyan')
-  ax.axvline(x=thrx[1], color='r')
-  ax.axvline(x=thrx[3], color='cyan')
-  ax.axvline(x=thrx[4], color='cyan')
+  ax.axhline(y=float(thry[1]), color='r')
+  ax.axhline(y=float(thry[3]), color='cyan')
+  ax.axhline(y=float(thry[4]), color='cyan')
+  ax.axvline(x=float(thrx[1]), color='r')
+  ax.axvline(x=float(thrx[3]), color='cyan')
+  ax.axvline(x=float(thrx[4]), color='cyan')
   return ax
 
 def plotBooleanPair(obj, pGroups=None):
@@ -302,16 +306,13 @@ def plotBooleanPair(obj, pGroups=None):
   datay = getHegemonPtr(obj[4], obj[9])
   thrx = thash[str(obj[0])]
   thry = thash[str(obj[2])]
-  w,h = (6.4, 4.8)
-  dpi = 100
-  fig = plt.figure(figsize=(w,h))
-  ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
+  df1 = pd.DataFrame(columns=["x", "y", "c"])
   if pGroups is None:
     df = pd.DataFrame()
     df["x"] = pd.to_numeric(pd.Series(datax[1][2:]))
     df["y"] = pd.to_numeric(pd.Series(datay[1][2:]))
-    #ax = df.plot.scatter(x='x', y='y')
-    ax.plot(df["x"], df["y"], ls='None', marker='.', color='blue')
+    df['c'] = "DarkBlue"
+    df1 = df1.append(df)
   else:
     for k in range(len(pGroups)):
       df = pd.DataFrame()
@@ -320,16 +321,22 @@ def plotBooleanPair(obj, pGroups=None):
       df["x"] = pd.to_numeric(pd.Series(val))
       val = [datay[1][i] for i in order]
       df["y"] = pd.to_numeric(pd.Series(val))
-      ax.plot(df["x"], df["y"], ls='None', marker='.', color=pGroups[k][1])
+      df["c"] = pGroups[k][1]
+      df1 = df1.append(df)
+  w,h = (6.4, 4.8)
+  dpi = 100
+  fig = plt.figure(figsize=(w,h))
+  ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
+  ax = df1.plot.scatter(x='x', y='y', c=df1['c'], ax=ax)
   ax.set_xlabel(obj[6])
   ax.set_ylabel(obj[7])
   ax.set_title("{0} (n = {1})".format(info[1], info[2]))
-  ax.axhline(y=thry[1], color='r')
-  ax.axhline(y=thry[3], color='cyan')
-  ax.axhline(y=thry[4], color='cyan')
-  ax.axvline(x=thrx[1], color='r')
-  ax.axvline(x=thrx[3], color='cyan')
-  ax.axvline(x=thrx[4], color='cyan')
+  ax.axhline(y=float(thry[1]), color='r')
+  ax.axhline(y=float(thry[3]), color='cyan')
+  ax.axhline(y=float(thry[4]), color='cyan')
+  ax.axvline(x=float(thrx[1]), color='r')
+  ax.axvline(x=float(thrx[3]), color='cyan')
+  ax.axvline(x=float(thrx[4]), color='cyan')
   return ax
 
 def boxplotArray(data, pGroups=None, thr=None, ax=None):
@@ -390,19 +397,26 @@ def boxplot(obj, pGroups=None):
   ax.set_title("{0} (n = {1})".format(info[1], info[2]))
   return ax
 
-def survival(time, status, pGroups=None):
-  kmf = KaplanMeierFitter()
+def censor(time, status, ct):
+  t = [time[i] if i < 2 or time[i] == '' or float(time[i]) < ct \
+          else ct for i in range(len(time))]
+  s = [status[i] if i < 2 or time[i] == '' or float(time[i]) < ct \
+          else 0 for i in range(len(time))]
+  return t,s
+
+def survival(time, status, pGroups=None, ax=None):
   if pGroups is None:
     order = [i for i in range(2, len(time)) 
 		if time[i] != "" and status[i] != ""]
     t = [float(time[i]) for i in order]
     s = [int(status[i]) for i in order]
+    kmf = KaplanMeierFitter()
     kmf.fit(t, s)
-    ax = kmf.plot(color='red')
+    ax = kmf.plot(ax = ax, color='red')
     return ax
   else:
-    ax = None
     groups = [ "" for i in time]
+    kmfs = []
     for k in range(len(pGroups)):
       df = pd.DataFrame()
       order = [i for i in pGroups[k][2]
@@ -413,11 +427,17 @@ def survival(time, status, pGroups=None):
         groups[i] = k
       t = [float(time[i]) for i in order]
       s = [int(status[i]) for i in order]
+      kmf = KaplanMeierFitter()
       kmf.fit(t, s, label = pGroups[k][0])
       if ax is None:
-        ax = kmf.plot(color=pGroups[k][1], ci_show=False, show_censors=True)
+        ax = kmf.plot(color=pGroups[k][1], ci_show=False, show_censors=True,
+                figsize=(4,4))
       else:
-        ax = kmf.plot(ax = ax, color=pGroups[k][1], ci_show=False, show_censors=True)
+        ax = kmf.plot(ax = ax, color=pGroups[k][1], ci_show=False,
+                show_censors=True)
+      kmfs += [kmf]
+    from lifelines.plotting import add_at_risk_counts
+    #add_at_risk_counts(*kmfs, ax=ax)
     order = [i for i in range(len(groups)) if groups[i] != ""]
     if len(order) > 0:
       t = [float(time[i]) for i in order]
@@ -820,6 +840,8 @@ class Hegemon:
 
   def getSimpleName(self, id):
     name = self.getName(id)
+    if name is None:
+        return "---"
     name = name.split(":")[0]
     name = name.split(" /// ")[0]
     return name;
@@ -905,7 +927,7 @@ class Hegemon:
       if (name.upper() in self.namehash):
         for id in self.namehash[name.upper()]:
           res[id] = name;
-    if (len(res) == 0):
+    if (len(res) == 0 and name != "" and name != "---"):
       f = self.rdataset.getIdx();
       self.readIndexFile(f, name);
       for g in genes:
@@ -1238,6 +1260,22 @@ class Hegemon:
         res.append([ll[0], self.getSimpleName(ll[0]), bs])
     fp.close()
     return res
+
+  def saveDiff(self, ofile, g1, g2):
+    fp = self.fp;
+    fp.seek(0, 0);
+    h = fp.readline();
+    of = open(ofile, "w")
+    for line in fp:
+      line = re.sub("[\r\n]", "", line)
+      ll = line.split("\t")
+      v1 = np.array([float(ll[i]) for i in g1 if ll[i] != ""])
+      v2 = np.array([float(ll[i]) for i in g2 if ll[i] != ""])
+      t, p = stats.ttest_ind(v1,v2)
+      res = [ll[0], self.getSimpleName(ll[0]),
+              t, p, np.mean(v1)-np.mean(v2)]
+      of.write("\t".join([str(i) for i in res]) +"\n")
+    of.close()
 
 def test1():
   inputarr = [1.2, 3, 5.6, 4, 10, 12, 7]

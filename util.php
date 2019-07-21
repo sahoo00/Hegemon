@@ -1332,11 +1332,17 @@ cat(\"END\\n\")
   }
 
   function writeTikzPair($fp, $a_hash, $x_id, $x_name, $y_id, $y_name, 
-    $minx, $maxx, $miny, $maxy) {
+    $minx, $maxx, $miny, $maxy, $x_thr, $y_thr) {
     $lmaxx = ($maxx - $minx);
     $lmaxy = ($maxy - $miny);
     if ($lmaxx <= 0) { $lmaxx = 1; }
     if ($lmaxy <= 0) { $lmaxy = 1; }
+    $thrx0 = $x_thr - 0.5;
+    $thrx1 = $x_thr;
+    $thrx2 = $x_thr + 0.5;
+    $thry0 = $y_thr - 0.5;
+    $thry1 = $y_thr;
+    $thry2 = $y_thr + 0.5;
     $width = 600;
     $height = 600;
     $xsp = 70;
@@ -1354,6 +1360,8 @@ cat(\"END\\n\")
     $xl = self::myescape("$x_id: $x_name");
     $yl = self::myescape("$y_id: $y_name");
     $str = "
+\\definecolor{thr1}{named}{cyan}
+\\definecolor{thr0}{named}{red}
 \\def\\ttsize{\\tiny}%
 \\def\\ttsizea{\\fontsize{9pt}{9pt}\\selectfont}%
 \\def\\ttsizeb{\\fontsize{8pt}{8pt}\\selectfont}%
@@ -1380,6 +1388,12 @@ cat(\"END\\n\")
       }
       $dindex++;
     }
+  fwrite($fp, "\\draw[thr1,line width=0.5pt] ($thrx0, $miny) -- ($thrx0, $maxy);\n");
+  fwrite($fp, "\\draw[thr0,line width=0.5pt] ($thrx1, $miny) -- ($thrx1, $maxy);\n");
+  fwrite($fp, "\\draw[thr1,line width=0.5pt] ($thrx2, $miny) -- ($thrx2, $maxy);\n");
+  fwrite($fp, "\\draw[thr1,line width=0.5pt] ($minx, $thry0) -- ($maxx, $thry0);\n");
+  fwrite($fp, "\\draw[thr0,line width=0.5pt] ($minx, $thry1) -- ($maxx, $thry1);\n");
+  fwrite($fp, "\\draw[thr1,line width=0.5pt] ($minx, $thry2) -- ($maxx, $thry2);\n");
     fwrite($fp, "\\end{axis}\n");
   }
 
@@ -2098,6 +2112,7 @@ anova & Pr(\$>\$F) & F Value \\\\
     $y_id = $y_arr[0];
     list($x_min, $x_max) = self::getMinMax($x_arr, 2, count($x_arr)-2);
     list($y_min, $y_max) = self::getMinMax($y_arr, 2, count($y_arr)-2);
+    list($x_thr, $y_thr) = self::getThresholdXY($file, $x_arr, $y_arr);
     $p_arr = self::getPArray($sfile, $h_arr, $groups);
     $outfile = "$outprefix.tex";
     if (($fp = fopen($outfile, "w")) === FALSE) {
@@ -2108,7 +2123,8 @@ anova & Pr(\$>\$F) & F Value \\\\
       fwrite($fp, "\\begin{tikzpicture}\n");
       $a_hash = self::writeTikzData($fp, $x_arr, $y_arr, $p_arr, $h_arr);
       self::writeTikzPair($fp, $a_hash, $x_id, $x_name, $y_id, $y_name, 
-        $x_min - 0.5 , $x_max + 0.5, $y_min - 0.5, $y_max + 0.5);
+        $x_min - 0.5 , $x_max + 0.5, $y_min - 0.5, $y_max + 0.5, 
+        $x_thr, $y_thr);
       fwrite($fp, "\\end{tikzpicture}\n");
       if ($boolean) {
         $gr1 = self::convertGroups($group_array, [4, 5]);
@@ -2168,7 +2184,6 @@ anova & Pr(\$>\$F) & F Value \\\\
       fwrite($fp, $g[0]." & ".self::myescape($g[1])." & ".count($g[2])."\\\\\n");
     }
     fwrite($fp, "\\end{tabular}\\\\\n");
-    list($x_thr, $y_thr) = self::getThresholdXY($file, $x_arr, $y_arr);
     $pre = str_replace("-expr.txt", "", $file);
     if (file_exists("$pre-thr.txt")) {
       fwrite($fp, "Threshold derived from -thr file\\\\\n");

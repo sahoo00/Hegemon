@@ -139,7 +139,7 @@ function printDatasetJSON($file, $id) {
   if ($n != null) {
     $h = new Hegemon($n);
     $num = $h->getNum();
-    $res = [$id, $n->getName(), $num];
+    $res = [$id, $n->getName(), $num, $n->getSource()];
   }
   echo json_encode($res);
 }
