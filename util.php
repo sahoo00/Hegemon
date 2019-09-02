@@ -1788,8 +1788,8 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
 
       foreach ($array as $idx => $value)
       {
-	if ($idx < ($middle_index - 1)) $lower_values[]  = $value; // We need to remove both of the values we used for the median from the lower values
-	elseif ($idx > $middle_index)   $higher_values[] = $value;
+	if ($idx < $middle_index) $lower_values[]  = $value; // We need to remove both of the values we used for the median from the lower values
+	elseif ($idx >= $middle_index)   $higher_values[] = $value;
       }
     }
     else

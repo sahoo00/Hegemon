@@ -917,7 +917,7 @@ class Hegemon:
       return +1
     return -1
 
-  def getIDs(self, name):
+  def getIDs(self, name, research=0):
     res = {}
     genes = re.split("\s+", name);
     for g in genes:
@@ -927,7 +927,7 @@ class Hegemon:
       if (name.upper() in self.namehash):
         for id in self.namehash[name.upper()]:
           res[id] = name;
-    if (len(res) == 0 and name != "" and name != "---"):
+    if (research == 1 and len(res) == 0 and name != "" and name != "---"):
       f = self.rdataset.getIdx();
       self.readIndexFile(f, name);
       for g in genes:
@@ -1254,8 +1254,10 @@ class Hegemon:
     for line in fp:
         line = line.strip()
         ll = line.split("\t")
-	b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2", "1"))
-        b_med = bitarray.bitarray(ll[2].replace("2", "0"))
+        b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2",
+            "1").replace(" ", "0"))
+        b_med = bitarray.bitarray(ll[2].replace("2", "0").replace(" ",
+            "1"))
         bs = getBooleanStats(a_high, a_med, b_high, b_med)
         res.append([ll[0], self.getSimpleName(ll[0]), bs])
     fp.close()
