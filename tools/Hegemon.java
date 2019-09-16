@@ -169,6 +169,9 @@ class Hegemon {
   }
 
   public boolean haveGoodDynamicRange(int num, BitSet va_thr) {
+    if (va_thr == null) {
+      return false;
+    }
     int outside = va_thr.cardinality();
     if (num > (3 * outside)) {
       return false;

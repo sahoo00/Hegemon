@@ -2,26 +2,22 @@ package tools;
 
 import java.io.*;
 import java.util.*;
-import java.nio.channels.Channels;
-import java.nio.charset.Charset;
+import java.lang.reflect.Field;
 
 public class FileR {
   
     String filename;
     RandomAccessFile raf;
-    MyBR reader;
-    InputStream is;
-    InputStreamReader isr;
+    BufferedReader reader;
+    long currentOffset = 0;
+    long previousOffset = -1;
     long index = 0;
-    final int size = 10000;
     
     public FileR (String f) {
       try {
         filename = f;
         raf = new RandomAccessFile(filename, "r");
-        is = Channels.newInputStream(raf.getChannel());
-        isr = new InputStreamReader(is, Charset.forName("UTF-8"));
-        reader = new MyBR(isr, size);
+        reader = new BufferedReader(new FileReader(raf.getFD()));
       } catch (Exception ex) {
         ex.printStackTrace();
       }
@@ -29,7 +25,6 @@ public class FileR {
 
     public void close(){
       try {
-        reader.close();
         raf.close();
       } catch (Exception ex) {
         ex.printStackTrace();
@@ -40,20 +35,44 @@ public class FileR {
         return index;
     }
     
-    public synchronized long filePtr() throws IOException {
-      return raf.getChannel().position() - size;
+    private static int getOffset(BufferedReader bufferedReader) throws Exception {
+      Field field = BufferedReader.class.getDeclaredField("nextChar");
+      int result = 0;
+      try {
+	field.setAccessible(true);
+	result = (Integer) field.get(bufferedReader);
+      } finally {
+	field.setAccessible(false);
+      }
+      return result;
+    }
+
+    public synchronized long filePtr() throws Exception {
+      long fileOffset = raf.getFilePointer();
+      if (fileOffset != previousOffset) {
+	if (previousOffset != -1) {
+	  currentOffset = previousOffset;
+	}
+	previousOffset = fileOffset;
+      }
+      int bufferOffset = getOffset(reader);
+      long realPosition = currentOffset + bufferOffset;
+      return realPosition;
     }
 
     public String readLine() throws Exception {
       index++;
-      return reader.readLine();
+      String line = reader.readLine();
+      return line;
     }
 
     public void seek(long pos) throws IOException {
       if(pos < 0) { return; }
       if(pos > raf.length()) { return; }
       raf.seek(pos);
-      reader = new MyBR(isr, size);
+      currentOffset = raf.getFilePointer();
+      previousOffset = -1;
+      reader = new BufferedReader(new FileReader(raf.getFD()));
     }
 
 }
