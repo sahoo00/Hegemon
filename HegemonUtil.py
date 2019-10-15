@@ -4,7 +4,10 @@ import re
 import json
 import requests
 from PIL import Image
-import StringIO
+try:
+    from StringIO import StringIO ## for Python 2
+except ImportError:
+    from io import StringIO ## for Python 3
 import pandas as pd
 import seaborn as sns
 import numpy as np
@@ -124,14 +127,14 @@ def fitstep(arr):
 
 def getX(filename, x, debug):
   if not os.path.isfile(filename):
-    print "Can't open file {0} <br>".format(filename);
+    print("Can't open file {0} <br>".format(filename));
     exit()
   fp = open(filename, "r")
   header = fp.readline().strip()
   fp.seek(long(x), 0)
   in_x = fp.readline()
   if (debug == 1):
-    print "Line 1:<br/>",in_x,":<br>";
+    print("Line 1:<br/>",in_x,":<br>");
   fp.close()
   x_arr = in_x.split("\t")
   h_arr = header.split("\t")
@@ -142,7 +145,7 @@ def getHash(filename, index=None):
   if index is None:
       index = 0
   if not os.path.isfile(filename):
-    print "Can't open file {0} <br>".format(filename);
+    print("Can't open file {0} <br>".format(filename));
     exit()
   res = {}
   fp = open(filename, "r")
@@ -473,11 +476,11 @@ def Multivariate(df):
       ro.r(k + " <- c(" + ",".join([str(i) for i in df[k]]) + ")")
     ro.r('x <- coxph(Surv(time, status) ~ ' + '+'.join(columns) + ')')
     ro.r('s <- summary(x)')
-    print ro.r('s')
+    print(ro.r('s'))
     for k in columns:
         ro.r('x <- coxph(Surv(time, status) ~ ' + k + ')')
         ro.r('s <- summary(x)')
-        print ro.r('s')
+        print(ro.r('s'))
 
 def getCounts(a_high, a_med, b_high, b_med):
     c0 = (~a_high & ~b_high) & ~(a_med | b_med)
@@ -602,11 +605,11 @@ class Dataset:
       return 0
 
   def details(self):
-    print '#{0}'.format(self.index)
-    print "[{0}]".format(self.id)
+    print('#{0}'.format(self.index))
+    print("[{0}]".format(self.id))
     for k in self.hash:
-      print "{0} = {1}".format(k, self.hash[k])
-    print ""
+      print("{0} = {1}".format(k, self.hash[k]))
+    print("")
 
   def getName(self):
       return self.hash['name']
@@ -668,7 +671,7 @@ class Database:
     file = self.conf_file
 
     if os.path.isfile(self.conf_file) is False:
-        print "Can't open file {0} <br>".format(self.conf_file)
+        print("Can't open file {0} <br>".format(self.conf_file))
         exit()
 
     n_id = None
@@ -701,9 +704,9 @@ class Database:
     
   def details(self):
     for k,v in self.env.iteritems():
-      print "{0} = {1}".format(k, v);
-    print ""
-    for k,n in sorted(self.list.iteritems(), key=lambda (k,v): v.getIndex()):
+      print("{0} = {1}".format(k, v));
+    print("")
+    for k,n in sorted(self.list.iteritems(), key=lambda k,v: v.getIndex()):
       n.details();
 
   def getNum(self):
@@ -712,7 +715,7 @@ class Database:
     return self.list;
   def getListKey(self, keys):
     res = [];
-    for k,n in sorted(self.list.iteritems(), key=lambda (k,v): v.getIndex()):
+    for k,n in sorted(self.list.iteritems(), key=lambda k,v: v.getIndex()):
       keyfound = 1;
       if (n.has("key")):
         lkey = n.get("key");
@@ -755,7 +758,7 @@ class Hegemon:
       self.getHeaders(f);
       self.end = len(self.headers) - 1;
     else:
-        print "Can't open file {0} <br>".format(f);
+        print("Can't open file {0} <br>".format(f));
         exit()
 
   def __del__(self):
@@ -949,9 +952,42 @@ class Hegemon:
     l2 = sorted(l1, cmp=self.compareIds);
     return l2[0];
 
+  def readIndex(self, f, num = None):
+    if not os.path.isfile(f):
+      print("Can't open file {0} <br>".format(f));
+      exit()
+    fp = open(f, "r")
+    line = fp.readline()
+    index = 0;
+    for line in fp:
+        line = line.strip();
+        ll = line.split("\t");
+        if (len(ll) == 3):
+            ll.append("")
+        if (len(ll) != 4):
+            continue;
+        id1, ptr, p_name, desc = ll;
+        lp = p_name.split(" /// ");
+        if id1 not in self.idhash:
+            self.ids.append(id1)
+        self.idhash[id1] = [ptr, lp[0].strip(), desc];
+        self.namehash[id1.upper()] = [id1];
+        for pn in lp:
+          pn = pn.strip().upper();
+          if (pn == "" or pn == "---"):
+              continue;
+          if (pn not in self.namehash):
+              self.namehash[pn] = []
+          if (id1 not in self.namehash[pn]):
+              self.namehash[pn].append(id1);
+        if (num is not None and index >= num):
+          break;
+        index += 1
+    fp.close();
+
   def readIndexFile(self, f, val = None):
     if not os.path.isfile(f):
-      print "Can't open file {0} <br>".format(f);
+      print("Can't open file {0} <br>".format(f));
       exit()
     fp = open(f, "r")
     genes = [];
@@ -979,7 +1015,7 @@ class Hegemon:
                 continue;
               if (pn not in self.namehash):
                 self.namehash[pn] = []
-              if (id not in self.namehash[pn]):
+              if (id1 not in self.namehash[pn]):
                 self.namehash[pn].append(id1);
             if (index >= 100000):
               break;
@@ -988,7 +1024,7 @@ class Hegemon:
             for g in genes:
               name = g.strip()
               found = 0;
-              if (id == name):
+              if (id1 == name):
                 found = 1;
               for pn in lp:
                 pn = pn.strip().upper();
@@ -1008,21 +1044,21 @@ class Hegemon:
                       continue;
                   if not (pn in self.namehash):
                     self.namehash[pn] = []
-                  if not (id in self.namehash[pn]):
+                  if not (id1 in self.namehash[pn]):
                     self.namehash[pn].append(id1);
     fp.close();
 
 
   def readPlatformFile(self, f):
     if not os.path.isfile(f):
-      print "Can't open file {0} <br>".format(f);
+      print("Can't open file {0} <br>".format(f));
       exit()
     fp = open(f, "r")
     line = fp.readline()
     for line in fp:
         line = line.strip();
         ll = line.split("\t");
-        id = ll[0];
+        id1 = ll[0];
         for i in range(len(ll)):
           if (i == 2):
             continue;
@@ -1034,14 +1070,14 @@ class Hegemon:
                 continue;
             if (pn not in self.namehash):
               self.namehash[pn] = []
-            if (id not in self.namehash[pn]):
-              self.namehash[pn].append(id);
+            if (id1 not in self.namehash[pn]):
+              self.namehash[pn].append(id1);
     fp.close();
 
   @staticmethod
   def readThrFile(f):
     if not os.path.isfile(f):
-      print "Can't open file {0} <br>".format(f);
+      print("Can't open file {0} <br>".format(f));
       exit()
     fp = open(f, "r")
     thrhash = {}
@@ -1056,7 +1092,7 @@ class Hegemon:
   @staticmethod
   def readSurvFile(f):
     if not os.path.isfile(f):
-      print "Can't open file {0} <br>".format(f);
+      print("Can't open file {0} <br>".format(f));
       exit()
     fp = open(f, "r")
     head = fp.readline()
@@ -1082,7 +1118,7 @@ class Hegemon:
   @staticmethod
   def searchIndexFile(f, val):
     if not os.path.isfile(f):
-      print "Can't open file {0} <br>".format(f);
+      print("Can't open file {0} <br>".format(f));
       exit()
     fp = open(f, "r")
     genes = [];
@@ -1100,7 +1136,7 @@ class Hegemon:
         id, ptr, p_name, desc = ll;
         if p_name not in namehash:
           if re.search(val, p_name):
-            print p_name
+            print(p_name)
             namehash[p_name] = 1
             index += 1
         if (index >= 10):
@@ -1116,7 +1152,7 @@ class Hegemon:
         id, ptr, p_name, desc = ll;
         if p_name not in namehash:
           if Hegemon.matchWords(val, desc):
-            print ": ".join([p_name, desc])
+            print(": ".join([p_name, desc]))
             namehash[p_name] = 1
             index += 1
         if (index >= 10):
@@ -1201,7 +1237,7 @@ class Hegemon:
     for line in fp:
         line = line.strip()
         ll = line.split("\t")
-	b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2", "1"))
+        b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2", "1"))
         b_med = bitarray.bitarray(ll[2].replace("2", "0"))
         bs = getBooleanStats(a_high, a_med, b_high, b_med)
         res.append([ll[0], self.getSimpleName(ll[0]), bs])
@@ -1281,12 +1317,12 @@ class Hegemon:
 
 def test1():
   inputarr = [1.2, 3, 5.6, 4, 10, 12, 7]
-  print "input is: " + ', '.join([str(s) for s in inputarr])
-  print "mean is: " + str(meanf(inputarr))
-  print "variance is "+ str(variancef(inputarr))
-  print "mse is "+ str(msef(inputarr))
-  print "standard deviation is " + str(stdevf(inputarr))
-  print "fit step is: " + str(fitstep(inputarr))
+  print("input is: " + ', '.join([str(s) for s in inputarr]))
+  print("mean is: " + str(meanf(inputarr)))
+  print("variance is "+ str(variancef(inputarr)))
+  print("mse is "+ str(msef(inputarr)))
+  print("standard deviation is " + str(stdevf(inputarr)))
+  print("fit step is: " + str(fitstep(inputarr)))
 
 def test2():
   db = Database("explore.conf")
@@ -1296,25 +1332,25 @@ def test2():
     h = Hegemon(n);
     num = h.getNum();
     if (num > 0):
-      print " ".join([id, n.getName(), str(num)])
+      print(" ".join([id, n.getName(), str(num)]))
   h = Hegemon(db.getDataset("LK21"))
   h.init()
   h.initPlatform()
-  print h.getNum()
+  print(h.getNum())
   id =  h.getIDs("CD96").keys()[0]
   #h.printSuggest("cell division")
-  print id, h.getName(id)
-  print h.getPre()
-  print h.getIDs("CA1")
-  print h.getBestID(h.getIDs("CA1").keys())
-  print h.getBestID(h.getIDs("CD96 FLT3").keys())
+  print(id, h.getName(id))
+  print(h.getPre())
+  print(h.getIDs("CA1"))
+  print(h.getBestID(h.getIDs("CA1").keys()))
+  print(h.getBestID(h.getIDs("CD96 FLT3").keys()))
 
 def test3():
   obj = getHegemonPlots("LK21", "CD96", "CA1")
-  print obj
+  print(obj)
   img = getHegemonImg(obj[0])
   obj = getHegemonPatientInfo("LK21")
-  print obj
+  print(obj)
   obj = getHegemonPatientData("LK21", 'c Title')
 
 def test4():
@@ -1322,9 +1358,9 @@ def test4():
   h = Hegemon(db.getDataset("PLP7"))
   h.init()
   h.initPlatform()
-  print h.rdataset.hasThr()
+  print(h.rdataset.hasThr())
   h.initSurv()
-  print h.getSurvName("c clinical condition")
+  print(h.getSurvName("c clinical condition"))
 
 def main():
   #test1()

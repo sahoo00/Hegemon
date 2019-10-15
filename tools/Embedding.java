@@ -28,7 +28,7 @@ class Embedding extends Hegemon {
 
   public static int getInt(String s) {
     try {
-      double v = Integer.parseInt(s);
+      int v = Integer.parseInt(s);
       return v;
     }
     catch (Exception e) {
@@ -87,11 +87,12 @@ class Embedding extends Hegemon {
   }
 
   public static BitSet getQuadrant(
-      BitSet a, BitSet a_thr, BitSet b, BitSet b_thr, int q) {
+      BitSet a, BitSet a_thr, BitSet b, BitSet b_thr, BitSet groups, int q) {
     if (a.length() == 0 || b.length() == 0) {
       return null;
     }
     BitSet thrBits = (BitSet) a_thr.clone();
+    if (groups != null) { thrBits.and(groups); }
     thrBits.and(b_thr);
     BitSet tmp = (BitSet) thrBits.clone();
     if (q == 0) {
@@ -123,12 +124,12 @@ class Embedding extends Hegemon {
   }
 
   public void updateBE(
-      BitSet a, BitSet a_thr, BitSet b, BitSet b_thr, int t,
+      BitSet a, BitSet a_thr, BitSet b, BitSet b_thr, BitSet groups, int t,
       int c0, int c1, int c2, int c3) {
     if (t == 2 || t == 3 || t == 5) {
       count1 ++;
-      BitSet q0 = getQuadrant(a, a_thr, b, b_thr, 0);
-      BitSet q3 = getQuadrant(a, a_thr, b, b_thr, 3);
+      BitSet q0 = getQuadrant(a, a_thr, b, b_thr, groups, 0);
+      BitSet q3 = getQuadrant(a, a_thr, b, b_thr, groups, 3);
       for (int i = 0; i < (end - start + 1); i++) {
         if (q0.get(i)) {
           be[1][i] += c0;
@@ -140,8 +141,8 @@ class Embedding extends Hegemon {
     }
     if (t == 1 || t == 4 || t == 6) {
       count2 ++;
-      BitSet q1 = getQuadrant(a, a_thr, b, b_thr, 1);
-      BitSet q2 = getQuadrant(a, a_thr, b, b_thr, 2);
+      BitSet q1 = getQuadrant(a, a_thr, b, b_thr, groups, 1);
+      BitSet q2 = getQuadrant(a, a_thr, b, b_thr, groups, 2);
       for (int i = 0; i < (end - start + 1); i++) {
         if (q1.get(i)) {
           be[0][i] += c1;
@@ -159,6 +160,7 @@ class Embedding extends Hegemon {
       out.println(be[0][i] + "\t" + be[1][i]);
     }
     System.err.println(count1 + "\t" + count2);
+    System.err.println(x0_ + "\t" + x1_ + "\t" + x2_ + "\t" + x3_);
   }
 
   public boolean manyHi(BitSet a, double nhithr) {
@@ -169,13 +171,15 @@ class Embedding extends Hegemon {
     return false;
   }
 
-  public void printEmbedding(String sThr_t, String pThr_t, String nhiThr_t) {
+  public void printEmbedding(String sThr_t, String pThr_t, String nhiThr_t,
+      String listFile) {
     if (!hasBv()) {
       return;
     }
     String bvFile = getBv();
     String line;
     try {
+      BitSet groups = getGroups(listFile);
       double sthr = getDouble(sThr_t);
       double pthr = getDouble(pThr_t);
       double nhithr = getDouble(nhiThr_t);
@@ -248,12 +252,12 @@ class Embedding extends Hegemon {
               if (!manyHi(vb, nhithr)) {
                 continue;
               }
-	      getBnum(bnum, va, va_thr, vb, vb_thr, null);
+	      getBnum(bnum, va, va_thr, vb, vb_thr, groups);
 	      getEstNum(estnum, bnum);
 	      getSnum(snum, bnum, estnum);
 	      getPnum(pnum, bnum);
               int t = getBooleanRelationType(snum, pnum, sthr, pthr);
-              updateBE(va, va_thr, vb, vb_thr, t, x0_, x1_, x2_, x3_);
+              updateBE(va, va_thr, vb, vb_thr, groups, t, x0_, x1_, x2_, x3_);
 	      if (j < (b2 -1 + blocksize_)) {
 		vb = ba2[j+1-b2];
 	      }
@@ -280,15 +284,15 @@ class Embedding extends Hegemon {
       System.exit(1);
     }
     String cmd = args[0];
-    if (cmd.equals("boolean") && args.length < 9) {
-      System.out.println("Usage: java Embedding boolean pre sThr pThr nhiThr x0 x1 x2 x3");
+    if (cmd.equals("boolean") && args.length < 10) {
+      System.out.println("Usage: java Embedding boolean pre sThr pThr nhiThr listFile x0 x1 x2 x3");
       System.exit(1);
     }
     if (cmd.equals("boolean")) {
       Embedding h = new Embedding(args[1]);
-      if (args.length >= 9) {
-        h.printEmbedding(args[2], args[3], args[4]);
-        h.setParams(args[5], args[6], args[7], args[8]);
+      if (args.length >= 10) {
+        h.setParams(args[6], args[7], args[8], args[9]);
+        h.printEmbedding(args[2], args[3], args[4], args[5]);
       }
     }
   }
