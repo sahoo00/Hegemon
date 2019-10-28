@@ -131,7 +131,7 @@ def getX(filename, x, debug):
     exit()
   fp = open(filename, "r")
   header = fp.readline().strip()
-  fp.seek(long(x), 0)
+  fp.seek(int(x), 0)
   in_x = fp.readline()
   if (debug == 1):
     print("Line 1:<br/>",in_x,":<br>");
