@@ -134,6 +134,34 @@ class U {
     return $result / ($end - $start + 1);
   }
 
+  function cal_median($arr){
+    if ($arr){
+      $count = count($arr);
+      sort($arr);
+      $mid = floor(($count-1)/2);
+      return ($arr[$mid]+$arr[$mid+1-$count%2])/2;
+    }
+    return 0;
+  }
+
+  public function median($arr, $start = FALSE, $end = FALSE) {
+    if ($start == FALSE) {
+      $start = 0;
+    }
+    if ($end == FALSE) {
+      $end = count($arr) - 1;
+    }
+    $result = 0;
+    if ($start > $end) {
+      return $result;
+    }
+    $tmparr = array();
+    for ($i = $start; $i <= $end; $i++) {
+      $tmparr[] = $arr[$i];
+    }
+    return self::cal_median($tmparr);
+  }
+
   function stddev ($arr, $start = FALSE, $end = FALSE) {
     if ($start == FALSE) {
       $start = 0;
@@ -1637,17 +1665,29 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     return array($x_thr, $y_thr);
   }
 
-  function updateThresholdXY($x_thr, $y_thr, $x_t = FALSE, $y_t = FALSE) {
+  function updateThresholdXY($file, $x_arr, $y_arr, $x_thr, $y_thr, $x_t = FALSE, $y_t = FALSE) {
     if ($x_t) {
       if ($x_t == "thr0") { $x_thr = $x_thr - 0.5; }
       elseif ($x_t == "thr2") { $x_thr = $x_thr + 0.5; }
       elseif ($x_t == "thr1") { $x_thr = $x_thr; }
+      elseif ($x_t == "mean") {
+        $x_thr = self::mean($x_arr, 2, count($x_arr)-2);
+      }
+      elseif ($x_t == "median") {
+        $x_thr = self::median($x_arr, 2, count($x_arr)-2);
+      }
       else { $x_thr = $x_t; }
     }
     if ($y_t) {
       if ($y_t == "thr0") { $y_thr = $y_thr - 0.5; }
       elseif ($y_t == "thr2") { $y_thr = $y_thr + 0.5; }
       elseif ($y_t == "thr1") { $y_thr = $y_thr; }
+      elseif ($y_t == "mean") {
+        $y_thr = self::mean($y_arr, 2, count($y_arr)-2);
+      }
+      elseif ($y_t == "median") {
+        $y_thr = self::median($y_arr, 2, count($y_arr)-2);
+      }
       else { $y_thr = $y_t; }
     }
     return array($x_thr, $y_thr);
@@ -1655,7 +1695,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
 
   function generateBooleanGroups ($file, $x_name, $y_name, $x_arr, $y_arr, $h_arr, $x_t = FALSE, $y_t = FALSE) {
     list($x_thr, $y_thr) = self::getThresholdXY($file, $x_arr, $y_arr);
-    list($x_thr, $y_thr) = self::updateThresholdXY($x_thr, $y_thr, $x_t, $y_t);
+    list($x_thr, $y_thr) = self::updateThresholdXY($file, $x_arr, $y_arr, $x_thr, $y_thr, $x_t, $y_t);
     $gr = [[0, "lolo", []], 
       [1, "lohi", []],
       [2, "hilo", []],
