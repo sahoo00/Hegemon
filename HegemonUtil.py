@@ -440,7 +440,7 @@ def survival(time, status, pGroups=None, ax=None):
                 show_censors=True)
       kmfs += [kmf]
     from lifelines.plotting import add_at_risk_counts
-    #add_at_risk_counts(*kmfs, ax=ax)
+    add_at_risk_counts(*kmfs, ax=ax)
     order = [i for i in range(len(groups)) if groups[i] != ""]
     if len(order) > 0:
       t = [float(time[i]) for i in order]
@@ -822,6 +822,11 @@ class Hegemon:
 
   def aRange(self):
     return range(self.start, self.end + 1)
+
+  def getTitle(self):
+      title = self.rdataset.getName() + " (" + self.getSource() + \
+              "; n = " + str(self.getNum()) + ")"
+      return title
 
   def getPtr(self, id):
     if (id in self.idhash):

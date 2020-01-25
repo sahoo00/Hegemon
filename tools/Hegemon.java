@@ -447,7 +447,8 @@ class Hegemon {
     }
   }
 
-  public void printBoolean(String id, String listFile, Set<String> keys) {
+  public void printBoolean(String id, String listFile, Set<String> keys,
+      boolean dynrange) {
     if (!hasBv()) {
       return;
     }
@@ -489,7 +490,7 @@ class Hegemon {
         int numArr = result[2].length();
         BitSet vb = stringToBitSet(result[2], 0);
         BitSet vb_thr = stringToBitSet(result[2], 1);
-        if (!haveGoodDynamicRange(numArr, vb_thr)) {
+        if (dynrange && !haveGoodDynamicRange(numArr, vb_thr)) {
           continue;
         }
         getBnum(bnum, va, va_thr, vb, vb_thr, groups);
@@ -509,6 +510,10 @@ class Hegemon {
     catch(Exception ex) {
       ex.printStackTrace();
     }
+  }
+
+  public void printBoolean(String id, String listFile, Set<String> keys) {
+    printBoolean(id, listFile, keys, true);
   }
 
   public void printBoolean(String id, String listFile) {
@@ -1804,6 +1809,19 @@ class Hegemon {
       }
       else {
         h.printBoolean(args[2], args[3], null);
+      }
+    }
+    if (cmd.equals("Bool") && args.length < 3) {
+      System.out.println("Usage: java Hegemon Bool pre id <listFile>");
+      System.exit(1);
+    }
+    if (cmd.equals("Bool")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.printBoolean(args[2], null, null, false);
+      }
+      else {
+        h.printBoolean(args[2], args[3], null, false);
       }
     }
     if (cmd.equals("Boolean") && args.length < 3) {
