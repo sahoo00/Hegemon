@@ -161,42 +161,18 @@ function explore($file, $str1, $str2, $id) {
     </td>
     <td style=\"vertical-align:top\">
     <div id=\"tools_display\">
-      <input type=\"button\" name=\"Union\" value=\"Union\"
-           onclick=\"callUnion();\"/>
-      <input type=\"button\" name=\"Intersection\" value=\"Intersection\"
-           onclick=\"callIntersection();\"/>
+      <input type=\"button\" name=\"BoxP\" value=\"Box Plot\"
+           onclick=\"callBoxP();\"/>
+      <input type=\"button\" name=\"Stats\" value=\"Statistics\"
+           onclick=\"callStats();\"/>
+      <input type=\"button\" name=\"Survival\" value=\"Survival Plot\"
+           onclick=\"callSurvival();\"/>
+      <input type=\"button\" name=\"Corr\" value=\"Correlation\"
+           onclick=\"callGCorr();\"/>
+      <input type=\"button\" name=\"Download\" value=\"Download\"
+	   onclick=\"callDownload();\"/>
       <input type=\"button\" name=\"Reset\" value=\"Reset\"
            onclick=\"callReset();\"/>
-      <input type=\"button\" name=\"Remove\" value=\"Remove\"
-           onclick=\"callRemove();\"/>
-      <input type=\"button\" name=\"D-AB\" value=\"D-AB\"
-           onclick=\"callDiffAB();\"/>
-      <input type=\"button\" name=\"D-BA\" value=\"D-BA\"
-           onclick=\"callDiffBA();\"/>
-      <input type=\"button\" name=\"Scr\" value=\"Scr\"
-           onclick=\"callScr();\"/>
-      <input type=\"button\" name=\"Rect1\" value=\"Rect1\"
-           onclick=\"callRect();\"/>
-      <input type=\"button\" name=\"Thr\" value=\"Thr\"
-           onclick=\"callThr();\"/>
-      <input type=\"button\" name=\"BoxP\" value=\"BoxP\"
-           onclick=\"callBoxP();\"/>
-      <input type=\"button\" name=\"Show\" value=\"Show\"
-           onclick=\"callShow();\"/>
-      <input type=\"button\" name=\"ShowIm\" value=\"ShowIm\"
-           onclick=\"callShowIm();\"/>
-      <input type=\"button\" name=\"Stats\" value=\"Stats\"
-           onclick=\"callStats();\"/>
-      <input type=\"button\" name=\"Survival\" value=\"Survival\"
-           onclick=\"callSurvival();\"/>
-      <input type=\"button\" name=\"Corr\" value=\"Corr\"
-           onclick=\"callGCorr();\"/>
-      <input type=\"button\" name=\"Diff\" value=\"Diff\"
-           onclick=\"callGDiff();\"/>
-      <input type=\"button\" name=\"Download\" value=\"Download\"
-           onclick=\"callDownload();\"/>
-      <input type=\"button\" name=\"Search\" value=\"Search\"
-           onclick=\"callSearch();\"/>
        <br/>
       $selectTool
     </div>

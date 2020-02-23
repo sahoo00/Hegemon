@@ -677,6 +677,7 @@ function callClear() {
   var ss1 = document.getElementById('lineresults');
   ss1.innerHTML = '';
   ss1.style.visibility = 'visible';
+  $('#explore').hide();
 }
 
 var selectionRect = {

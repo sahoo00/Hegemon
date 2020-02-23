@@ -784,6 +784,11 @@ function printBody($db) {
     $cmd = $_GET['cmd'];
   }
 echo "
+    <header>
+      <h1 style=\"text-align:center;\">Hegemon</h1>
+    </header>
+";
+echo "
     <div id=\"exploreAll\">
       <form name=\"exploreForm\" action=\"\">
       Select Dataset: <select id=\"dataset\" name=\"dataset\">
@@ -807,34 +812,19 @@ echo "
   }
 echo "
       </select>
-      <input type=\"button\" name=\"topGenes\" value=\"topGenes\"
-              onclick=\"callTopGenes();\"/>
-      nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
       <div id=\"box\">
       Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
               name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
       Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
               name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
-          <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
-              onclick=\"callGetIDs();\"/>
-          <input type=\"button\" name=\"getPlots\" value=\"getPlots\"
-              onclick=\"callGetPlots();\"/>
-          <input type=\"button\" name=\"getStats\" value=\"getStats\"
-              onclick=\"callGetStats();\"/>
-          <input type=\"button\" name=\"Explore\" value=\"Explore\"
-              onclick=\"callExplore();\"/> <br/>
-     SThr: <input type=\"text\" size=\"3\" id=\"sthr\" value=\"3\"/>
-     PThr: <input type=\"text\" size=\"3\" id=\"pthr\" value=\"0.1\"/>
-          <input type=\"button\" name=\"MiDReG\" value=\"MiDReG\"
-              onclick=\"callMiDReG();\"/> 
-    CT: <input type=\"text\" size=\"3\" id=\"CT\"
-              name=\"CT\" value=\"\" alt=\"Censor Time\"/>
-          <input type=\"button\" name=\"getCorr\" value=\"getCorr\"
-              onclick=\"callCorr();\"/>
-          <input type=\"button\" name=\"getInfo\" value=\"getInfo\"
-              onclick=\"callInfo();\"/>
+          <input type=\"button\" name=\"getPlots\" value=\"Show Plot\"
+	      onclick=\"callGetPlots();\"/>
+	  <input type=\"button\" id=\"explore\" name=\"Explore\" value=\"Explore\"
+              style=\"display: none;\" onclick=\"callExplore();\"/>
           <input type=\"button\" name=\"Clear\" value=\"Clear\"
-              onclick=\"callClear();\"/>
+	      onclick=\"callClear();\"/>
+	  <input type=\"text\" size=\"3\" id=\"CT\"
+              name=\"CT\" value=\"\" alt=\"Censor Time\" style=\"display: none;\"/>
       </div> <!-- end id box -->
 ";
 echo "
@@ -846,11 +836,11 @@ echo "
     <script type=\"text/javascript\">
         var s1 = $('#dataset').val();
         var url = 'explore.php?go=getsource&id=' + s1;
-        \$('#results').load(url);
+	\$('#results').load(url);
         \$('#dataset').on('change', function() {
             var s1 = $('#dataset').val();
             var url = 'explore.php?go=getsource&id=' + s1;
-            \$('#results').load(url);
+	    \$('#results').load(url);
         });
 ";
       if (strcmp($cmd, "explore") == 0) {
@@ -863,53 +853,6 @@ echo "
 
 function printFooter() {
 echo "
-    <br clear=\"all\"/>
-    <div id=\"ref\">
-      References:
-      <ol>
-        <li>
-        Debashis Sahoo, David L. Dill, Andrew J. Gentles, Rob Tibshirani,
-Sylvia K. Plevritis. Boolean implication networks derived from large scale,
-whole genome microarray datasets. Genome Biology, 9:R157, Oct 30 2008.
-        </li>
-        <li>
-Debashis Sahoo, Jun Seita, Deepta Bhattacharya, Matthew A. Inlay, Sylvia K.
-Plevritis, Irving L. Weissman, David L. Dill. MiDReG: A Method of Mining
-Developmentally Regulated Genes using Boolean Implications. Proc Natl Acad Sci
-U S A. 2010 Mar 30;107(13):5732-7. Epub 2010 Mar 15.
-        </li>
-        <li>
-Piero Dalerba *, Tomer Kalisky *, Debashis Sahoo *, Pradeep S. Rajendran, Mike
-Rothenberg, Anne A. Leyrat, Sopheak Sim, Jennifer Okamoto, John D. Johnston,
-Dalong Qian, Maider Zabala, Janet Bueno, Norma Neff, Jianbin Wang, Andy A.
-Shelton, Brendan Visser, Shigeo Hisamori, Mark van den Wetering, Hans Clevers,
-Michael F. Clarke * and Stephen R. Quake *. Single-cell dissection of
-transcriptional heterogeneity in human colon tumors. Nature Biotech, 2011 Nov
-13. doi: 10.1038/nbt.2038
-        </li>
-        <li>
-Jens-Peter Volkmer *, Debashis Sahoo *, Robert Chin *, Philip Levy Ho, Chad
-Tang, Antonina V. Kurtova, Stephen B. Willingham, Senthil K. Pazhanisamy,
-Humberto Contreras-Trujillo, Theresa A. Storm, Yair Lotan, Andrew H. Beck,
-Benjamin Chung, Ash A. Alizadeh, Guilherme Godoy, Seth P. Lerner, Matt van de
-Rijn, Linda. D. Shortliffe, Irving L. Weissman *, and Keith S. Chan *. Three
-differentiation states risk-stratify bladder cancer into distinct subtypes.
-PNAS February 7, 2012 vol. 109 no. 6 pp 2078-2083.
-        </li>
-        <li>
-Piero Dalerba*, Debashis Sahoo*, Soonmyung Paik, Xiangqian Guo, Greg Yothers,
-Nan Song, Nate Wilcox-Fogel, Erna Forgó, Pradeep S. Rajendran, Stephen P.
-Miranda, Shigeo Hisamori, Jacqueline Hutchison, Tomer Kalisky, Dalong Qian,
-Norman Wolmark, George A. Fisher, Matt van de Rijn, and Michael F. Clarke. CDX2
-as a Prognostic Biomarker in Stage II and Stage III Colon Cancer. N Engl J Med.
-2016 Jan 21;374(3):211-22. doi: 10.1056/NEJMoa1506597.
-        </li>
-      </ol>
-    </div>
-    <div id=\"footer\">
-      <p>Copyright &copy; 2016 <strong> Author: Debashis Sahoo </strong> 
-      &mdash; All rights reserved.</p>
-    </div>
   </body>
 </html>
 ";

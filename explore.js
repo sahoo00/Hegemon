@@ -30,6 +30,7 @@ function getDatasetID(name) {
 
 function callGetPlots() {
   bindGetPlots('getplots', handleGetPlot);
+  $('#explore').show();
 }
 
 function bindGetPlots(cmd, fun) {
