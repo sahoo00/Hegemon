@@ -405,7 +405,7 @@ function getSurvival($file, $expr, $id, $x, $y, $xn, $yn, $ct, $groups) {
   echo "</pre>\n";
 }
 
-functio ngetlstats($file, $f, $id, $x, $y, $id1, $id2) {
+function getlstats($file, $f, $id, $x, $y, $id1, $id2) {
   $h = getHegemon($file, $id);
   list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
   list($thrx0, $thrx1, $thrx2) = U::getThreshold($x_arr, 2, count($x_arr)-2);
