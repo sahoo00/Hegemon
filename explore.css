@@ -8,12 +8,32 @@ body, select {
   color: #000;
   font: 16px/1.3em Arial, Helvetica, sans-serif;
 }
-#header {
-  color: #000;
+
+#head1 {
+  display: inline-block;
+  text-align: center;
+  margin-top: 0px;
 }
+
+#menu {
+  display: inline-block;
+  margin-left: 40px;
+  vertical-align: top;
+  float: right;
+  clear: left;
+}
+#menu-item {
+  display: inline-block;
+  width: 80px;
+  text-align: center;
+}
+#menu-item:hover {
+  background-color: yellow;
+}
+
 #exploreAll {
-  margin:0px;
-  padding:0px;
+  margin: 5px;
+  padding: 5px;
 }
 #box {
   margin-top: 10px;
@@ -23,8 +43,8 @@ img.groupPlot {
   position: relative;
   padding: 0 0 0 0;
   margin: 0 0 0 0;
-  float:left;
-  border:1px solid #fff;
+  float: left;
+  border: 1px solid #fff;
 }
 #rect { 
   position: absolute;

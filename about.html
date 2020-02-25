@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title> Analysis of Plant Gene Expression Data </title>
+<meta name="description" content="Header Navigation">
+<meta name="author" content="Debashis Sahoo"/>
+<meta name="viewport" content="width=device-width; initial-scale=1; maximum-scale=1"/>
+
+<style>
+#head1 {
+  display: inline-block;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+#menu {
+  display: inline-block;
+  margin-left:40px;
+  vertical-align: top;
+  float:right;
+  clear: left;
+}
+#menu-item {
+  display: inline-block;
+  width: 80px;
+  text-align:center;
+}
+#menu-item:hover {
+  background-color: yellow;
+}
+#im-plant {
+  float:right;
+  clear: left;
+  display: block;
+  vertical-align: top;
+  margin:0px;
+  height:40px;
+}
+#footer {
+  margin-top:400px;
+}
+p {
+  color: #000;
+  font: 18px/1.3em Arial, Helvetica, sans-serif;
+}
+body {
+  color: #000;
+  font: 18px/1.3em Arial, Helvetica, sans-serif;
+}
+</style>
+</head>
+<body>
+<div id="header">
+<h1 id="head1"> About </h1>
+<div id="menu">
+<div id="menu-item"> <a href="explore.php"> Home </a> </div>
+</div>
+</div>
+
+<p>
+This website is designed to explore genomic and transcriptomic dataset
+from plant. We have collected publicly available
+microarray and RNASeq datasets to perform Boolean analysis on various genes.
+</p>
+
+<h2> Tutorial </h2>
+<p>
+For this tutorial, we will utilize the <em>Arabidopsis thaliana</em> 
+dataset to demonstrate how Hegemon works and the various tools you can use to explore the dataset. 
+The <a href="explore.php">Home</a> link above will take you to the home page where there are links to two
+different tools to explore <em>Arabidopsis thaliana</em> datasets.
+</p>
+
+<p>
+In the <a href="explore.php">Home</a> page there are links to the tool of 
+Hegemon scatterplot explorer
+</p>
+
+<p>
+Hegemon scatterplot explorer links are identified by the following links in the
+<a href="explore.php">Home</a> page:
+<ul>
+<li> Explore <em>Arabidopsis thaliana</em> data </li>
+<li> Explore scatterplots between CRU3 and RBCS1A in Microarray data </li>
+<li> Explore scatterplots between CRU3 and RBCS1A in RNASeq data </li>
+</ul>
+</p>
+
+<h2> HEGEMON scatterplot explorer </h2>
+<p> When you are on the home page this is what you can choose/see on the page as shown below:
+</p>
+<img src="Images/booleanpic1.png"/>
+<ol>
+  <li> Select Dataset: select a dataset to analyze by using the dropdown menu. </li>
+  <li> Gene A: Type a gene name in the textbox (Gene Symbol Name, Affymetrix ID or AGI code AT#G#####). Gene A is used in the X-axis of the scatterplot.  </li>
+  <li> Gene B: Type another gene name in the textbox (Gene Symbol Name, Affymetrix ID or AGI code AT#G#####). Gene B is used in the Y-axis of the scatterplot. </li>
+    this button to make sure that a probe exists in the dataset. </li>
+  <li> Show Plot: Shows scatterplots with all combinations of the probe IDs
+    between gene A and gene B. At this page the users can select their favorite
+  scatterplots by clicking mouse on the scatterplot. Once a
+  scatterplot is selected textboxes corresponding to
+  Gene A and Gene B are changed to reflect
+  the selection. An option to further explore will appear when "Show Plot" is clicked.</li>
+  <li> Explore: Shows the selected scatterplot with a new set of tools on the
+    right.
+    <img src="Images/exploretools1.png"/>
+    <ol type="a">
+      <li> Selecting samples using Mouse to drag across points on the plot.
+        <img src="Images/selectGroups.png"/>
+      </li>
+      <li> Highlighting the samples using the checkbox on the left side of
+        "Group 0".
+        <img src="Images/select1Group.png"/>
+      </li>
+      <li> Highlighting multiple groups using the checkbox on the left side of
+        "Group 0", "Group 1".
+        <img src="Images/select2groups.png"/>
+      </li>
+      <li> Selecting Tissue Annotation: Click on the drop down menu "Select
+        Patient Information" and select "c Tissue".
+        <img src="Images/selectTissue.png"/>
+      </li>
+      <li> Selecting Root Samples: Click on the drop down menu "root" after selecting Tissue annotation above.
+        <img src="Images/selectRoot.png"/>
+      </li>
+      <li> Selecting Flower Samples: Click on the drop down menu "flower" after
+        selecting root samples above.
+        <img src="Images/flowerSample.png"/>
+      </li>
+      <li> Highlighting Root and Flower Samples: You can change the names of the
+        respective groups "Group 0" to "Root" and "Group 1" to "Flower". Click
+        on the checkbox to highlight them in the scatterplot.
+        <img src="Images/changeNames.png"/>
+      </li>
+      <li> Boxplot of Root and Flower Samples: After selecting the checkbox on
+        the left side of "Root" and "Flower" click on the button "Box Plot" above.
+        <img src="Images/boxplot.png"/>
+      </li>
+      <li> Statistics: To analyze the statistics of the dataset, click on "Statistics"
+	      and information will appear below the scatterplot.
+	      <img src="Images/statistics.png"/>
+      </li>
+	<li> Finding Correlations: After selecting the checkboxes for the groups selected, 
+		click on "Correlation" and a plot will appear below the scatterplot. You can 
+		enter in correlation values and click "Go" which will then display all of the points that are
+		correlated at that value.
+		<img src="Images/correlation.png"/>
+	</li>
+	<li> Survival Plot: After selecting the checkbox of groups, click on "Survival Plot" and the main scatterplot will be replacd with a new survival plot.
+	</li>
+	<li> Reseting groups: To reset the groups you created, click on "Reset" which will remove the groups.
+	</li>
+      <li> Download scatterplots, boxplots and results of different statistical tests: After selecting the checkbox on the left side of "Root" and "Flower" click on the button "Download" above. It opens a new page with a pdf file:
+        <a href="Images/Hegemon-plots.pdf"> Hegemon-plots </a>.
+      </li>
+    </ol>
+  </li>
+  <li> Clear: Clears the plot and any exploring options that were selected before.
+</ol>
+
+<h2> Software </h2>
+
+<h3> <a href="https://github.com/sahoo00/BooleanNet"> https://github.com/sahoo00/BooleanNet </a> </h3>
+<h3> <a href="https://github.com/sahoo00/Hegemon"> https://github.com/sahoo00/Hegemon </a> </h3>
+
+<h2> Acknowledgement</h2>
+
+<p>
+Dr. Debashis Sahoo is supported by startup funds from the Department of Pediatrics at University of California San Diego, and a R00 grant from National Institute of Health, USA (R00CA151673).
+</p>
+
+<h2> <a href="references.html">References</a> </h2>
+
+</body>
+</html>
+

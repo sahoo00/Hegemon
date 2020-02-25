@@ -60,8 +60,8 @@ function callGroupsCommands($file, $groups, $param) {
         $_GET['CT'], $groups);
   }
   if (strcmp($_GET["go"], "getlstats") == 0) {
-    getlstats($file, $_GET['file'], $_GET['id'],
-        $_GET['x'], $_GET['y'], $_GET['xn'],$_GET['yn']);
+    getlstats($file, $_GET['file'], $_GET['id'], 
+        $_GET['x'], $_GET['y'], $_GET['id1'],$_GET['id2']);
   }
   if (strcmp($_GET["go"], "getrect") == 0) {
     getrect($file, $_GET['file'], $_GET['id'], 
@@ -113,7 +113,10 @@ function getSelectTool($file) {
   $str = "<select id=\"clinical0\" name=\"clinical\" onchange=\"callSelectTool();\">\n";
   $str .= "<option value=\"0\"> Select Patient Information </option>\n";
   for ($i = 1; $i < count($headers); $i++) {
-    $str .= "<option value=\"$i\">$headers[$i]</option>\n";
+    $hList = explode(" ", $headers[$i]);
+    if (count($hList) > 1 && $hList[0] == "c") {
+      $str .= "<option value=\"$i\">$hList[1]</option>\n";
+    }
   }
   $str .= "</select>\n";
   $str .= "<div id=\"selectPatientInfo\"></div>\n";
@@ -167,8 +170,8 @@ function explore($file, $str1, $str2, $id) {
            onclick=\"callStats();\"/>
       <input type=\"button\" name=\"Survival\" value=\"Survival Plot\"
            onclick=\"callSurvival();\"/>
-      <input type=\"button\" name=\"Corr\" value=\"Correlation\"
-           onclick=\"callGCorr();\"/>
+      <input type=\"button\" name=\"stats\" value=\"Statistics\"
+           onclick=\"callStats();\"/>
       <input type=\"button\" name=\"Download\" value=\"Download\"
 	   onclick=\"callDownload();\"/>
       <input type=\"button\" name=\"Reset\" value=\"Reset\"
@@ -403,7 +406,7 @@ function getSurvival($file, $expr, $id, $x, $y, $xn, $yn, $ct, $groups) {
   echo "</pre>\n";
 }
 
-function getlstats($file, $f, $id, $x, $y, $xn, $yn) {
+function getlstats_old($file, $f, $id, $x, $y, $xn, $yn) {
   list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
   list($thrx0, $thrx1, $thrx2) = U::getThreshold($x_arr, 2, count($x_arr)-2);
   list($thry0, $thry1, $thry2) = U::getThreshold($y_arr, 2, count($y_arr)-2);
@@ -416,6 +419,22 @@ function getlstats($file, $f, $id, $x, $y, $xn, $yn) {
     echo "<tr> <td> $k </td> <td> $v </td> </tr>\n";
   }
   echo "</table>\n";
+}
+
+function getlstats($file, $f, $id, $x, $y, $id1, $id2) {
+  $h = getHegemon($file, $id);
+  list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
+  list($thrx0, $thrx1, $thrx2) = U::getThreshold($x_arr, 2, count($x_arr)-2);
+  list($thry0, $thry1, $thry2) = U::getThreshold($y_arr, 2, count($y_arr)-2);
+  $nm1 = $h->getName($id1);
+  $nm2 = $h->getName($id2);
+  $bs = U::getBooleanStats($x_arr, $y_arr, $thrx1-0.5, $thrx1+0.5, $thry1-0.5, $thry1+0.5);
+  $rel = U::getBooleanRelations($bs, 3, 0.1);
+  $formula = U::getFormula($nm1, $nm2, $rel);
+  $rhash = U::getXYStats($x_arr, $y_arr);
+  $r = $rhash['r '];
+  echo "<b> Boolean Relation: $formula </b> <br/>\n";
+  echo "<b> Correlation: $r </b> <br/>\n";
 }
 
 function getOutprefix() {

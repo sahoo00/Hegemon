@@ -30,7 +30,6 @@ function getDatasetID(name) {
 
 function callGetPlots() {
   bindGetPlots('getplots', handleGetPlot);
-  $('#explore').show();
 }
 
 function bindGetPlots(cmd, fun) {
@@ -67,7 +66,7 @@ function handleGetPlot() {
     }
     var patt=/^Error/i;
     if (patt.test(str[0])) {
-      str[0] += '<br/> Click getPlots and then click on a plot to select probeset id';
+      str[0] += '<br/> Click Show Plot(s) and then click on a plot for advanced options';
     }
     var plots = '<table border=0> <tr>';
     for(i=0; i < str.length - 1; i++) {
@@ -78,7 +77,8 @@ function handleGetPlot() {
       box += '<a href="' + list[4] + '"> p</a>  ';
       box += '<br/>';
       box += '<img height=240 width=320 src="' + list[4] + '"  ';
-      box += ' onclick="updateTextBox(\'' + list[0] + '\',\'' + list[1] + '\',\'' + list[2] + '\',\'' + list[3] + '\');"/>';
+      //box += ' onclick="updateTextBox(\'' + list[0] + '\',\'' + list[1] + '\',\'' + list[2] + '\',\'' + list[3] + '\');"/>';
+      box += ' onclick="callExplore()"/>';
       box += '</td>';
       if ( (i % 2) == 1 ) {
         box += '</tr><tr>';
@@ -86,6 +86,7 @@ function handleGetPlot() {
       plots += box;
     }
     plots += '</tr></table>';
+    plots += '<br/> Click on a plot for advanced options.';
     ss.innerHTML += plots;
   }
 }

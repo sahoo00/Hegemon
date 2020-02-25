@@ -252,7 +252,7 @@ function getImgUrl($h, $id, $id1, $id2) {
   $n1 = $h->getName($id1);
   $n2 = $h->getName($id2);
   $src = "explore.php?go=plot&file=$exprFile&id=$id&xn=$n1&yn=$n2" . 
-    "&x=$ptr1&y=$ptr2";
+    "&x=$ptr1&y=$ptr2&id1=$id1&id2=$id2";
   return $src;
 }
   
@@ -784,9 +784,12 @@ function printBody($db) {
     $cmd = $_GET['cmd'];
   }
 echo "
-    <header>
-      <h1 style=\"text-align:center;\">Hegemon</h1>
-    </header>
+    <div id=\"header\">
+      <h1 id=\"head1\">Hegemon</h1>
+    <div id=\"menu\">
+      <div id=\"menu-item\"> <a href=\"about.html\">About</a></div>
+    </div>
+    </div>
 ";
 echo "
     <div id=\"exploreAll\">
@@ -817,7 +820,7 @@ echo "
               name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
       Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
               name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
-          <input type=\"button\" name=\"getPlots\" value=\"Show Plot\"
+          <input type=\"button\" name=\"getPlots\" value=\"Show Plot(s)\"
 	      onclick=\"callGetPlots();\"/>
 	  <input type=\"button\" id=\"explore\" name=\"Explore\" value=\"Explore\"
               style=\"display: none;\" onclick=\"callExplore();\"/>
