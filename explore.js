@@ -1,3 +1,16 @@
+
+
+$(document).ready(function() {
+  $('.js-example-basic-single').select2();
+  setGeneListA();
+  setGeneListB();
+  $('#dataset').on('change', function() {
+    setGeneListA();
+    setGeneListB();
+  });
+});
+
+
 function GetXmlHttpObject()
 {
   var xmlHttp=null;
@@ -77,7 +90,6 @@ function handleGetPlot() {
       box += '<a href="' + list[4] + '"> p</a>  ';
       box += '<br/>';
       box += '<img height=240 width=320 src="' + list[4] + '"  ';
-      //box += ' onclick="updateTextBox(\'' + list[0] + '\',\'' + list[1] + '\',\'' + list[2] + '\',\'' + list[3] + '\');"/>';
       box += ' onclick="callExplore()"/>';
       box += '</td>';
       if ( (i % 2) == 1 ) {
@@ -89,10 +101,6 @@ function handleGetPlot() {
     plots += '<br/> Click on a plot for advanced options.';
     ss.innerHTML += plots;
   }
-}
-function updateTextBox(v1, n1, v2, n2) {
-  document.getElementById('Ab').value = v1;
-  document.getElementById('Bb').value = v2;
 }
 
 function callGetStats() {
@@ -215,6 +223,32 @@ function callInfo() {
         .enter()
         .append('td')
         .text(ident);
+    });
+  }
+}
+
+function setGeneListA() {
+  if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
+  $('#Ab').empty().append($('<option>').val('').text('Select Gene A').prop('disabled', true).prop('selected', true));  
+    var s1 = $('#dataset').val();
+    var url = 'explore.php?go=getgenelistjson&id=' + s1;
+    d3.json(url, function(data) {
+      for(g of data) {
+        $('#Ab').append($('<option>').val(g).text(g)); 
+      }
+    });
+  }
+}
+
+function setGeneListB() {
+  if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
+  $('#Bb').empty().append($('<option>').val('').text('Select Gene B').prop('disabled', true).prop('selected', true));
+  var s1 = $('#dataset').val();
+    var url = 'explore.php?go=getgenelistjson&id=' + s1;
+    d3.json(url, function(data) {
+      for(g of data) {
+        $('#Bb').append($('<option>').val(g).text(g));
+      }
     });
   }
 }

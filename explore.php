@@ -43,6 +43,9 @@ if (array_key_exists("param", $_POST)) {
   $param = getParam(urldecode($_POST['param']));
 }
 
+if (strcmp($_GET["go"], "getgenelistjson") == 0) {
+  getGeneList($file, $_GET['id']);
+}
 if (array_key_exists("go", $_GET)) {
   if (strcmp($_GET["go"], "getthrjson") == 0) {
     printThrJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
@@ -175,6 +178,16 @@ function getHegemon($file, $id) {
   $h = new Hegemon($d);
   $h->init();
   return $h;
+}
+
+function getGeneList($file, $id) {
+  $h = getHegemon($file, $id);
+  $ids = $h->topGenesJava(count($h->namehash));
+  $geneList = [];
+  foreach ($ids as $k => $v) {
+    array_push($geneList, $h->getName($k));
+  }
+  echo json_encode($geneList);
 }
 
 function printPtrJSON($exprFile, $ptr1) {
@@ -757,6 +770,8 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <script src=\"explore.js\" type=\"text/javascript\"></script>
   <script src=\"Mouse.js\" type=\"text/javascript\"></script>
   <script src=\"Groups.js\" type=\"text/javascript\"></script>
+  <link href=\"https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css\" rel=\"stylesheet\" />
+  <script src=\"https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js\"></script>
 ";
   echo file_get_contents("gtag.html");
 echo "
@@ -794,7 +809,7 @@ echo "
 echo "
     <div id=\"exploreAll\">
       <form name=\"exploreForm\" action=\"\">
-      Select Dataset: <select id=\"dataset\" name=\"dataset\">
+      Select Dataset: <select class=\"js-example-basic-single\" id=\"dataset\" name=\"dataset\">
 ";
   foreach ($db->getListKey($keys) as $n) {
     $id = $n->getID();
@@ -816,18 +831,23 @@ echo "
 echo "
       </select>
       <div id=\"box\">
-      Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
-              name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
-      Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
-              name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
-          <input type=\"button\" name=\"getPlots\" value=\"Show Plot(s)\"
+      <div style=\"text-align: left;\">
+      Gene A: <select class=\"js-example-basic-single\" style=\"width: 10%\" id=\"Ab\" name=\"Ab\">
+      </select>
+      Gene B: <select class=\"js-example-basic-single\" style=\"width: 10%\" id=\"Bb\" name=\"Bb\"/>
+      </select>
+      </div>
+      <br/>
+      <div style=\"text-align: left;\">
+      <input type=\"button\" name=\"getPlots\" value=\"Show Plot(s)\"
 	      onclick=\"callGetPlots();\"/>
-	  <input type=\"button\" id=\"explore\" name=\"Explore\" value=\"Explore\"
+      <input type=\"button\" id=\"explore\" name=\"Explore\" value=\"Explore\"
               style=\"display: none;\" onclick=\"callExplore();\"/>
-          <input type=\"button\" name=\"Clear\" value=\"Clear\"
+      <input type=\"button\" name=\"Clear\" value=\"Clear\"
 	      onclick=\"callClear();\"/>
-	  <input type=\"text\" size=\"3\" id=\"CT\"
-              name=\"CT\" value=\"\" alt=\"Censor Time\" style=\"display: none;\"/>
+      <input type=\"text\" size=\"3\" id=\"CT\"
+	      name=\"CT\" value=\"\" alt=\"Censor Time\" style=\"display: none;\"/>
+      </div>
       </div> <!-- end id box -->
 ";
 echo "
@@ -837,14 +857,6 @@ echo "
       </form>
     </div> <!-- end id exploreAll -->
     <script type=\"text/javascript\">
-        var s1 = $('#dataset').val();
-        var url = 'explore.php?go=getsource&id=' + s1;
-	\$('#results').load(url);
-        \$('#dataset').on('change', function() {
-            var s1 = $('#dataset').val();
-            var url = 'explore.php?go=getsource&id=' + s1;
-	    \$('#results').load(url);
-        });
 ";
       if (strcmp($cmd, "explore") == 0) {
         echo "callExplore();\n";

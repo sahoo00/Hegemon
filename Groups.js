@@ -221,7 +221,7 @@ function callReset() {
 
 function displayGroups() {
   var str = '';
-  str += numGroups + "<br/>";
+  //str += numGroups + "<br/>";
   for (var i in groups) {
     str += '<input type="checkbox" name="selectGroup" value="' + i + '" ';
     str += ' onclick="changeImage();" />' ;
@@ -343,6 +343,15 @@ function updateImg1linkPost(url) {
         }});
 }
 
+function toggleGroupButtonsDisplay() {
+  var num = getNumArrays();
+  if(num > 0) {
+    $('.grp_btn').prop('disabled', false);
+  } else {
+    $('.grp_btn').prop('disabled', true);
+  }
+}
+
 function changeImage() {
   var num = getNumArrays();
   var url = document.getElementById('img0link').href;
@@ -356,6 +365,7 @@ function changeImage() {
     var nurl = url + '&groups=' + getGroupStr();
     updateImg1linkPost(nurl);
   }
+  toggleGroupButtonsDisplay();
 }
 
 function changeGroupNames(box, id) {

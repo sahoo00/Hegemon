@@ -164,16 +164,15 @@ function explore($file, $str1, $str2, $id) {
     </td>
     <td style=\"vertical-align:top\">
     <div id=\"tools_display\">
-      <input type=\"button\" name=\"BoxP\" value=\"Box Plot\"
-           onclick=\"callBoxP();\"/>
       <input type=\"button\" name=\"Stats\" value=\"Statistics\"
-           onclick=\"callStats();\"/>
-      <input type=\"button\" name=\"Survival\" value=\"Survival Plot\"
-           onclick=\"callSurvival();\"/>
-      <input type=\"button\" name=\"stats\" value=\"Statistics\"
-           onclick=\"callStats();\"/>
-      <input type=\"button\" name=\"Download\" value=\"Download\"
-	   onclick=\"callDownload();\"/>
+	   onclick=\"callStats();\"/>
+      <input type=\"button\" name=\"Download\" value=\"Download\"                                                                                                                                                             onclick=\"callDownload();\"/>
+      <br/>
+      <input type=\"button\" class=\"grp_btn\" name=\"BoxP\" value=\"Box Plot\"
+           onclick=\"callBoxP();\" disabled/>
+      <input type=\"button\" class=\"grp_btn\" name=\"Survival\" value=\"Survival Plot\"
+	   onclick=\"callSurvival();\" disabled/>
+      <br/>
       <input type=\"button\" name=\"Reset\" value=\"Reset\"
            onclick=\"callReset();\"/>
        <br/>
@@ -406,22 +405,7 @@ function getSurvival($file, $expr, $id, $x, $y, $xn, $yn, $ct, $groups) {
   echo "</pre>\n";
 }
 
-function getlstats_old($file, $f, $id, $x, $y, $xn, $yn) {
-  list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
-  list($thrx0, $thrx1, $thrx2) = U::getThreshold($x_arr, 2, count($x_arr)-2);
-  list($thry0, $thry1, $thry2) = U::getThreshold($y_arr, 2, count($y_arr)-2);
-  $rhash = U::getXYStats($x_arr, $y_arr);
-  echo "<br clear=\"all\"/>\n";
-  echo "<table border=\"0\">\n";
-  echo "<tr> <td> SThrX </td> <td> $thrx1 </td> </tr>\n";
-  echo "<tr> <td> SThrY </td> <td> $thry1 </td> </tr>\n";
-  foreach ($rhash as $k => $v) {
-    echo "<tr> <td> $k </td> <td> $v </td> </tr>\n";
-  }
-  echo "</table>\n";
-}
-
-function getlstats($file, $f, $id, $x, $y, $id1, $id2) {
+functio ngetlstats($file, $f, $id, $x, $y, $id1, $id2) {
   $h = getHegemon($file, $id);
   list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
   list($thrx0, $thrx1, $thrx2) = U::getThreshold($x_arr, 2, count($x_arr)-2);
