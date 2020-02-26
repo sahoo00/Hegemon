@@ -92,18 +92,16 @@ Hegemon scatterplot explorer links are identified by the following links in the
 <img src="Images/booleanpic1.png"/>
 <ol>
   <li> Select Dataset: select a dataset to analyze by using the dropdown menu. </li>
-  <li> Gene A: Type a gene name in the textbox (Gene Symbol Name, Affymetrix ID or AGI code AT#G#####). Gene A is used in the X-axis of the scatterplot.  </li>
-  <li> Gene B: Type another gene name in the textbox (Gene Symbol Name, Affymetrix ID or AGI code AT#G#####). Gene B is used in the Y-axis of the scatterplot. </li>
-    this button to make sure that a probe exists in the dataset. </li>
+  <li> Gene A: Type a gene name in the textbox (Gene Symbol Name, Affymetrix ID or AGI code AT#G#####) or click on the box to get a dropdown menu of the gene options. Gene A is used in the X-axis of the scatterplot.  </li>
+  <li> Gene B: Type another gene name in the textbox (Gene Symbol Name, Affymetrix ID or AGI code AT#G#####) or click on the box to get a dropdown menu of the gene options. Gene B is used in the Y-axis of the scatterplot. </li>
   <li> Show Plot: Shows scatterplots with all combinations of the probe IDs
     between gene A and gene B. At this page the users can select their favorite
   scatterplots by clicking mouse on the scatterplot. Once a
   scatterplot is selected textboxes corresponding to
   Gene A and Gene B are changed to reflect
-  the selection. An option to further explore will appear when "Show Plot" is clicked.</li>
-  <li> Explore: Shows the selected scatterplot with a new set of tools on the
-    right.
-    <img src="Images/exploretools1.png"/>
+  the selection. An option to further explore is available once the plot is made and you click on the plot.</li>
+  <li> Once the scatterplot is clicked, you will see options appear on the right side of the plot to further explore.
+    <img src="Images/explore.png"/>
     <ol type="a">
       <li> Selecting samples using Mouse to drag across points on the plot.
         <img src="Images/selectGroups.png"/>
@@ -114,10 +112,10 @@ Hegemon scatterplot explorer links are identified by the following links in the
       </li>
       <li> Highlighting multiple groups using the checkbox on the left side of
         "Group 0", "Group 1".
-        <img src="Images/select2groups.png"/>
+        <img src="Images/select2Groups.png"/>
       </li>
       <li> Selecting Tissue Annotation: Click on the drop down menu "Select
-        Patient Information" and select "c Tissue".
+        Patient Information" and select "Tissue".
         <img src="Images/selectTissue.png"/>
       </li>
       <li> Selecting Root Samples: Click on the drop down menu "root" after selecting Tissue annotation above.
@@ -125,7 +123,7 @@ Hegemon scatterplot explorer links are identified by the following links in the
       </li>
       <li> Selecting Flower Samples: Click on the drop down menu "flower" after
         selecting root samples above.
-        <img src="Images/flowerSample.png"/>
+        <img src="Images/flowerSamp.png"/>
       </li>
       <li> Highlighting Root and Flower Samples: You can change the names of the
         respective groups "Group 0" to "Root" and "Group 1" to "Flower". Click
@@ -137,16 +135,10 @@ Hegemon scatterplot explorer links are identified by the following links in the
         <img src="Images/boxplot.png"/>
       </li>
       <li> Statistics: To analyze the statistics of the dataset, click on "Statistics"
-	      and information will appear below the scatterplot.
+	      and information (including the correlations) will appear below the scatterplot.
 	      <img src="Images/statistics.png"/>
       </li>
-	<li> Finding Correlations: After selecting the checkboxes for the groups selected, 
-		click on "Correlation" and a plot will appear below the scatterplot. You can 
-		enter in correlation values and click "Go" which will then display all of the points that are
-		correlated at that value.
-		<img src="Images/correlation.png"/>
-	</li>
-	<li> Survival Plot: After selecting the checkbox of groups, click on "Survival Plot" and the main scatterplot will be replacd with a new survival plot.
+	<li> Survival Plot: After selecting the checkbox of groups, click on "Survival Plot" and the main scatterplot will be replacd with a new survival plot. This is only available for display on humans (thus why on this example shown there is not an option for the survival plot).
 	</li>
 	<li> Reseting groups: To reset the groups you created, click on "Reset" which will remove the groups.
 	</li>

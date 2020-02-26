@@ -35,7 +35,7 @@ function callGroupsPostCommands($file, $groups, $param) {
 
 function callGroupsCommands($file, $groups, $param) {
   if (strcmp($_GET["go"], "explore") == 0) {
-    explore($file, $_GET['A'], $_GET['B'], $_GET['id']);
+    explore($file, $_GET['A'], $_GET['B'], $_GET['id'], $_GET['id1'], $_GET['id2']);
   }
   if (strcmp($_GET["go"], "group") == 0) {
     group($file, $_GET['file'], $_GET['id'],
@@ -123,22 +123,9 @@ function getSelectTool($file) {
   return $str;
 }
 
-function explore($file, $str1, $str2, $id) {
+function explore($file, $str1, $str2, $id, $id1, $id2) {
   $h = getHegemon($file, $id);
   $h->initPlatform();
-  $id1 = null;
-  $id2 = null;
-  $ids = $h->getIDs("$str1");
-  if (count($ids) > 0) {
-    $id1 = array_keys($ids)[0];
-  }
-  $ids = $h->getIDs("$str2");
-  if (count($ids) > 0) {
-    $id2 = array_keys($ids)[0];
-  }
-  if ($id1 == null || $id2 == null) {
-    return;
-  }
   $url = getImgUrl($h, $id, $id1, $id2);
   $str1 = "$id1: ". $h->getName($id1) . " " . $h->getDesc($id1);
   $str2 = "$id2: ". $h->getName($id2) . " " . $h->getDesc($id2);

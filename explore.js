@@ -90,7 +90,7 @@ function handleGetPlot() {
       box += '<a href="' + list[4] + '"> p</a>  ';
       box += '<br/>';
       box += '<img height=240 width=320 src="' + list[4] + '"  ';
-      box += ' onclick="callExplore()"/>';
+      box += ' onclick="callExplore(\'' + list[0] + '\',\'' + list[2] + '\');"/>';
       box += '</td>';
       if ( (i % 2) == 1 ) {
         box += '</tr><tr>';
@@ -156,7 +156,7 @@ function callMiDReG() {
   }
 }
 
-function callExplore() {
+function callExplore(id1, id2) {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
     $('#results').css("visibility", "visible");
@@ -164,8 +164,8 @@ function callExplore() {
     var str1 = $('#Ab').val();
     var str2 = $('#Bb').val();
     var url = 'explore.php?go=explore&id=' + s1;
-    url += "&A=" + encodeURIComponent(str1)
-    + "&B=" + encodeURIComponent(str2);
+    url += "&A=" + encodeURIComponent(str1) + "&id1=" + id1
+    + "&B=" + encodeURIComponent(str2) + "&id2=" + id2;
     $('#results').load(url);
   }
 }
