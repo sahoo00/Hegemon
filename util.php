@@ -2,6 +2,14 @@
 
 class U {
 
+  public function aselect($arr, $order) {
+    $res = array();
+    foreach ($order as $i) {
+      array_push($res, $arr[$i]);
+    }
+    return $res;
+  }
+
   public function a2n($str) {
     $num = 0;
     for ($i = 0; $i < strlen($str); $i++) {
@@ -592,20 +600,35 @@ class U {
     return array($x_arr, $y_arr, $h_arr);
   }
 
-  function getH($file, $debug) {
-    if (($fp = fopen($file, "r")) === FALSE) {
-      echo "Can't open file $file <br>";
-      exit;
-    }
+  function getHfp($fp, $debug) {
     $header = fgets($fp);
     $header = chop($header, "\r\n");
     if ($debug == 1) {
       echo "Line 1:<br/>",$header,":<br>";
     }
-    fclose($fp);
     $h_arr = explode("\t", $header);
-
     return $h_arr;
+  }
+
+  function getH($file, $debug) {
+    if (($fp = fopen($file, "r")) === FALSE) {
+      echo "Can't open file $file <br>";
+      exit;
+    }
+    $h_arr = self::getHfp($fp, $debug);
+    fclose($fp);
+    return $h_arr;
+  }
+
+  function getXfp($fp, $x, $debug) {
+    self::my_fseek($fp, $x, $debug);
+    $in_x = fgets($fp);
+    $in_x = chop($in_x, "\r\n");
+    if ($debug == 1) {
+      echo "Line 1:<br/>",$in_x,":<br>";
+    }
+    $x_arr = explode("\t", $in_x);
+    return $x_arr;
   }
 
   function getX($file, $x, $debug) {
@@ -613,18 +636,9 @@ class U {
       echo "Can't open file $file <br>";
       exit;
     }
-    $header = fgets($fp);
-    $header = chop($header, "\r\n");
-    self::my_fseek($fp, $x, $debug);
-    $in_x = fgets($fp);
-    $in_x = chop($in_x, "\r\n");
-    if ($debug == 1) {
-      echo "Line 1:<br/>",$in_x,":<br>";
-    }
+    $h_arr = self::getHfp($fp, $debug);
+    $x_arr = self::getXfp($fp, $x, $debug);
     fclose($fp);
-    $x_arr = explode("\t", $in_x);
-    $h_arr = explode("\t", $header);
-
     return array($x_arr, $h_arr);
   }
 
@@ -2266,6 +2280,175 @@ anova & Pr(\$>\$F) & F Value \\\\
       self::cleanupfile("$outprefix.tex");
       self::cleanupfile("$outprefix-1.pdf");
       self::cleanupfile("$outprefix-2.pdf");
+    }
+  }
+
+  function readFileGenes($h, $file, $genes, $debug) {
+    if (!$genes || $genes == '') {
+      readfile($file);
+    }
+    else {
+      if (($fp = fopen($file, "r")) === FALSE) {
+        echo "Can't open file $file <br>";
+        exit;
+      }
+      $h_arr = self::getHfp($fp, $debug);
+      echo join("\t", $h_arr)."\n";
+      $idhash = $h->getIDs($genes);
+      foreach ($idhash as $v1 => $n1) {
+        $ptr1 = $h->getPtr($v1);
+        $x_arr = self::getXfp($fp, $ptr1, $debug);
+        echo join("\t", $x_arr)."\n";
+      }
+      fclose($fp);
+    }
+  }
+
+  function readFileGenesOrder($h, $file, $genes, $order, $debug) {
+    if (!$genes || $genes == '') {
+      if (($fp = fopen($file, "r")) === FALSE) {
+        echo "Can't open file $file <br>";
+        exit;
+      }
+      $line = fgets($fp);
+      $line = chop($line, "\r\n");
+      $h_arr =  explode("\t", $line);
+      echo join("\t", self::aselect($h_arr, $order))."\n";
+      while (!feof($fp))
+      {
+        $line = fgets($fp);
+        $line = chop($line, "\r\n");
+        $x_arr = explode("\t", $line);
+        echo join("\t", self::aselect($x_arr, $order))."\n";
+      }
+      fclose($fp);
+    }
+    else {
+      if (($fp = fopen($file, "r")) === FALSE) {
+        echo "Can't open file $file <br>";
+        exit;
+      }
+      $h_arr = self::getHfp($fp, $debug);
+      echo join("\t", self::aselect($h_arr, $order))."\n";
+      $idhash = $h->getIDs($genes);
+      foreach ($idhash as $v1 => $n1) {
+        $ptr1 = $h->getPtr($v1);
+        $x_arr = self::getXfp($fp, $ptr1, $debug);
+        echo join("\t", self::aselect($x_arr, $order))."\n";
+      }
+      fclose($fp);
+    }
+  }
+
+  function transferExprData($h, $file, $sfile, $genes, $groups, $debug) {
+    if (!$groups || $groups == '') {
+      self::readFileGenes($h, $file, $genes, $debug);
+    }
+    else {
+      $h_arr = self::getH($file, $debug);
+      $p_arr = self::getPArray($sfile, $h_arr, $groups);
+      $count = 2;
+      $order = [0, 1];
+      for ($i = 2; $i < count($h_arr); $i++) {
+        if ($p_arr[$i] > 1) {
+          $count++;
+          array_push($order, $i);
+        }
+      }
+      if ($count == count($h_arr)) {
+        self::readFileGenes($h, $file, $genes, $debug);
+      }
+      else {
+        self::readFileGenesOrder($h, $file, $genes, $order, $debug);
+      }
+    }
+  }
+
+  function transferSurvivalData($h, $file, $sfile, $groups, $debug) {
+    $h_arr = self::getH($file, $debug);
+    $p_arr = self::getPArray($sfile, $h_arr, $groups);
+    if (($fp = fopen($sfile, "r")) === FALSE) {
+      echo "Can't open file $file <br>";
+      exit;
+    }
+    $line = fgets($fp);
+    echo $line;
+    $shash = array();
+    while (!feof($fp)) {
+      $line = fgets($fp);
+      $id = strtok($line, "\t");
+      $shash[$id] = $line;
+    }
+    fclose($fp);
+    for ($i = 2; $i < count($h_arr); $i++) {
+      $id = $h_arr[$i];
+      if ($p_arr[$i] > 1 && array_key_exists($id, $shash)) {
+        echo $shash[$id];
+      }
+    }
+  }
+
+  function transferInfoData($h, $file, $genes, $debug, $header=0) {
+    if (($fp = fopen($file, "r")) === FALSE) {
+      echo "Can't open file $file <br>";
+      exit;
+    }
+    if (!$genes || $genes == '') {
+      fpassthru($fp);
+    }
+    else {
+      $idhash = $h->getIDs($genes);
+      if ($header == 1) {
+        $line = fgets($fp);
+        echo $line;
+      }
+      while (!feof($fp)) {
+        $line = fgets($fp);
+        $id = strtok($line, "\t");
+        if (array_key_exists($id, $idhash)) {
+          echo $line;
+        }
+      }
+    }
+    fclose($fp);
+  }
+
+  function transferData($h, $genes, $groups, $params) {
+    $sfile = $h->getSurv();
+    $file = $h->getExprFile();
+    $pre = $h->getPre();
+    $type = "expr";
+    if ($params && array_key_exists("type", $params)) {
+      $type = $params["type"];
+    }
+    $debug = 0;
+    if ($params && array_key_exists("debug", $params)) {
+      $debug = $params["debug"];
+    }
+    if ($type == "expr") {
+      self::transferExprData($h, $file, $sfile, $genes, $groups, $debug);
+    }
+    if ($type == "survival") {
+      self::transferSurvivalData($h, $file, $sfile, $groups, $debug);
+    }
+    if ($type == "indexHeader") {
+      self::transferSurvivalData($h, $file, $h->rdataset->getIH(), $groups, $debug);
+    }
+    if ($type == "thr") {
+      $file1 = "$pre-thr.txt";
+      self::transferInfoData($h, $file1, $genes, $debug);
+    }
+    if ($type == "info") {
+      $file1 = "$pre-info.txt";
+      self::transferInfoData($h, $file1, $genes, $debug, 1);
+    }
+    if ($type == "bv") {
+      $file1 = "$pre-bv.txt";
+      self::transferInfoData($h, $file1, $genes, $debug, 1);
+    }
+    if ($type == "vinfo") {
+      $file1 = "$pre-vinfo.txt";
+      self::transferInfoData($h, $file1, $genes, $debug, 1);
     }
   }
 

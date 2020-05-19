@@ -15,7 +15,12 @@ class Hegemon {
     pre = p;
     start = 2;
     headers = getHeaders();
-    end = headers.length - 1;
+    if (headers != null) {
+      end = headers.length - 1;
+    }
+    else {
+      end = start;
+    }
   }
 
   public boolean isExpr() {
@@ -47,6 +52,10 @@ class Hegemon {
   }
 
   public String getBv() {
+    File f = new File(pre);
+    if(f.exists() && !f.isDirectory()) { 
+      return pre;
+    }
     return pre + "-bv.txt";
   }
 

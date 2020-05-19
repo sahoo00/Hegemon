@@ -44,6 +44,9 @@ if (array_key_exists("param", $_POST)) {
 }
 
 if (array_key_exists("go", $_GET)) {
+  if (strcmp($_GET["go"], "dataDownload") == 0) {
+    printDataDownload($file, $_GET['genes'], $_GET['id'], $groups, $param);
+  }
   if (strcmp($_GET["go"], "getthrjson") == 0) {
     printThrJSON($file, $_GET['A'], $_GET['B'], $_GET['id']);
   }
@@ -116,6 +119,9 @@ if (array_key_exists("go", $_GET)) {
   callGroupsCommands($file, $groups, $param);
 }
 elseif (array_key_exists("go", $_POST)) {
+  if (strcmp($_POST["go"], "dataDownload") == 0) {
+    printDataDownload($file, $_POST['genes'], $_POST['id'], $groups, $param);
+  }
   if (strcmp($_POST["go"], "plot") == 0) {
     plotDataUri($file, urldecode($_POST['file']), $_POST['id'], 
         $_POST['x'], $_POST['y'],$_POST['xn'],$_POST['yn'],
@@ -183,6 +189,12 @@ function printPtrJSON($exprFile, $ptr1) {
   array_push($res, $h_arr);
   array_push($res, $x_arr);
   echo json_encode($res);
+}
+
+function printDataDownload($file, $genes, $id, $groups, $param) {
+  $h = getHegemon($file, $id);
+  header('Content-Type: text/plain');
+  U::transferData($h, $genes, $groups, $param);
 }
 
 function printThrJSON($file, $str1, $str2, $id) {

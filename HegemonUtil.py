@@ -180,6 +180,25 @@ def getThrData(arr, start = None, length = None):
   stat = s_thr["statistic"]
   return [thr, stat, thr-0.5, thr+0.5]
 
+def getHegemonDataFrame(dbid, genelist=None, pGroups=None):
+  genes =''
+  if genelist is not None:
+      genes = ' '.join(genelist)
+  groups = ''
+  if pGroups is not None:
+      for i in range(len(pGroups)):
+          str1 = "=".join([str(i), pGroups[i][0], ":".join(pGroups[i][2])])
+          if i == 0:
+              groups += str1
+          else:
+              groups = groups + ';' + str1
+  url = "http://hegemon.ucsd.edu/Tools/explore.php"
+  opt = {'go': 'dataDownload', 'id': dbid, 'genes': genes, 'groups' : groups}
+  response = requests.post(url, opt)
+  data = StringIO(response.text)
+  df = pd.read_csv(data, sep="\t")
+  return df
+
 def getHegemonPlots(dbid, gA, gB):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getplotsjson&id=" + \
           dbid + "&A=" + gA + "&B=" + gB
@@ -407,6 +426,50 @@ def censor(time, status, ct):
           else 0 for i in range(len(time))]
   return t,s
 
+def logrank(time, status, pGroups):
+    groups = [ "" for i in time]
+    for k in range(len(pGroups)):
+      df = pd.DataFrame()
+      order = [i for i in pGroups[k][2]
+               if time[i] != "" and status[i] != ""]
+      if len(order) <= 0:
+          continue
+      for i in order:
+        groups[i] = k
+    order = [i for i in range(len(groups)) if groups[i] != ""]
+    if len(order) > 0:
+      t = [float(time[i]) for i in order]
+      s = [int(status[i]) for i in order]
+      g = [int(groups[i]) for i in order]
+      from lifelines.statistics import multivariate_logrank_test
+      from matplotlib.legend import Legend
+      res = multivariate_logrank_test(t, g, s)
+      return res.p_value
+    return 1.0
+
+def getBestThr(time, status, value, order, vrange=None, ct=None, tn=3):
+    if ct is not None:
+        time, status = censor(time, status, ct)
+    order = [i for i in order if value[i] is not None and
+            value[i] != '' and value[i] != 'NA' and value[i] != "null"]
+    vals = sorted([float(value[i]) for i in order])
+    p = []
+    thr = []
+    for fthr in vals:
+        if vrange is not None and len(vrange) > 1 and fthr < vrange[0]:
+            continue
+        if vrange is not None and len(vrange) > 1 and fthr > vrange[1]:
+            continue
+        g1 = [i for i in order if float(value[i]) < fthr]
+        g2 = [i for i in order if float(value[i]) >= fthr]
+        pG = [ ["Low", "red", g1], ["High", "green", g2]]
+        pv = logrank(time, status, pG)
+        if not np.isnan(pv):
+            p.append(pv)
+            thr.append(fthr)
+    iord = np.argsort(p)[0:tn]
+    return [[p[i], thr[i]] for i in iord]
+
 def survival(time, status, pGroups=None, ax=None):
   if pGroups is None:
     order = [i for i in range(2, len(time)) 
@@ -459,7 +522,20 @@ def multivariate(df):
     cph = CoxPHFitter()
     cph.fit(df, duration_col='time', event_col='status',
             show_progress=True)
-    cph.print_summary()  # access the results using cph.summary
+    return cph.print_summary()  # access the results using cph.summary
+
+def getCode(p):
+    if p <= 0:
+        return '0'
+    if p <= 0.001:
+        return '***'
+    if p <= 0.01:
+        return '**'
+    if p <= 0.05:
+        return '*'
+    if p <= 0.1:
+        return '.'
+    return ''
 
 def Multivariate(df):
     import rpy2.robjects as ro
@@ -476,11 +552,63 @@ def Multivariate(df):
       ro.r(k + " <- c(" + ",".join([str(i) for i in df[k]]) + ")")
     ro.r('x <- coxph(Surv(time, status) ~ ' + '+'.join(columns) + ')')
     ro.r('s <- summary(x)')
-    print(ro.r('s'))
+    #print(ro.r('s'))
+    v = ro.r('s$conf.int')
+    n = len(columns)
+    df1 = pd.DataFrame([[v[i] for i in range(i, len(v), n)] for i in range(n)],
+            columns = ['exp(coef)', 'exp(-coef)', 'lower .95', 'upper .95'],
+            index=columns)
+    v = ro.r('s$coefficients')
+    df2 = pd.DataFrame([[v[i] for i in range(i, len(v), n)] for i in range(n)],
+            columns = ['coef', 'exp(coef)', 'se(coef)', 'z', 'p'],
+            index=columns)
+    df3 = pd.merge(df1, df2, left_index=True, right_index=True, how='inner',
+            suffixes=('', '_y'))
+    df3['codes'] = [getCode(p) for p in df3['p']]
+    df1 = pd.DataFrame(columns = ['exp(coef)', 'exp(-coef)', 'lower .95', 'upper .95',
+	    'coef', 'se(coef)', 'z', 'p'])
     for k in columns:
         ro.r('x <- coxph(Surv(time, status) ~ ' + k + ')')
         ro.r('s <- summary(x)')
-        print(ro.r('s'))
+        #print(ro.r('s'))
+        v2 = ro.r('s$coefficients')
+        v1 = ro.r('s$conf.int')
+        df1.loc[k] = [v1[i] for i in range(len(v1))] + [v2[i] for i in [0, 2, 3, 4]]
+    df1['codes'] = [getCode(p) for p in df1['p']]
+    return df1, df3
+
+def plotCoef(df1, title = None, ax = None):
+    df = df1.copy()
+    df = df.iloc[::-1]
+    if ax is None:
+        w,h = (3, 0.5 * len(df.index))
+        dpi = 100
+        fig = plt.figure(figsize=(w,h), dpi=dpi)
+        ax = fig.add_subplot(1, 1, 1)
+    ax.errorbar(df["exp(coef)"], range(len(df.index)),
+        yerr=0,
+        xerr=[df["exp(coef)"] - df["lower .95"], df["upper .95"] - df["exp(coef)"]],
+        fmt='o', capsize=3)
+    ax.set_yticks(range(len(df.index)))
+    ax.set_ylim([-1, len(df.index)])
+    ax.set_yticklabels(df.index)
+    ax.set_xlabel("exp(coefficient)")
+    ax.axvline(x=1)
+    for i in range(len(df.index)):
+        ax.text(df["upper .95"][df.index[i]] + 0.1,i, df['codes'][df.index[i]],
+                verticalalignment='center')
+    if title is not None:
+        ax.set_title(title)
+    return ax
+
+def printCoef(df):
+    cols = ['exp(coef)', 'lower .95', 'upper .95', 'p', 'codes']
+    print(df[cols].to_string(formatters={'exp(coef)':'{:,.2f}'.format,
+            'lower .95':'{:,.2f}'.format, 'upper .95':'{:,.2f}'.format,
+            'p': '{:,.3g}'.format}))
+    for k in df.index:
+        print('%s\t%.2f\t(%0.2f - %0.2f)\t%0.3g\t%s' % \
+            tuple([k] + list(df[cols].loc[k])))
 
 def getCounts(a_high, a_med, b_high, b_med):
     c0 = (~a_high & ~b_high) & ~(a_med | b_med)
@@ -666,6 +794,7 @@ class Database:
   def init(self):
     self.env = {}
     self.list = {}
+    self.olist = []
 
   def build(self):
     file = self.conf_file
@@ -677,6 +806,7 @@ class Database:
     n_id = None
     lset = None
     res = {}
+    olist = []
     index = 0;
     f = open(self.conf_file, "r")
     for line in f:
@@ -684,6 +814,7 @@ class Database:
         if line.startswith("["):
             if (n_id is not None and lset is not None):
                 res[n_id] = lset;
+                olist += [lset]
             n_id = re.sub('^\s*\[(.+)\]\s*$', '\\1', line)
             lset = Dataset(n_id)
             lset.setIndex(index)
@@ -701,6 +832,7 @@ class Database:
     if (n_id is not None and lset is not None):
         res[n_id] = lset
     self.list = res
+    self.olist = olist
     
   def details(self):
     for k,v in self.env.iteritems():
@@ -829,6 +961,8 @@ class Hegemon:
       return title
 
   def getPtr(self, id):
+    if (id is None):
+        return None
     if (id in self.idhash):
         return self.idhash[id][0];
     if id.upper() in self.namehash:
@@ -838,6 +972,8 @@ class Hegemon:
     return None
 
   def getName(self, id):
+    if (id is None):
+        return None
     if (id in self.idhash):
         return self.idhash[id][1];
     if id.upper() in self.namehash:
@@ -941,8 +1077,8 @@ class Hegemon:
       for g in genes:
         name = g.strip()
         #print name in self.namehash
-        if name in self.namehash:
-          res[name] = name;
+        #if name in self.namehash:
+        #  res[name] = name;
         if (name.upper() in self.namehash):
           for id in self.namehash[name.upper()]:
             res[id] = name;
@@ -1314,7 +1450,7 @@ class Hegemon:
       ll = line.split("\t")
       v1 = np.array([float(ll[i]) for i in g1 if ll[i] != ""])
       v2 = np.array([float(ll[i]) for i in g2 if ll[i] != ""])
-      t, p = stats.ttest_ind(v1,v2)
+      t, p = stats.ttest_ind(v1,v2,equal_var=False)
       res = [ll[0], self.getSimpleName(ll[0]),
               t, p, np.mean(v1)-np.mean(v2)]
       of.write("\t".join([str(i) for i in res]) +"\n")
