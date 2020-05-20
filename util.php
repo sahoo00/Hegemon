@@ -2367,6 +2367,11 @@ anova & Pr(\$>\$F) & F Value \\\\
   function transferSurvivalData($h, $file, $sfile, $groups, $debug) {
     $h_arr = self::getH($file, $debug);
     $p_arr = self::getPArray($sfile, $h_arr, $groups);
+    if (!$groups || $groups == '') {
+      for ($i = 2; $i < count($h_arr); $i++) {
+        $p_arr[$i] = 2;
+      }
+    }
     if (($fp = fopen($sfile, "r")) === FALSE) {
       echo "Can't open file $file <br>";
       exit;
