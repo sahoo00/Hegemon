@@ -199,6 +199,19 @@ def getHegemonDataFrame(dbid, genelist=None, pGroups=None):
   df = pd.read_csv(data, sep="\t")
   return df
 
+def getHegemonThrFrame(dbid, genelist=None):
+  genes =''
+  if genelist is not None:
+      genes = ' '.join(genelist)
+  url = "http://hegemon.ucsd.edu/Tools/explore.php"
+  opt = {'go': 'dataDownload', 'id': dbid, 'genes': genes, 'groups' : '',
+          'param': 'type:thr'}
+  response = requests.post(url, opt)
+  data = StringIO(response.text)
+  df = pd.read_csv(data, sep="\t", header=None)
+  df.columns=['ProbeID', 'thr1', 'stat', 'thr0', 'thr2']
+  return df
+
 def getHegemonPlots(dbid, gA, gB):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getplotsjson&id=" + \
           dbid + "&A=" + gA + "&B=" + gB
