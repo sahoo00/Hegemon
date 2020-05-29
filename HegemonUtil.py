@@ -9,13 +9,21 @@ try:
 except ImportError:
     from io import StringIO ## for Python 3
 import pandas as pd
-import seaborn as sns
 import numpy as np
 import bitarray
 import math
 from matplotlib import pyplot as plt
 from lifelines import KaplanMeierFitter
 from scipy import stats
+
+try:
+    reload  # Python 2.7
+except NameError:
+    from functools import cmp_to_key
+    try:
+        from importlib import reload  # Python 3.4+
+    except ImportError:
+        from imp import reload  # Python 3.0 - 3.3
 
 def uniq(mylist):
   used = set()
@@ -594,7 +602,7 @@ def plotCoef(df1, title = None, ax = None):
     df = df1.copy()
     df = df.iloc[::-1]
     if ax is None:
-        w,h = (3, 0.5 * len(df.index))
+        w,h = (2, 0.5 * len(df.index))
         dpi = 100
         fig = plt.figure(figsize=(w,h), dpi=dpi)
         ax = fig.add_subplot(1, 1, 1)
@@ -1060,14 +1068,13 @@ class Hegemon:
             continue
         if (re.search('^\s*$', data2[i])):
             continue
-        if (data1[i] < thr1[3]):
+        if (float(data1[i]) < thr1[3] and float(data2[i]) < thr2[3]):
             continue
-        if (data2[i] < thr2[3]):
-            continue
-        if (data1[i] >= data2[i]):
+        if (float(data1[i]) >= float(data2[i])):
             count1 += 1
         else:
             count2 += 1
+    #print(id1, id2, count1, count2)
     if (count1 == count2):
       return 0;
     if (count1 < count2):
@@ -1103,7 +1110,10 @@ class Hegemon:
       return None
     if (len(l1) == 1):
       return l1[0];
-    l2 = sorted(l1, cmp=self.compareIds);
+    if sys.version_info[0] >= 3:
+        l2 = sorted(l1, key=cmp_to_key(self.compareIds));
+    else:
+        l2 = sorted(l1, cmp=self.compareIds);
     return l2[0];
 
   def readIndex(self, f, num = None):

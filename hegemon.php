@@ -333,8 +333,7 @@ class Hegemon {
     for ($i = $this->start; $i <= $this->end; $i++) {
       if (preg_match('/^\s*$/', $data1[$i])) { continue; }
       if (preg_match('/^\s*$/', $data2[$i])) { continue; }
-      if ($data1[$i] < $thr1[3]) { continue; }
-      if ($data2[$i] < $thr2[3]) { continue; }
+      if ($data1[$i] < $thr1[3] && $data2[$i] < $thr2[3]) { continue; }
       if ($data1[$i] >= $data2[$i]) {
           $count1 ++;
       }
