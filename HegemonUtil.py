@@ -856,10 +856,10 @@ class Database:
     self.olist = olist
     
   def details(self):
-    for k,v in self.env.iteritems():
+    for k,v in self.env.items():
       print("{0} = {1}".format(k, v));
     print("")
-    for k,n in sorted(self.list.iteritems(), key=lambda k,v: v.getIndex()):
+    for k,n in sorted(self.list.items(), key=lambda v: v[1].getIndex()):
       n.details();
 
   def getNum(self):
@@ -868,7 +868,7 @@ class Database:
     return self.list;
   def getListKey(self, keys):
     res = [];
-    for k,n in sorted(self.list.iteritems(), key=lambda k,v: v.getIndex()):
+    for k,n in sorted(self.list.items(), key=lambda v: v[1].getIndex()):
       keyfound = 1;
       if (n.has("key")):
         lkey = n.get("key");
@@ -1109,7 +1109,7 @@ class Hegemon:
     if (len(l1) <= 0):
       return None
     if (len(l1) == 1):
-      return l1[0];
+      return list(l1)[0];
     if sys.version_info[0] >= 3:
         l2 = sorted(l1, key=cmp_to_key(self.compareIds));
     else:
