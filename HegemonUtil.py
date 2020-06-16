@@ -222,28 +222,28 @@ def getHegemonThrFrame(dbid, genelist=None):
 
 def getHegemonPlots(dbid, gA, gB):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getplotsjson&id=" + \
-          dbid + "&A=" + gA + "&B=" + gB
+          dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
 def getHegemonData(dbid, gA, gB):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getdatajson&id=" + \
-          dbid + "&A=" + gA + "&B=" + gB
+          dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
 def getHegemonThr(dbid, gA, gB):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getthrjson&id=" + \
-          dbid + "&A=" + gA + "&B=" + gB
+          dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
 def getHegemonPatients(dbid, clinical, value):
   url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getPatients&id=" + \
-          dbid + "&clinical=" + clinical + "&value=" + value
+          dbid + "&clinical=" + str(clinical) + "&value=" + str(value)
   response = requests.get(url)
   obj = response.text.split("\n")
   pHash = {}
