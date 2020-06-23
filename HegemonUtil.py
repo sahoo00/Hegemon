@@ -294,6 +294,32 @@ def getHegemonDataset(dbid):
   obj = json.loads(response.text)
   return  obj
 
+def plotStepMiner(obj):
+    import bisect
+    datax = getHegemonPtr(obj[4], obj[8])
+    ex = np.array([float(i) for i in datax[1][2:]])
+    x = range(len(ex))
+    y = sorted(ex)
+    thr = getStepMinerThr(y)
+    w,h = (6.4, 4.8)
+    dpi = 100
+    fig = plt.figure(figsize=(w,h))
+    ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
+    ax.plot(x, y, 'blue')
+    tx = bisect.bisect_left(y, thr['threshold'])
+    ty = thr['threshold']
+    my1,my2 = np.min(y), np.max(y)
+    mx1,mx2 = np.min(x), np.max(x)
+    ax.plot([mx1, tx], [thr['m1'], thr['m1']], 'black')
+    ax.plot([tx, tx], [thr['m1'], thr['m2']], 'black')
+    ax.plot([tx, mx2], [thr['m2'], thr['m2']], 'black')
+    ax.plot([mx1, mx2], [ty, ty], 'r')
+    ax.plot([mx1, mx2], [ty - 0.5, ty - 0.5], 'c')
+    ax.plot([mx1, mx2], [ty + 0.5, ty + 0.5], 'c')
+    ax.set_ylabel(obj[6])
+    ax.set_xlabel('Rank of sample')
+    return ax
+
 def plotPair(obj):
   info = getHegemonDataset(obj[5]);
   datax = getHegemonPtr(obj[4], obj[8])
@@ -390,6 +416,14 @@ def savePlotData(ofile, obj):
     df["x"] = pd.Series(datax[1])
     df["y"] = pd.Series(datay[1])
     df.to_csv(ofile, header=False, sep='\t', index=False)
+
+def getCorrelation(obj):
+    datax = getHegemonPtr(obj[4], obj[8])
+    datay = getHegemonPtr(obj[4], obj[9])
+    ex = np.array([float(i) for i in datax[1][2:]])
+    ey = np.array([float(i) for i in datay[1][2:]])
+    corr = np.corrcoef(ex, ey)
+    return corr[0][1]
 
 def boxplotArray(data, pGroups=None, thr=None, ax=None):
   if ax is None:
