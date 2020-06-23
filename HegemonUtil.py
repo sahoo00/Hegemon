@@ -382,6 +382,15 @@ def plotBooleanPair(obj, pGroups=None):
   ax.axvline(x=float(thrx[4]), color='cyan')
   return ax
 
+def savePlotData(ofile, obj):
+    datax = getHegemonPtr(obj[4], obj[8])
+    datay = getHegemonPtr(obj[4], obj[9])
+    df = pd.DataFrame()
+    df['a'] = pd.Series(datax[0])
+    df["x"] = pd.Series(datax[1])
+    df["y"] = pd.Series(datay[1])
+    df.to_csv(ofile, header=False, sep='\t', index=False)
+
 def boxplotArray(data, pGroups=None, thr=None, ax=None):
   if ax is None:
     w,h = (6.4, 4.8)
