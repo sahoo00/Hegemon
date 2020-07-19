@@ -652,7 +652,7 @@ class Hegemon {
     if ($path1) { $path1 .= ":$path"; }           // append old paths if any 
     putenv("PATH=$path1");        // set new value 
     putenv("JAVA_HOME=$java_home");        // set new value 
-    $cmd = "java tools.Hegemon boolean \"$pre\" \"$id1\"";
+    $cmd = "java tools.Hegemon bool \"$pre\" \"$id1\"";
     if ( ($fh = popen($cmd, 'r')) === false )
       die("Open failed: ${php_errormsg}\n");
     while (!feof($fh))

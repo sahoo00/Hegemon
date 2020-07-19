@@ -1772,6 +1772,46 @@ class Hegemon {
     }
   }
 
+  public void highGenes(String listFile, String thr_s, String nthr_s) {
+    String exprFile = getExprFile();
+    if (exprFile == null) {
+      return;
+    }
+    try {
+      BitSet groups = getGroups(listFile);
+      String line;
+      double thr = 2.0;
+      int nthr = 10;
+      if (thr_s != null) {
+        thr = Double.parseDouble(thr_s);
+      }
+      if (nthr_s != null) {
+        nthr = Integer.parseInt(nthr_s);
+      }
+      FileReader fileReader = new FileReader(exprFile);
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      while((line = bufferedReader.readLine()) != null) {
+        String[] result = line.split("\\t", -2); // -2 : Don't discard trailing nulls
+        double[] data = new double[result.length];
+        getExprData(result, data, groups); 
+        int count = 0;
+        for (int i = 0; i < data.length; i++) {
+          if (data[i] != Double.NaN && data[i] > thr) {
+            count ++;
+          }
+        }
+        if (count > nthr) {
+          out.println(result[0] + "\t" + count);
+        }
+      }
+      // Always close files.
+      bufferedReader.close();         
+    }
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
     if (args.length < 1) {
       System.out.println("Usage: java Hegemon <cmd> <args> ... <args>");
@@ -1932,6 +1972,22 @@ class Hegemon {
       Hegemon h = new Hegemon(args[1]);
       if (args.length < 4) {
         h.getInfoJSON(args[2]);
+      }
+    }
+    if (cmd.equals("high") && args.length < 3) {
+      System.out.println("Usage: java Hegemon high pre listfile thr nthr");
+      System.exit(1);
+    }
+    if (cmd.equals("high")) {
+      Hegemon h = new Hegemon(args[1]);
+      if (args.length < 4) {
+        h.highGenes(args[2], null, null);
+      }
+      else if (args.length < 5) {
+        h.highGenes(args[2], args[3], null);
+      }
+      else if (args.length < 6) {
+        h.highGenes(args[2], args[3], args[4]);
       }
     }
   }
