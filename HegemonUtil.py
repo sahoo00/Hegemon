@@ -1501,6 +1501,16 @@ class Hegemon:
             "1").replace(" ", "0"))
         b_med = bitarray.bitarray(ll[2].replace("2", "0").replace(" ",
             "1"))
+        if (a_high.length() > b_high.length()):
+            count = a_high.length() - b_high.length()
+            str1 = bitarray.bitarray("1" * count)
+            b_high.extend(str1)
+            b_med.extend(str1)
+        elif (a_high.length() < b_high.length()):
+            count = b_high.length() - a_high.length()
+            str1 = bitarray.bitarray("1" * count)
+            a_high.extend(str1)
+            a_med.extend(str1)
         bs = getBooleanStats(a_high, a_med, b_high, b_med)
         res.append([ll[0], self.getSimpleName(ll[0]), bs])
     fp.close()
