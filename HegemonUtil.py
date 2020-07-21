@@ -1497,6 +1497,8 @@ class Hegemon:
     for line in fp:
         line = line.strip()
         ll = line.split("\t")
+        if len(ll) < 3:
+            continue
         b_high = bitarray.bitarray(ll[2].replace("1", "0").replace("2",
             "1").replace(" ", "0"))
         b_med = bitarray.bitarray(ll[2].replace("2", "0").replace(" ",
