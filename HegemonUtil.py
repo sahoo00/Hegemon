@@ -545,7 +545,9 @@ def survival(time, status, pGroups=None, ax=None):
     ax = kmf.plot(ax = ax, color='red')
     return ax
   else:
-    groups = [ "" for i in time]
+    t1 = []
+    s1 = []
+    g1 = []
     kmfs = []
     for k in range(len(pGroups)):
       df = pd.DataFrame()
@@ -553,10 +555,12 @@ def survival(time, status, pGroups=None, ax=None):
                if time[i] != "" and status[i] != ""]
       if len(order) <= 0:
           continue
-      for i in order:
-        groups[i] = k
       t = [float(time[i]) for i in order]
       s = [int(status[i]) for i in order]
+      g = [k for i in order]
+      t1 += t
+      s1 += s
+      g1 += g
       kmf = KaplanMeierFitter()
       kmf.fit(t, s, label = pGroups[k][0])
       if ax is None:
@@ -568,14 +572,10 @@ def survival(time, status, pGroups=None, ax=None):
       kmfs += [kmf]
     from lifelines.plotting import add_at_risk_counts
     add_at_risk_counts(*kmfs, ax=ax)
-    order = [i for i in range(len(groups)) if groups[i] != ""]
-    if len(order) > 0:
-      t = [float(time[i]) for i in order]
-      s = [int(status[i]) for i in order]
-      g = [int(groups[i]) for i in order]
+    if len(t1) > 0:
       from lifelines.statistics import multivariate_logrank_test
       from matplotlib.legend import Legend
-      res = multivariate_logrank_test(t, g, s)
+      res = multivariate_logrank_test(t1, g1, s1)
       leg = Legend(ax, [], [], title = "p = %.2g" % res.p_value,
                    loc='lower left', frameon=False)
       ax.add_artist(leg);
@@ -1477,14 +1477,15 @@ class Hegemon:
       res = list(set(res) & set(r))
     return res;
 
-  def getBitVectorID(self, id1, arr=None):
-    low = self.getArraysAll(id1, "thr0", "lo")
-    high = self.getArraysAll(id1, "thr2", "hi")
+  def getBitVectorID(self, id1, arr=None, thr0="thr0", thr2="thr2"):
+    low = self.getArraysAll(id1, thr0, "lo")
+    high = self.getArraysAll(id1, thr2, "hi")
     return self.getBitVector(low, high, arr)
 
-  def getBooleanRelation(self, id1, id2, arr=None):
-    a_high, a_med = self.getBitVectorID(id1, arr)
-    b_high, b_med = self.getBitVectorID(id2, arr)
+  def getBooleanRelation(self, id1, id2, arr=None,
+          thrx0="thr0", thrx2="thr2", thry0="thr0", thry2="thr2"):
+    a_high, a_med = self.getBitVectorID(id1, arr, thrx0, thrx2)
+    b_high, b_med = self.getBitVectorID(id2, arr, thry0, thry2)
     bs = getBooleanStats(a_high, a_med, b_high, b_med)
     return bs
 
