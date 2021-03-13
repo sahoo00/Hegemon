@@ -534,6 +534,57 @@ def getBestThr(time, status, value, order, vrange=None, ct=None, tn=3):
     iord = np.argsort(p)[0:tn]
     return [[p[i], thr[i]] for i in iord]
 
+def survivalCDF(time, status, pGroups=None, ax=None):
+  if pGroups is None:
+    order = [i for i in range(2, len(time)) 
+		if time[i] != "" and status[i] != ""]
+    t = [float(time[i]) for i in order]
+    s = [int(status[i]) for i in order]
+    kmf = KaplanMeierFitter()
+    kmf.fit(t, s)
+    if ax is None:
+        ax = kmf.plot_cumulative_density(color='red')
+    else:
+        ax = kmf.plot_cumulative_density(ax = ax, color='red')
+    return ax
+  else:
+    t1 = []
+    s1 = []
+    g1 = []
+    kmfs = []
+    for k in range(len(pGroups)):
+      df = pd.DataFrame()
+      order = [i for i in pGroups[k][2]
+               if time[i] != "" and status[i] != ""]
+      if len(order) <= 0:
+          continue
+      t = [float(time[i]) for i in order]
+      s = [int(status[i]) for i in order]
+      g = [k for i in order]
+      t1 += t
+      s1 += s
+      g1 += g
+      kmf = KaplanMeierFitter()
+      kmf.fit(t, s, label = pGroups[k][0])
+      if ax is None:
+        fig,ax = plt.subplots(figsize=(4,4), dpi=100)
+        ax = kmf.plot_cumulative_density(ax = ax, color=pGroups[k][1], 
+                ci_show=False)
+      else:
+        ax = kmf.plot_cumulative_density(ax = ax, color=pGroups[k][1],
+                ci_show=False)
+      kmfs += [kmf]
+    from lifelines.plotting import add_at_risk_counts
+    add_at_risk_counts(*kmfs, ax=ax)
+    if len(t1) > 0:
+      from lifelines.statistics import multivariate_logrank_test
+      from matplotlib.legend import Legend
+      res = multivariate_logrank_test(t1, g1, s1)
+      leg = Legend(ax, [], [], title = "p = %.2g" % res.p_value,
+                   loc='center right', frameon=False)
+      ax.add_artist(leg);
+    return ax
+
 def survival(time, status, pGroups=None, ax=None):
   if pGroups is None:
     order = [i for i in range(2, len(time)) 
