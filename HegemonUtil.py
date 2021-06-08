@@ -365,7 +365,7 @@ def plotBooleanSelect(obj, pHash=None):
   ax.axvline(x=float(thrx[4]), color='cyan')
   return ax
 
-def plotBooleanPair(obj, pGroups=None):
+def plotBooleanPair(obj, pGroups=None, ax=None, thrx=None, thry=None):
   info = getHegemonDataset(obj[5]);
   thr = getHegemonThr(obj[5], obj[0], obj[2]);
   thash = {}
@@ -373,8 +373,10 @@ def plotBooleanPair(obj, pGroups=None):
     thash[v[0]] = v
   datax = getHegemonPtr(obj[4], obj[8])
   datay = getHegemonPtr(obj[4], obj[9])
-  thrx = thash[str(obj[0])]
-  thry = thash[str(obj[2])]
+  if thrx is None:
+    thrx = thash[str(obj[0])]
+  if thry is None:
+    thry = thash[str(obj[2])]
   df1 = pd.DataFrame(columns=["x", "y", "c"])
   if pGroups is None:
     df = pd.DataFrame()
@@ -392,10 +394,11 @@ def plotBooleanPair(obj, pGroups=None):
       df["y"] = pd.to_numeric(pd.Series(val))
       df["c"] = pGroups[k][1]
       df1 = df1.append(df)
-  w,h = (6.4, 4.8)
-  dpi = 100
-  fig = plt.figure(figsize=(w,h))
-  ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
+  if ax is None:
+      w,h = (6.4, 4.8)
+      dpi = 100
+      fig = plt.figure(figsize=(w,h))
+      ax = fig.add_axes([70.0/w/dpi, 54.0/h/dpi, 1-2*70.0/w/dpi, 1-2*54.0/h/dpi])
   ax = df1.plot.scatter(x='x', y='y', c=df1['c'], ax=ax)
   ax.set_xlabel(obj[6])
   ax.set_ylabel(obj[7])
@@ -585,7 +588,7 @@ def survivalCDF(time, status, pGroups=None, ax=None):
       ax.add_artist(leg);
     return ax
 
-def survival(time, status, pGroups=None, ax=None):
+def survival(time, status, pGroups=None, ax=None, atrisk=1):
   if pGroups is None:
     order = [i for i in range(2, len(time)) 
 		if time[i] != "" and status[i] != ""]
@@ -621,8 +624,9 @@ def survival(time, status, pGroups=None, ax=None):
         ax = kmf.plot(ax = ax, color=pGroups[k][1], ci_show=False,
                 show_censors=True)
       kmfs += [kmf]
-    from lifelines.plotting import add_at_risk_counts
-    add_at_risk_counts(*kmfs, ax=ax)
+    if atrisk == 1:
+        from lifelines.plotting import add_at_risk_counts
+        add_at_risk_counts(*kmfs, ax=ax)
     if len(t1) > 0:
       from lifelines.statistics import multivariate_logrank_test
       from matplotlib.legend import Legend
