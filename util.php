@@ -678,8 +678,9 @@ for line in f:
     data[t[2]][1] += [float(t[1])];
 fig = figure(figsize=(6.4,4.8))
 ax = fig.add_axes([70.0/640, 54.0/480, 1-2*70.0/640, 1-2*54.0/480])
-colors = data.keys()
-colors.sort(key=lambda t:-len(data[t][0]))
+#colors = data.keys()
+#colors.sort(key=lambda t:-len(data[t][0]))
+colors = sorted(data, key=lambda t:-len(data[t][0]))
 for c in colors:
     ax.plot(data[c][0],data[c][1], color=c, ls='None', marker='+', mew=1.1, ms=4, mec=c)
 ax.axis([$minx, $maxx, $miny, $maxy])
@@ -1482,8 +1483,9 @@ for line in f:
     data[t[2]][1] += [float(t[1])];
 fig = figure(figsize=(6.4,4.8))
 ax = fig.add_axes([70.0/640, 54.0/480, 1-2*70.0/640, 1-2*54.0/480])
-colors = data.keys()
-colors.sort(key=lambda t:-len(data[t][0]))
+#colors = data.keys()
+#colors.sort(key=lambda t:-len(data[t][0]))
+colors = sorted(data, key=lambda t:-len(data[t][0]))
 for c in colors:
     ax.plot(data[c][0],data[c][1], color=c, ls='None', marker='.', mew=2, ms=2, mec=c)
 ax.axis([$minx, $maxx, $miny, $maxy])
