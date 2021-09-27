@@ -810,6 +810,23 @@ def getThrCode (thr_step, value, code = None):
     thr = code;
   return float(thr);
 
+def toIdx(expf, idxf):
+    pos = 0
+    idxfh = open(idxf, 'w')
+    idxfh.write('ProbeID\tPtr\tName\tDescription\n')
+    with open(expf, 'rb') as f:
+        for line in f:
+            ll = line.decode("utf-8").split('\t')
+            id1 = ll[0]
+            l1 = re.split(': ', ll[1])
+            name = l1[0]
+            desc = ''
+            if len(l1) > 1:
+                desc = ': '.join(l1[1:])
+            idxfh.write('\t'.join([id1, str(pos), name, desc]) + '\n')
+            pos += len(line)
+        f.close()
+    idxfh.close()
 
 class Dataset:
 
@@ -1589,6 +1606,24 @@ class Hegemon:
               t, p, np.mean(v1)-np.mean(v2)]
       of.write("\t".join([str(i) for i in res]) +"\n")
     of.close()
+
+  def writeSubset(self, pre, order):
+    fp = self.fp
+    fp.seek(0, 0)
+    ofh = open(pre + "-expr.txt", "w")
+    for line in fp:
+        line = re.sub("[\r\n]", "", line)
+        ll = line.split("\t")
+        ofh.write("\t".join([ll[i] for i in ([0, 1] + order)])+"\n")
+    ofh.close()
+    toIdx(pre + "-expr.txt", pre + "-idx.txt")
+    df = pd.read_csv(self.rdataset.getIH(), sep="\t", index_col=0)
+    df = df.reindex([self.headers[i] for i in order])
+    df.to_csv(pre + "-ih.txt", sep="\t", index=True)
+    df = pd.read_csv(self.rdataset.getSurv(), sep="\t", index_col=0)
+    df = df.reindex([self.headers[i] for i in order])
+    df.to_csv(pre + "-survival.txt", sep="\t", index=True)
+    return
 
 def test1():
   inputarr = [1.2, 3, 5.6, 4, 10, 12, 7]
