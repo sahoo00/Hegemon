@@ -780,8 +780,8 @@ echo "
 function printBody($db) {
   global $keys;
   $gid = "";
-  $gA = "CDX2";
-  $gB = "KRT20";
+  $gA = "TYROBP";
+  $gB = "FCER1G";
   $cmd = "";
   if (array_key_exists("id", $_GET)) {
     $gid = $_GET['id'];

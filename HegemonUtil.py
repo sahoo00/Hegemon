@@ -16,6 +16,8 @@ from matplotlib import pyplot as plt
 from lifelines import KaplanMeierFitter
 from scipy import stats
 
+urlbase="http://hegemon.ucsd.edu/Tools/explore.php"
+
 try:
     reload  # Python 2.7
 except NameError:
@@ -188,7 +190,7 @@ def getThrData(arr, start = None, length = None):
   stat = s_thr["statistic"]
   return [thr, stat, thr-0.5, thr+0.5]
 
-def getHegemonDataFrame(dbid, genelist=None, pGroups=None):
+def getHegemonDataFrame(dbid, genelist=None, pGroups=None, urlbase=urlbase):
   genes =''
   if genelist is not None:
       genes = ' '.join(genelist)
@@ -200,18 +202,18 @@ def getHegemonDataFrame(dbid, genelist=None, pGroups=None):
               groups += str1
           else:
               groups = groups + ';' + str1
-  url = "http://hegemon.ucsd.edu/Tools/explore.php"
+  url = urlbase
   opt = {'go': 'dataDownload', 'id': dbid, 'genes': genes, 'groups' : groups}
   response = requests.post(url, opt)
   data = StringIO(response.text)
   df = pd.read_csv(data, sep="\t")
   return df
 
-def getHegemonThrFrame(dbid, genelist=None):
+def getHegemonThrFrame(dbid, genelist=None, urlbase=urlbase):
   genes =''
   if genelist is not None:
       genes = ' '.join(genelist)
-  url = "http://hegemon.ucsd.edu/Tools/explore.php"
+  url = urlbase
   opt = {'go': 'dataDownload', 'id': dbid, 'genes': genes, 'groups' : '',
           'param': 'type:thr'}
   response = requests.post(url, opt)
@@ -220,29 +222,26 @@ def getHegemonThrFrame(dbid, genelist=None):
   df.columns=['ProbeID', 'thr1', 'stat', 'thr0', 'thr2']
   return df
 
-def getHegemonPlots(dbid, gA, gB):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getplotsjson&id=" + \
-          dbid + "&A=" + str(gA) + "&B=" + str(gB)
+def getHegemonPlots(dbid, gA, gB, urlbase=urlbase):
+  url = urlbase + "?go=getplotsjson&id=" + dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
-def getHegemonData(dbid, gA, gB):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getdatajson&id=" + \
-          dbid + "&A=" + str(gA) + "&B=" + str(gB)
+def getHegemonData(dbid, gA, gB, urlbase=urlbase):
+  url = urlbase + "?go=getdatajson&id=" + dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
-def getHegemonThr(dbid, gA, gB):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getthrjson&id=" + \
-          dbid + "&A=" + str(gA) + "&B=" + str(gB)
+def getHegemonThr(dbid, gA, gB, urlbase=urlbase):
+  url = urlbase + "?go=getthrjson&id=" + dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
-def getHegemonPatients(dbid, clinical, value):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getPatients&id=" + \
+def getHegemonPatients(dbid, clinical, value, urlbase=urlbase):
+  url = urlbase + "?go=getPatients&id=" + \
           dbid + "&clinical=" + str(clinical) + "&value=" + str(value)
   response = requests.get(url)
   obj = response.text.split("\n")
@@ -254,32 +253,30 @@ def getHegemonPatients(dbid, clinical, value):
     pHash[l[0]] = l[1]
   return  pHash
 
-def getHegemonPatientInfo(dbid):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getpatientinfojson" + \
-        "&id=" + dbid
+def getHegemonPatientInfo(dbid, urlbase=urlbase):
+  url = urlbase + "?go=getpatientinfojson" + "&id=" + dbid
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
-def getHegemonPatientData(dbid, name):
-  hdr = getHegemonPatientInfo(dbid)
+def getHegemonPatientData(dbid, name, urlbase=urlbase):
+  hdr = getHegemonPatientInfo(dbid, urlbase)
   clinical = 0
   if name in hdr:
     clinical = hdr.index(name)
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getpatientdatajson" + \
+  url = urlbase + "?go=getpatientdatajson" + \
         "&id=" + dbid + "&clinical=" + str(clinical)
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
-def getHegemonPtr(exprFile, ptr):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getptrjson&file=" + \
-          exprFile + "&x=" + ptr
+def getHegemonPtr(exprFile, ptr, urlbase=urlbase):
+  url = urlbase + "?go=getptrjson&file=" + exprFile + "&x=" + ptr
   response = requests.get(url)
   return json.loads(response.text)
 
-def getHegemonImg(obj):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=plot&file=" + \
+def getHegemonImg(obj, urlbase=urlbase):
+  url = urlbase + "?go=plot&file=" + \
           obj[4] + "&id=" + obj[5] + \
           "&xn=" + obj[6] + "&yn=" + obj[7] + \
           "&x=" + obj[8] + "&y=" + obj[9]
@@ -287,16 +284,15 @@ def getHegemonImg(obj):
   img = Image.open(StringIO.StringIO(response.content))
   return img
 
-def getHegemonDataset(dbid):
-  url = "http://hegemon.ucsd.edu/Tools/explore.php?go=getdatasetjson&id=" + \
-          dbid
+def getHegemonDataset(dbid, urlbase=urlbase):
+  url = urlbase + "?go=getdatasetjson&id=" + dbid
   response = requests.get(url)
   obj = json.loads(response.text)
   return  obj
 
-def plotStepMiner(obj):
+def plotStepMiner(obj, urlbase=urlbase):
     import bisect
-    datax = getHegemonPtr(obj[4], obj[8])
+    datax = getHegemonPtr(obj[4], obj[8], urlbase)
     ex = np.array([float(i) for i in datax[1][2:]])
     x = range(len(ex))
     y = sorted(ex)
@@ -320,10 +316,10 @@ def plotStepMiner(obj):
     ax.set_xlabel('Rank of sample')
     return ax
 
-def plotPair(obj):
-  info = getHegemonDataset(obj[5]);
-  datax = getHegemonPtr(obj[4], obj[8])
-  datay = getHegemonPtr(obj[4], obj[9])
+def plotPair(obj, urlbase=urlbase):
+  info = getHegemonDataset(obj[5], urlbase);
+  datax = getHegemonPtr(obj[4], obj[8], urlbase)
+  datay = getHegemonPtr(obj[4], obj[9], urlbase)
   df = pd.DataFrame()
   df["x"] = pd.to_numeric(pd.Series(datax[1][2:]))
   df["y"] = pd.to_numeric(pd.Series(datay[1][2:]))
@@ -333,14 +329,14 @@ def plotPair(obj):
   ax.set_title("{0} (n = {1})".format(info[1], info[2]))
   return ax
 
-def plotBooleanSelect(obj, pHash=None):
-  info = getHegemonDataset(obj[5]);
-  thr = getHegemonThr(obj[5], obj[0], obj[2]);
+def plotBooleanSelect(obj, pHash=None, urlbase=urlbase):
+  info = getHegemonDataset(obj[5], urlbase);
+  thr = getHegemonThr(obj[5], obj[0], obj[2], urlbase);
   thash = {}
   for v in thr:
     thash[v[0]] = v
-  datax = getHegemonPtr(obj[4], obj[8])
-  datay = getHegemonPtr(obj[4], obj[9])
+  datax = getHegemonPtr(obj[4], obj[8], urlbase)
+  datay = getHegemonPtr(obj[4], obj[9], urlbase)
   thrx = thash[str(obj[0])]
   thry = thash[str(obj[2])]
   df = pd.DataFrame()
@@ -365,14 +361,15 @@ def plotBooleanSelect(obj, pHash=None):
   ax.axvline(x=float(thrx[4]), color='cyan')
   return ax
 
-def plotBooleanPair(obj, pGroups=None, ax=None, thrx=None, thry=None):
-  info = getHegemonDataset(obj[5]);
-  thr = getHegemonThr(obj[5], obj[0], obj[2]);
+def plotBooleanPair(obj, pGroups=None, ax=None, thrx=None, thry=None,
+        urlbase=urlbase):
+  info = getHegemonDataset(obj[5], urlbase);
+  thr = getHegemonThr(obj[5], obj[0], obj[2], urlbase);
   thash = {}
   for v in thr:
     thash[v[0]] = v
-  datax = getHegemonPtr(obj[4], obj[8])
-  datay = getHegemonPtr(obj[4], obj[9])
+  datax = getHegemonPtr(obj[4], obj[8], urlbase)
+  datay = getHegemonPtr(obj[4], obj[9], urlbase)
   if thrx is None:
     thrx = thash[str(obj[0])]
   if thry is None:
@@ -411,18 +408,18 @@ def plotBooleanPair(obj, pGroups=None, ax=None, thrx=None, thry=None):
   ax.axvline(x=float(thrx[4]), color='cyan')
   return ax
 
-def savePlotData(ofile, obj):
-    datax = getHegemonPtr(obj[4], obj[8])
-    datay = getHegemonPtr(obj[4], obj[9])
+def savePlotData(ofile, obj, urlbase=urlbase):
+    datax = getHegemonPtr(obj[4], obj[8], urlbase)
+    datay = getHegemonPtr(obj[4], obj[9], urlbase)
     df = pd.DataFrame()
     df['a'] = pd.Series(datax[0])
     df["x"] = pd.Series(datax[1])
     df["y"] = pd.Series(datay[1])
     df.to_csv(ofile, header=False, sep='\t', index=False)
 
-def getCorrelation(obj):
-    datax = getHegemonPtr(obj[4], obj[8])
-    datay = getHegemonPtr(obj[4], obj[9])
+def getCorrelation(obj, urlbase=urlbase):
+    datax = getHegemonPtr(obj[4], obj[8], urlbase)
+    datay = getHegemonPtr(obj[4], obj[9], urlbase)
     ex = np.array([float(i) for i in datax[1][2:]])
     ey = np.array([float(i) for i in datay[1][2:]])
     corr = np.corrcoef(ex, ey)
@@ -463,14 +460,14 @@ def boxplotArray(data, pGroups=None, thr=None, ax=None):
     ax.axhline(y=thr[4], color='cyan')
   return ax
 
-def boxplot(obj, pGroups=None):
-  info = getHegemonDataset(obj[5]);
-  thr = getHegemonThr(obj[5], obj[0], obj[2]);
+def boxplot(obj, pGroups=None, urlbase=urlbase):
+  info = getHegemonDataset(obj[5], urlbase);
+  thr = getHegemonThr(obj[5], obj[0], obj[2], urlbase);
   thash = {}
   for v in thr:
     thash[v[0]] = v
-  datax = getHegemonPtr(obj[4], obj[8])
-  datay = getHegemonPtr(obj[4], obj[9])
+  datax = getHegemonPtr(obj[4], obj[8], urlbase)
+  datay = getHegemonPtr(obj[4], obj[9], urlbase)
   thrx = thash[str(obj[0])]
   thry = thash[str(obj[2])]
   w,h = (12, 4.8)
@@ -1602,6 +1599,10 @@ class Hegemon:
       v1 = np.array([float(ll[i]) for i in g1 if ll[i] != ""])
       v2 = np.array([float(ll[i]) for i in g2 if ll[i] != ""])
       t, p = stats.ttest_ind(v1,v2,equal_var=False)
+      if np.isnan(t):
+          t = 0
+      if np.isnan(p):
+          p = 1
       res = [ll[0], self.getSimpleName(ll[0]),
               t, p, np.mean(v1)-np.mean(v2)]
       of.write("\t".join([str(i) for i in res]) +"\n")
