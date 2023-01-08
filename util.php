@@ -1997,7 +1997,7 @@ fig.savefig('$outprefix-1.pdf', dpi=100)
     $res .= "values <- c(" . join(",", $gxa) . ");\n";
     $res .= "groups <- c(" . join(",", $groups) . ");\n";
     $res .= "
-        s <- anova(lm(values ~ groups))
+        s <- anova(lm(values ~ paste('G', groups)))
         cat(paste('anova', s$'Pr(>F)'[1], s$'F value'[1], '\\n', sep='\\t'))
 ";
     $res .= "cat('END\\n')\n";
@@ -2366,6 +2366,33 @@ anova & Pr(\$>\$F) & F Value \\\\
     }
   }
 
+  function transferGeneIDs($h, $file, $genes, $debug) {
+    $h_arr = ["ProbeID", "Name"];
+    echo join("\t", $h_arr)."\n";
+    if (!$genes || $genes == '') {
+      return;
+    }
+    else {
+      if (($fp = fopen($file, "r")) === FALSE) {
+        echo "Can't open file $file <br>";
+        exit;
+      }
+      $genelist = preg_split("/\s+/", $genes);
+      foreach ($genelist as $g) {
+        $name = trim($g);
+        if ($name == '' || $name == '---') {
+          continue;
+        }
+        $idhash = $h->getIDs($name);
+        foreach ($idhash as $v1 => $n1) {
+          $x_arr = [$v1, $n1];
+          echo join("\t", $x_arr)."\n";
+        }
+      }
+      fclose($fp);
+    }
+  }
+
   function transferSurvivalData($h, $file, $sfile, $groups, $debug) {
     $h_arr = self::getH($file, $debug);
     $p_arr = self::getPArray($sfile, $h_arr, $groups);
@@ -2421,6 +2448,9 @@ anova & Pr(\$>\$F) & F Value \\\\
   }
 
   function transferData($h, $genes, $groups, $params) {
+    if (!$h->isPublic()) {
+      return;
+    }
     $sfile = $h->getSurv();
     $file = $h->getExprFile();
     $pre = $h->getPre();
@@ -2434,6 +2464,9 @@ anova & Pr(\$>\$F) & F Value \\\\
     }
     if ($type == "expr") {
       self::transferExprData($h, $file, $sfile, $genes, $groups, $debug);
+    }
+    if ($type == "geneids") {
+      self::transferGeneIDs($h, $file, $genes, $debug);
     }
     if ($type == "survival") {
       self::transferSurvivalData($h, $file, $sfile, $groups, $debug);

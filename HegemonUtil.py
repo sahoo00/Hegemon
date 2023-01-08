@@ -222,6 +222,18 @@ def getHegemonThrFrame(dbid, genelist=None, urlbase=urlbase):
   df.columns=['ProbeID', 'thr1', 'stat', 'thr0', 'thr2']
   return df
 
+def getHegemonGeneIDs(dbid, genelist=None, urlbase=urlbase):
+  genes =''
+  if genelist is not None:
+      genes = ' '.join(genelist)
+  url = urlbase
+  opt = {'go': 'dataDownload', 'id': dbid, 'genes': genes, 'groups' : '',
+          'param': 'type:geneids'}
+  response = requests.post(url, opt)
+  data = StringIO(response.text)
+  df = pd.read_csv(data, sep="\t")
+  return df
+
 def getHegemonPlots(dbid, gA, gB, urlbase=urlbase):
   url = urlbase + "?go=getplotsjson&id=" + dbid + "&A=" + str(gA) + "&B=" + str(gB)
   response = requests.get(url)

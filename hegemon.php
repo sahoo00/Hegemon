@@ -51,6 +51,22 @@ class Dataset {
     }
     return "";
   }
+  public function isPublic() {
+    $keyfound = 1;
+    if ($this->has("key")) {
+      $lkey = $this->get("key");
+      $keyfound = 0;
+      foreach (explode(":", $lkey) as $k) {
+        if ($k == '') {
+          $keyfound = 1;
+        }
+      }
+    }
+    if ($keyfound) {
+      return 1;
+    }
+    return 0;
+  }
 }
 
 class Database {
@@ -235,6 +251,10 @@ class Hegemon {
 
   public function getPre() {
     return $this->rdataset->getPre();
+  }
+
+  public function isPublic() {
+    return $this->rdataset->isPublic();
   }
 
   public function init() {
