@@ -2296,18 +2296,11 @@ anova & Pr(\$>\$F) & F Value \\\\
       }
       $h_arr = self::getHfp($fp, $debug);
       echo join("\t", $h_arr)."\n";
-      $genelist = preg_split("/\s+/", $genes);
-      foreach ($genelist as $g) {
-        $name = trim($g);
-        if ($name == '' || $name == '---') {
-          continue;
-        }
-        $idhash = $h->getIDs($name);
-        foreach ($idhash as $v1 => $n1) {
-          $ptr1 = $h->getPtr($v1);
-          $x_arr = self::getXfp($fp, $ptr1, $debug);
-          echo join("\t", $x_arr)."\n";
-        }
+      $idhash = $h->getIDs($genes);
+      foreach ($idhash as $v1 => $n1) {
+        $ptr1 = $h->getPtr($v1);
+        $x_arr = self::getXfp($fp, $ptr1, $debug);
+        echo join("\t", $x_arr)."\n";
       }
       fclose($fp);
     }
@@ -2339,18 +2332,11 @@ anova & Pr(\$>\$F) & F Value \\\\
       }
       $h_arr = self::getHfp($fp, $debug);
       echo join("\t", self::aselect($h_arr, $order))."\n";
-      $genelist = preg_split("/\s+/", $genes);
-      foreach ($genelist as $g) {
-        $name = trim($g);
-        if ($name == '' || $name == '---') {
-          continue;
-        }
-        $idhash = $h->getIDs($name);
-        foreach ($idhash as $v1 => $n1) {
-          $ptr1 = $h->getPtr($v1);
-          $x_arr = self::getXfp($fp, $ptr1, $debug);
-          echo join("\t", self::aselect($x_arr, $order))."\n";
-        }
+      $idhash = $h->getIDs($genes);
+      foreach ($idhash as $v1 => $n1) {
+        $ptr1 = $h->getPtr($v1);
+        $x_arr = self::getXfp($fp, $ptr1, $debug);
+        echo join("\t", self::aselect($x_arr, $order))."\n";
       }
       fclose($fp);
     }
@@ -2391,17 +2377,10 @@ anova & Pr(\$>\$F) & F Value \\\\
         echo "Can't open file $file <br>";
         exit;
       }
-      $genelist = preg_split("/\s+/", $genes);
-      foreach ($genelist as $g) {
-        $name = trim($g);
-        if ($name == '' || $name == '---') {
-          continue;
-        }
-        $idhash = $h->getIDs($name);
-        foreach ($idhash as $v1 => $n1) {
-          $x_arr = [$v1, $n1, $h->getName($v1)];
-          echo join("\t", $x_arr)."\n";
-        }
+      $idhash = $h->getIDs($genes);
+      foreach ($idhash as $v1 => $n1) {
+        $x_arr = [$v1, $n1, $h->getName($v1)];
+        echo join("\t", $x_arr)."\n";
       }
       fclose($fp);
     }
@@ -2445,18 +2424,7 @@ anova & Pr(\$>\$F) & F Value \\\\
       fpassthru($fp);
     }
     else {
-      $idhash = [];
-      $genelist = preg_split("/\s+/", $genes);
-      foreach ($genelist as $g) {
-        $name = trim($g);
-        if ($name == '' || $name == '---') {
-          continue;
-        }
-        $idhash1 = $h->getIDs($name);
-        foreach ($idhash1 as $v1 => $n1) {
-          $idhash[$v1] = $n1;
-        }
-      }
+      $idhash = $h->getIDs($genes);
       if ($header == 1) {
         $line = fgets($fp);
         echo $line;
