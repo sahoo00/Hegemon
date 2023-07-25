@@ -207,6 +207,13 @@ function callRemove() {
   return false;
 }
 
+function callRemoveGroup(id) {
+  console.log("id", id, typeof id);
+  removeGroups(id);
+  updateGroupDisplay();
+  return false;
+}
+
 function callReset() {
   groups = new Array();
   groupNames = new Array();
@@ -219,16 +226,42 @@ function callReset() {
   return false;
 }
 
+function changeGroup(e, id) {
+    console.log("event", e.checked, id);
+    var downloadIcon = document.getElementById(id);
+    if (e.checked == true){
+        downloadIcon.style.display = "block";
+    } else {
+         downloadIcon.style.display = "none";
+    }
+//   var list = document.getElementsByName('selectGroup');
+//   for (var i = 0; i < list.length; i++) {
+//     if (list[i].checked) {
+//         searchGroup = 1;
+//         updateGroupDisplay();
+//         return;
+//     }
+//   }
+//   updateGroupDisplay();
+//   searchGroup = 0;
+}
+
 function displayGroups() {
-  var str = '';
-  str += numGroups + "<br/>";
+  var str = '<p style="margin: 3px;">' + numGroups + '</p>';
   for (var i in groups) {
+    var id = i+"";
+    str += '<div class="flex-container" style="justify-content: flex-start;">';
     str += '<input type="checkbox" name="selectGroup" value="' + i + '" ';
-    str += ' onclick="changeImage();" />' ;
-    str += '<input type="text" size="10" value="' + groupNames[i] + '" ';
-    str += ' onchange="changeGroupNames(this, ' + i + ');" />' ;
-    str += ' ' + groups[i].length + ' <br/> ';
+    str += ' onclick="changeImage();" onchange="changeGroup(this,'+i+')" />' ;
+    str += '<div class="did-floating-label-content">'
+    str += '<input class="did-floating-input" style="margin: 0px 10px; min-width: 150px; max-width: 150px;" type="text" size="10" value="' + groupNames[i] + '" ' + 'onchange="changeGroupNames(this, ' + i + ');" />';
+    str += '</div>'
+    str += '<p style="width: 30px;">'+groups[i].length+'</p>';
+    str += '<svg width="18" height="18" style="margin: 17px 3px 3px 20px; cursor: pointer;" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" onclick="callRemoveGroup('+id+');"> <path d="M13.25 8.25H5.75V6.75H13.25M9.5 0C8.51509 0 7.53982 0.193993 6.62987 0.570903C5.71993 0.947814 4.89314 1.50026 4.1967 2.1967C2.79018 3.60322 2 5.51088 2 7.5C2 9.48912 2.79018 11.3968 4.1967 12.8033C4.89314 13.4997 5.71993 14.0522 6.62987 14.4291C7.53982 14.806 8.51509 15 9.5 15C11.4891 15 13.3968 14.2098 14.8033 12.8033C16.2098 11.3968 17 9.48912 17 7.5C17 6.51509 16.806 5.53982 16.4291 4.62987C16.0522 3.71993 15.4997 2.89314 14.8033 2.1967C14.1069 1.50026 13.2801 0.947814 12.3701 0.570903C11.4602 0.193993 10.4849 0 9.5 0Z" fill="#FF0000"/> </svg>';
+    str += '<svg id='+i+' width="20" height="20" style="margin: 15px 3px 3px 30px; cursor: pointer; display:none;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onclick="callSearchGroup()"><title>Download Group</title><path fill-rule="evenodd" clip-rule="evenodd" d="M9.163 2.819C9 3.139 9 3.559 9 4.4V11H7.803c-.883 0-1.325 0-1.534.176a.75.75 0 0 0-.266.62c.017.274.322.593.931 1.232l4.198 4.401c.302.318.453.476.63.535a.749.749 0 0 0 .476 0c.177-.059.328-.217.63-.535l4.198-4.4c.61-.64.914-.96.93-1.233a.75.75 0 0 0-.265-.62C17.522 11 17.081 11 16.197 11H15V4.4c0-.84 0-1.26-.164-1.581a1.5 1.5 0 0 0-.655-.656C13.861 2 13.441 2 12.6 2h-1.2c-.84 0-1.26 0-1.581.163a1.5 1.5 0 0 0-.656.656zM5 21a1 1 0 0 0 1 1h12a1 1 0 1 0 0-2H6a1 1 0 0 0-1 1z" fill="#000000"/></svg>';
+    str += '</div>';
   }
+    
   str += "";
   if (showVal && showVal.length > 0) {
     str += '<textarea name="showVal" cols="20" rows="5">';
@@ -258,14 +291,20 @@ function displayGroups() {
     }
     str += "</div>\n";
   }
+
   if (searchGroup) {
-    str += '<textarea id="searchGroupArea" name="searchGroupArea" cols="20" rows="5">';
-    str += '</textarea><br/>';
-    str += '<input type="button" name="searchGroup" value="searchGroup"';
-    str += ' onclick="callSearchGroup();" />' ;
+    str += '<div>';
+    str += '<button name="searchGroup" value="searchGroup" class="searchGroup-btn" onclick="callSearchGroup()"> Search Group </button>';
+    str += '<textarea id="searchGroupArea" name="searchGroupArea" cols="20" rows="5"></textarea>';
+    str += '</div>';
+//     str += '<textarea id="searchGroupArea" name="searchGroupArea" cols="20" rows="5">';
+//     str += '</textarea><br/>';
+//     str += '<input type="button" name="searchGroup" value="searchGroup"';
+//     str += ' onclick="callSearchGroup();" />' ;
   }
   return str;
 }
+
 
 function updateGroupDisplay() {
   var dis = document.getElementById('group_display');
@@ -570,12 +609,12 @@ function callGetLinePlots() {
       }
     }
     xmlHttp.send(params);
-  }		
+  }
 }
 
 function callBoxP() {
   var num = getNumArrays();
-  var str1 = escape(document.getElementById('CT').value);
+  var str1 = ""; //escape(document.getElementById('CT').value);
   var url = document.getElementById('img0link').href;
   url += '&CT=' + str1 + '&groups=' + getGroupStr();
   url = url.replace("go=plot", "go=boxplot");
@@ -592,6 +631,35 @@ function callBoxP() {
     xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     xmlHttp.setRequestHeader("Content-length", params.length);
     xmlHttp.setRequestHeader("Connection", "close");
+    xmlHttp.onreadystatechange = function() {
+      if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        var ur = xmlHttp.responseText;
+        document.getElementById('img0').src = ur;
+        document.getElementById('img2link').href = ur;
+        document.getElementById('img2link').style.visibility = 'visible';
+      }
+    }
+    xmlHttp.send(params);
+  }
+}
+
+function callViolinP() {
+  var num = getNumArrays();
+  var str1 = "";
+  var url = document.getElementById('img0link').href;
+  url += '&CT=' + str1 + '&groups=' + getGroupStr();
+  url = url.replace("go=plot", "go=violinplot");
+  if (num < maxarrayget) {
+    document.getElementById('img0').src = url;
+    document.getElementById('img2link').href = url;
+    document.getElementById('img2link').style.visibility = 'visible';
+  }
+  else {
+    var list = url.split("?");
+    var params = list[1];
+    xmlHttp.open("POST", list[0], true);
+    //Send the proper header information along with the request
+    xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     xmlHttp.onreadystatechange = function() {
       if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
         var ur = xmlHttp.responseText;
@@ -1188,14 +1256,14 @@ function callSearchGroup() {
   url = url.replace("go=plot", "go=sga");
   var list = url.split("?");
   var d = list[1].split('&').reduce(function(s,c){
-      var t=c.split('=');s[t[0]]=t[1];return s;},{});
+  var t=c.split('=');s[t[0]]=t[1];return s;},{});
   var str = $("#searchGroupArea").val();
   d['sga'] = str;
   $.ajax({type: 'POST',
       data: d,
       url: list[0],
       success: function (data) {
-        if (str == "") {
+        if (!str || str == "") {
           $("#searchGroupArea").val(data);
         }
         else {
@@ -1210,7 +1278,62 @@ function callSearchGroup() {
           }
           updateGroupDisplay();
         }
-        }});
+        window.open('./tmpdir/temp.csv', "_blank");
+      }
+    });
   return false;
 }
 
+function callUploadGroup(e) {
+//     console.log("callUploadGroup", e.files[0], e.files[0].type);
+    const input = e.files[0];
+     const reader = new FileReader();
+     reader.onload = function (e) {
+        var str = "", xn = "", yn = ""; 
+        var rows = e.target.result.split("\n");
+        for(let i=0; i<rows.length; i++) {
+            var cells = rows[i].split("\r")[0].split(",");
+            if(i==0 && cells.length==4) {
+                xn = cells[2];                
+                yn = cells[3];
+            }
+            str += cells.join("\t");
+            str += "\n";
+        }
+        var url = document.getElementById('img0link').href;
+        url += '&groups=' + getGroupStr();
+        var str1 = escape(document.getElementById('clinical0').value) || "1";
+        console.log("str1", str1);
+        url += '&clinical=' + str1;
+        url = url.replace("go=plot", "go=sga");
+        var list = url.split("?");
+        var d = list[1].split('&').reduce(function(s,c){
+        var t=c.split('=');s[t[0]]=t[1];return s;},{});
+        d['sga'] = str;
+        d['xn'] = xn;
+        d['yn'] = yn; 
+        
+        $.ajax({type: 'POST',
+          data: d,
+          url: list[0],
+          success: function (data) {
+            if (str == "") {
+              $("#searchGroupArea").val(data);
+            }
+            else {
+              var list2 = data.split("\n");
+              if (list2[0] > 0) {
+                if (str.startsWith("Boolean")) {
+                  addGroups(createGroup(list2), 1);
+                }
+                else {
+                  addGroups(createGroup(list2));
+                }
+              }
+              updateGroupDisplay();
+            }
+          }});
+      return false;
+     };
+     reader.readAsText(input);
+}

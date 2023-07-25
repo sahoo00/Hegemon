@@ -1,13 +1,13 @@
-html, body {
+/* html, body {
   margin: 5px;
   padding: 5px;
   border: none;
   background: #FFF;
-}
-body, select {
+} */
+/* body, select {
   color: #000;
   font: 16px/1.3em Arial, Helvetica, sans-serif;
-}
+} */
 #header {
   color: #000;
 }
@@ -71,3 +71,12 @@ rect.selection {
   fill: white;
   fill-opacity: 0.5;
 }
+/* .footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: red;
+  color: white;
+  text-align: center;
+} */

@@ -37,6 +37,12 @@ function bindGetPlots(cmd, fun) {
     var ss = document.getElementById('results');
     ss.innerHTML ='Please Wait ... <br/><img width=70 src="Images/loading.gif"/>' ;
     ss.style.visibility = 'visible';
+    $('#results').css("background", "#F1F1F1");
+    $('#results').parent().css("justify-content", "space-around");  
+    $('#results').css("margin", "30px");
+    $('#results').css("padding", "20px");
+    $('.sidebar>input').removeClass('active');
+    $('#getPlots').addClass('active');
     var str1 = escape(document.getElementById('Ab').value);
     var str2 = escape(document.getElementById('Bb').value);
     var s1 = escape(getDatasetID('dataset'));
@@ -71,10 +77,10 @@ function handleGetPlot() {
     var plots = '<table border=0> <tr>';
     for(i=0; i < str.length - 1; i++) {
       var list = str[i].split("\t");
-      var box = '<td>' ;
-      box += list[1] + ' and ' + list[3] ; 
+      var box = '<td style="padding-left: 20px; padding-right: 20px;">' ;
+      box += '<p>' + list[1] + ' and ' + list[3] ; 
       box += '(' + list[0] + ',' + list[2] + ',' + i + ') ';
-      box += '<a href="' + list[4] + '"> p</a>  ';
+      box += '<a href="' + list[4] + '"> p</a> </p> ';
       box += '<br/>';
       box += '<img height=240 width=320 src="' + list[4] + '"  ';
       box += ' onclick="updateTextBox(\'' + list[0] + '\',\'' + list[1] + '\',\'' + list[2] + '\',\'' + list[3] + '\');"/>';
@@ -97,6 +103,12 @@ function callGetStats() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
     $('#results').css("visibility", "visible");
+    $('#results').css("background", "#F1F1F1");
+    $('#results').css("margin", "30px");
+    $('#results').css("padding", "20px");
+    $('#results').parent().css("justify-content", "space-around"); 
+    $('.sidebar>input').removeClass('active');
+    $('#getStats').addClass('active');
     var s1 = $('#dataset').val();
     var str1 = $('#Ab').val();
     var str2 = $('#Bb').val();
@@ -117,6 +129,12 @@ function callTopGenes() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
     $('#results').css("visibility", "visible");
+    $('#results').css("background", "#F1F1F1");
+    $('#results').parent().css("justify-content", "space-around");  
+    $('#results').css("margin", "30px");
+    $('#results').css("padding", "20px");
+    $('.sidebar>input').removeClass('active');
+    $('#topGenes').addClass('active');
     var s1 = $('#dataset').val();
     var num = $.trim($('#arg1').val());
     if (/^[\d]+$/.test(num) == false)
@@ -150,7 +168,14 @@ function callExplore() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
     $('#results').css("visibility", "visible");
+    $('#results').css("background", "#F1F1F1");
+    $('#results').css("margin", "30px");
+    $('#results').css("padding", "20px");
+    $('#results').parent().css("justify-content", "space-around"); 
+    $('.sidebar>input').removeClass('active');
+    $('#Explore').addClass('active');
     var s1 = $('#dataset').val();
+      alert("//////", s1);
     var str1 = $('#Ab').val();
     var str2 = $('#Bb').val();
     var url = 'explore.php?go=explore&id=' + s1;
@@ -221,6 +246,12 @@ function callGetIDs() {
   if (xmlHttp.readyState == 4 || xmlHttp.readyState == 0) {
     $("#results").html('Please Wait ... <br/><img width=70 src="Images/loading.gif"/>');
     $('#results').css("visibility", "visible");
+    $('#results').css("background", "#F1F1F1");
+    $('#results').css("margin", "30px");
+    $('#results').css("padding", "20px");
+    $('#results').parent().css("justify-content", "space-around"); 
+    $('.sidebar>input').removeClass('active');
+    $('#getIDs').addClass('active');
     var s1 = $('#dataset').val();
     var str1 = $('#Ab').val();
     var str2 = $('#Bb').val();

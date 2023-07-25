@@ -332,6 +332,10 @@ function setupDisplay($h, $id, $sthr, $pthr, $bestid1, $bestid2, $head,
     $values, $idlist) {
   echo "
     <script type=\"text/javascript\">
+    <link
+      href=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css\"
+      rel=\"stylesheet\"
+    />
     function updateRel(i) {
       $('#rel' + i).toggle();
       $('#res' + i).html('');
@@ -511,7 +515,7 @@ function getSource($file, $id) {
   $str = $h->getSource();
   if (preg_match_all('/(GSE\d+)/', $str, $matches)) {
     foreach (range(0, count($matches[0]) - 1) as $i) {
-      echo "<a
+      echo "<a style=\"margin: 30px; padding: 20px;\"
 href=\"https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=".$matches[0][$i].
 "\"
 target=\"_blank\"> ".$matches[0][$i]." </a> <br/>";
@@ -525,7 +529,7 @@ target=\"_blank\"> ".$matches[0][$i]." </a> <br/>";
 function topGenes($file, $id, $num) {
   $h = getHegemon($file, $id);
   $ids = $h->topGenesJava($num);
-  echo "<table border=\"0\">\n";
+  echo "<table border=\"0\" class=\"sidebar-table\">\n";
   foreach ($ids as $k => $v) {
     echo "<tr>\n";
     echo "<td>$k</td><td>". $h->getName($k) ."</td><td>$v</td>\n";
@@ -533,6 +537,7 @@ function topGenes($file, $id, $num) {
   }
   echo "</table>\n";
 }
+
 
 function getStats($file, $str1, $str2, $id, $sthr, $pthr) {
   $h = getHegemon($file, $id);
@@ -601,7 +606,7 @@ function printAllIDs($file, $str1, $str2, $id) {
   $h->initPlatform();
   $ids = $h->getIDs($str1);
   $bestid1 = $h->getBestID(array_keys($ids));
-  echo "<table border=\"0\">\n";
+  echo "<table border=\"0\" class=\"sidebar-table\">\n";
   foreach ($ids as $k => $v) {
     echo "<tr>\n";
     if (strcmp($bestid1, $k) == 0) {
@@ -766,10 +771,13 @@ echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
   <script src=\"https://code.jquery.com/jquery-3.1.0.min.js\" type=\"text/javascript\"></script>
   <script src=\"https://d3js.org/d3.v4.min.js\"></script>
   <link href=\"explore.css\" media=\"screen\" rel=\"Stylesheet\" type=\"text/css\"/>
+  <link rel=\"stylesheet\" href=\"styles.css\" type=\"text/css\" media=\"screen\">
+  <link href=\"https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css\" rel=\"stylesheet\"/>
   <script src=\"explore.js\" type=\"text/javascript\"></script>
   <script src=\"Mouse.js\" type=\"text/javascript\"></script>
   <script src=\"Groups.js\" type=\"text/javascript\"></script>
-";
+  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>";
+    
   echo file_get_contents("gtag.html");
 echo "
   </head>
@@ -795,136 +803,302 @@ function printBody($db) {
   if (array_key_exists("cmd", $_GET)) {
     $cmd = $_GET['cmd'];
   }
+ 
+
 echo "
-    <div id=\"exploreAll\">
-      <form name=\"exploreForm\" action=\"\">
-      Select Dataset: <select id=\"dataset\" name=\"dataset\">
-";
-  foreach ($db->getListKey($keys) as $n) {
-    $id = $n->getID();
-    $h = new Hegemon($n);
-    $num = $h->getNum();
-    if ($num > 0) {
-      if (strcmp($id, $gid) == 0) {
-echo "
-      <option value=\"$id\" selected> ".$n->getName()." (n = $num) </option>
-";
-      }
-      else {
-echo "
-      <option value=\"$id\"> ".$n->getName()." (n = $num) </option>
-";
-      }
-    }
-  }
-echo "
-      </select>
-      <input type=\"button\" name=\"topGenes\" value=\"topGenes\"
-              onclick=\"callTopGenes();\"/>
-      nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
-      <div id=\"box\">
-      Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
-              name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
-      Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
-              name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
-          <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
-              onclick=\"callGetIDs();\"/>
-          <input type=\"button\" name=\"getPlots\" value=\"getPlots\"
-              onclick=\"callGetPlots();\"/>
-          <input type=\"button\" name=\"getStats\" value=\"getStats\"
-              onclick=\"callGetStats();\"/>
-          <input type=\"button\" name=\"Explore\" value=\"Explore\"
-              onclick=\"callExplore();\"/> <br/>
-     SThr: <input type=\"text\" size=\"3\" id=\"sthr\" value=\"3\"/>
-     PThr: <input type=\"text\" size=\"3\" id=\"pthr\" value=\"0.1\"/>
-          <input type=\"button\" name=\"MiDReG\" value=\"MiDReG\"
-              onclick=\"callMiDReG();\"/> 
-    CT: <input type=\"text\" size=\"3\" id=\"CT\"
-              name=\"CT\" value=\"\" alt=\"Censor Time\"/>
-          <input type=\"button\" name=\"getCorr\" value=\"getCorr\"
-              onclick=\"callCorr();\"/>
-          <input type=\"button\" name=\"getInfo\" value=\"getInfo\"
-              onclick=\"callInfo();\"/>
-          <input type=\"button\" name=\"Clear\" value=\"Clear\"
-              onclick=\"callClear();\"/>
-      </div> <!-- end id box -->
-";
-echo "
-      <br clear=\"all\"/>
-      <div id=\"results\"> </div>
-      <div id=\"lineresults\"> </div>
-      </form>
-    </div> <!-- end id exploreAll -->
+    <div class=\"studies-container\">
+        <div class=\"sidebar\">
+              <input type=\"button\" name=\"topGenes\" id=\"topGenes\" value=\"Top Genes\" onclick=\"callTopGenes();\"/>
+              <input type=\"button\" name=\"getIDs\" id=\"getIDs\" value=\"Get Ids\" onclick=\"callGetIDs();\"/>
+              <input type=\"button\" name=\"getPlots\" id=\"getPlots\" value=\"Get Plots\" onclick=\"callGetPlots();\"/>         
+              <input type=\"button\" name=\"getStats\" id=\"getStats\" value=\"Get Stats\" onclick=\"callGetStats();\"/>
+              <input type=\"button\" name=\"Explore\" id=\"Explore\" value=\"Explore\" onclick=\"callExplore();\"/>
+        </div>
+        
+        <div class=\"content\">
+        
+            <div class=\"flex-container\">
+                <div class=\"did-floating-label-content\">
+                    <select class=\"did-floating-select\" id=\"dataset\" name=\"dataset\">
+    ";
+//    value=\"\" onclick=\"this.setAttribute('value', this.value);\" onchange=\"this.setAttribute('value', this.value);\"
+                      foreach ($db->getListKey($keys) as $n) {
+                        $id = $n->getID();
+                        $src = $n->getSource();
+                        $h = new Hegemon($n);
+                        $num = $h->getNum();
+                        if ($num > 0) {
+                          if (strcmp($id, $gid) == 0) {
+                        echo "
+                              <option title=\"$src\" value=\"$id\" selected> ".$n->getName()." (n = $num) </option>
+                        ";
+                          }
+                          else {
+                        echo "
+                              <option title=\"$src\" value=\"$id\"> ".$n->getName()." (n = $num) </option>
+                        ";
+                          }
+                        }
+                      }
+         
+   echo "
+                    </select>
+                    <label class=\"did-floating-label\">Select Dataset</label>
+                </div>
+            
+                <div class=\"did-floating-label-content\">
+                    <input class=\"did-floating-input\" type=\"text\" placeholder=\" \" size=\"3\" id=\"arg1\"/>
+                    <label class=\"did-floating-label\">Number of Genes</label>
+                </div>
+            </div>
+        
+            <div class=\"flex-container\">
+                <div class=\"did-floating-label-content\">
+                    <input class=\"did-floating-input\" type=\"text\" placeholder=\" \" size=\"10\" id=\"Ab\" name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
+                    <label class=\"did-floating-label\">Enter Gene A</label>
+                </div>
+
+                <div class=\"did-floating-label-content\">
+                    <input class=\"did-floating-input\" type=\"text\" placeholder=\" \" size=\"10\" id=\"Bb\" name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
+                    <label class=\"did-floating-label\">Enter Gene B</label>
+                </div>
+            </div>
+        
+            <div class=\"flex-container\">
+                <div id=\"results\"> </div>
+            </div>
+
+            <div class=\"flex-container\">
+                <div id=\"lineresults\"> </div>
+            </div>
+        
+        </div>
+    </div>
+    
     <script type=\"text/javascript\">
+        $(document).ready(function () {
+            function matchCustom(params, data) {
+                if ($.trim(params.term) === '') {
+                  return data;
+                }
+
+                if (typeof data.text === 'undefined') {
+                  return null;
+                }
+                if (data.id.toLowerCase().indexOf(params.term.toLowerCase()) > -1 || data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1 || data?.title.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                   return data;
+                }
+
+                return null;
+            }
+
+
+            $('#dataset').select2({
+                matcher: matchCustom
+            });
+        });
         var s1 = $('#dataset').val();
         var url = 'explore.php?go=getsource&id=' + s1;
         \$('#results').load(url);
+        \$('#results').parent().css(\"justify-content\", \"flex-start\");
         \$('#dataset').on('change', function() {
             var s1 = $('#dataset').val();
+            $('.sidebar>input').removeClass('active');
+            $('#results').css(\"background\", \"none\");
+            \$('#results').parent().css(\"justify-content\", \"flex-start\");
             var url = 'explore.php?go=getsource&id=' + s1;
             \$('#results').load(url);
         });
-";
-      if (strcmp($cmd, "explore") == 0) {
-        echo "callExplore();\n";
-      }
+  ";
+    /*
+    
+                     if (data.id.toLowerCase().indexOf(params.term.toLowerCase()) > -1 || data.text.toLowerCase().indexOf(params.terms.toLowerCase()) > -1) {
+//                   console.log('params.terms', params.terms);
+//                   return data;
+//                 }
+    
+        {
+                matcher: function(term, text) {
+                    console.log('///', term, text);
+                    if(term?.term) {
+                        return text?.id.toLowerCase().indexOf(term?.term.toLowerCase()) > -1 || text?.text.toLowerCase().indexOf(term?.term.toLowerCase()) > -1
+                    }
+                    return true;
+                }
+            }
+    */
+   if (strcmp($cmd, "explore") == 0) {
+      echo "callExplore();\n";
+   }
+    
 echo "
-    </script>
+    </script>  
 ";
+//     <div id=\"exploreAll\">
+//       <form name=\"exploreForm\" action=\"\">
+//       Select Dataset: <select id=\"dataset\" name=\"dataset\">
+// ";
+//   foreach ($db->getListKey($keys) as $n) {
+//     $id = $n->getID();
+//     $h = new Hegemon($n);
+//     $num = $h->getNum();
+//     if ($num > 0) {
+//       if (strcmp($id, $gid) == 0) {
+// echo "
+//       <option value=\"$id\" selected> ".$n->getName()." (n = $num) </option>
+// ";
+//       }
+//       else {
+// echo "
+//       <option value=\"$id\"> ".$n->getName()." (n = $num) </option>
+// ";
+//       }
+//     }
+//   }
+// echo "
+//       </select>
+//       <input type=\"button\" name=\"topGenes\" value=\"topGenes\"
+//               onclick=\"callTopGenes();\"/>
+//       nG: <input type=\"text\" size=\"3\" id=\"arg1\"/>
+//       <div id=\"box\">
+//       Gene A: <input type=\"text\" size=\"10\" id=\"Ab\" 
+//               name=\"Ab\" value=\"$gA\" alt=\"Gene A\" />
+//       Gene B: <input type=\"text\" size=\"10\" id=\"Bb\"
+//               name=\"Bb\" value=\"$gB\" alt=\"Gene B\" />
+//           <input type=\"button\" name=\"getIDs\" value=\"getIDs\"
+//               onclick=\"callGetIDs();\"/>
+//           <input type=\"button\" name=\"getPlots\" value=\"getPlots\"
+//               onclick=\"callGetPlots();\"/>
+//           <input type=\"button\" name=\"getStats\" value=\"getStats\"
+//               onclick=\"callGetStats();\"/>
+//           <input type=\"button\" name=\"Explore\" value=\"Explore\"
+//               onclick=\"callExplore();\"/> <br/>
+//      SThr: <input type=\"text\" size=\"3\" id=\"sthr\" value=\"3\"/>
+//      PThr: <input type=\"text\" size=\"3\" id=\"pthr\" value=\"0.1\"/>
+//           <input type=\"button\" name=\"MiDReG\" value=\"MiDReG\"
+//               onclick=\"callMiDReG();\"/> 
+//     CT: <input type=\"text\" size=\"3\" id=\"CT\"
+//               name=\"CT\" value=\"\" alt=\"Censor Time\"/>
+//           <input type=\"button\" name=\"getCorr\" value=\"getCorr\"
+//               onclick=\"callCorr();\"/>
+//           <input type=\"button\" name=\"getInfo\" value=\"getInfo\"
+//               onclick=\"callInfo();\"/>
+//           <input type=\"button\" name=\"Clear\" value=\"Clear\"
+//               onclick=\"callClear();\"/>
+//       </div> <!-- end id box -->
+//       </div>
+// ";
+// echo "
+//       <br clear=\"all\"/>
+//       <div id=\"results\"> </div>
+//       <div id=\"lineresults\"> </div>
+//       </form>
+//     </div> <!-- end id exploreAll -->
+//     <script type=\"text/javascript\">
+//         var s1 = $('#dataset').val();
+//         var url = 'explore.php?go=getsource&id=' + s1;
+//         \$('#results').load(url);
+//         \$('#dataset').on('change', function() {
+//             var s1 = $('#dataset').val();
+//             var url = 'explore.php?go=getsource&id=' + s1;
+//             \$('#results').load(url);
+//         });
+// ";
+//       if (strcmp($cmd, "explore") == 0) {
+//         echo "callExplore();\n";
+//       }
+// echo "
+//     </script>
+// ";
 }
 
 function printFooter() {
-echo "
-    <br clear=\"all\"/>
-    <div id=\"ref\">
-      References:
-      <ol>
-        <li>
-        Debashis Sahoo, David L. Dill, Andrew J. Gentles, Rob Tibshirani,
-Sylvia K. Plevritis. Boolean implication networks derived from large scale,
-whole genome microarray datasets. Genome Biology, 9:R157, Oct 30 2008.
-        </li>
-        <li>
-Debashis Sahoo, Jun Seita, Deepta Bhattacharya, Matthew A. Inlay, Sylvia K.
-Plevritis, Irving L. Weissman, David L. Dill. MiDReG: A Method of Mining
-Developmentally Regulated Genes using Boolean Implications. Proc Natl Acad Sci
-U S A. 2010 Mar 30;107(13):5732-7. Epub 2010 Mar 15.
-        </li>
-        <li>
-Piero Dalerba *, Tomer Kalisky *, Debashis Sahoo *, Pradeep S. Rajendran, Mike
-Rothenberg, Anne A. Leyrat, Sopheak Sim, Jennifer Okamoto, John D. Johnston,
-Dalong Qian, Maider Zabala, Janet Bueno, Norma Neff, Jianbin Wang, Andy A.
-Shelton, Brendan Visser, Shigeo Hisamori, Mark van den Wetering, Hans Clevers,
-Michael F. Clarke * and Stephen R. Quake *. Single-cell dissection of
-transcriptional heterogeneity in human colon tumors. Nature Biotech, 2011 Nov
-13. doi: 10.1038/nbt.2038
-        </li>
-        <li>
-Jens-Peter Volkmer *, Debashis Sahoo *, Robert Chin *, Philip Levy Ho, Chad
-Tang, Antonina V. Kurtova, Stephen B. Willingham, Senthil K. Pazhanisamy,
-Humberto Contreras-Trujillo, Theresa A. Storm, Yair Lotan, Andrew H. Beck,
-Benjamin Chung, Ash A. Alizadeh, Guilherme Godoy, Seth P. Lerner, Matt van de
-Rijn, Linda. D. Shortliffe, Irving L. Weissman *, and Keith S. Chan *. Three
-differentiation states risk-stratify bladder cancer into distinct subtypes.
-PNAS February 7, 2012 vol. 109 no. 6 pp 2078-2083.
-        </li>
-        <li>
-Piero Dalerba*, Debashis Sahoo*, Soonmyung Paik, Xiangqian Guo, Greg Yothers,
-Nan Song, Nate Wilcox-Fogel, Erna Forgó, Pradeep S. Rajendran, Stephen P.
-Miranda, Shigeo Hisamori, Jacqueline Hutchison, Tomer Kalisky, Dalong Qian,
-Norman Wolmark, George A. Fisher, Matt van de Rijn, and Michael F. Clarke. CDX2
-as a Prognostic Biomarker in Stage II and Stage III Colon Cancer. N Engl J Med.
-2016 Jan 21;374(3):211-22. doi: 10.1056/NEJMoa1506597.
-        </li>
-      </ol>
-    </div>
-    <div id=\"footer\">
-      <p>Copyright &copy; 2016 <strong> Author: Debashis Sahoo </strong> 
-      &mdash; All rights reserved.</p>
-    </div>
-  </body>
-</html>
-";
+    
+    echo "  
+            
+            <div class=\"footer\">
+               <p style=\"margin-left: 15px;\">References</p>
+               <ol>
+                   <li>
+                   Debashis Sahoo, David L. Dill, Andrew J. Gentles, Rob Tibshirani, Sylvia K. Plevritis. Boolean implication networks derived from large scale, whole genome microarray datasets. Genome Biology, 9:R157, Oct 30 2008.
+                   </li>
+                   <li>
+                      Debashis Sahoo, Jun Seita, Deepta Bhattacharya, Matthew A. Inlay, Sylvia K. Plevritis, Irving L. Weissman, David L. Dill. MiDReG: A Method of Mining Developmentally Regulated Genes using Boolean Implications. Proc Natl Acad Sci U S A. 2010 Mar 30;107(13):5732-7. Epub 2010 Mar 15.
+                  </li>
+                  <li>
+                      Piero Dalerba *, Tomer Kalisky *, Debashis Sahoo *, Pradeep S. Rajendran, Mike Rothenberg, Anne A. Leyrat, Sopheak Sim, Jennifer Okamoto, John D. Johnston, Dalong Qian, Maider Zabala, Janet Bueno, Norma Neff, Jianbin Wang, Andy A. Shelton, Brendan Visser, Shigeo Hisamori, Mark van den Wetering, Hans Clevers, Michael F. Clarke * and Stephen R. Quake *. Single-cell dissection of transcriptional heterogeneity in human colon tumors. Nature Biotech, 2011 Nov 13. doi: 10.1038/nbt.2038
+                  </li>
+                  <li>
+                      Jens-Peter Volkmer *, Debashis Sahoo *, Robert Chin *, Philip Levy Ho, Chad Tang, Antonina V. Kurtova, Stephen B. Willingham, Senthil K. Pazhanisamy, Humberto Contreras-Trujillo, Theresa A. Storm, Yair Lotan, Andrew H. Beck, Benjamin Chung, Ash A. Alizadeh, Guilherme Godoy, Seth P. Lerner, Matt van de Rijn, Linda. D. Shortliffe, Irving L. Weissman *, and Keith S. Chan *. Three differentiation states risk-stratify bladder cancer into distinct subtypes. PNAS February 7, 2012 vol. 109 no. 6 pp 2078-2083.
+                  </li>
+                  <li>
+                      Piero Dalerba*, Debashis Sahoo*, Soonmyung Paik, Xiangqian Guo, Greg Yothers, Nan Song, Nate Wilcox-Fogel, Erna Forgó, Pradeep S. Rajendran, Stephen P. Miranda, Shigeo Hisamori, Jacqueline Hutchison, Tomer Kalisky, Dalong Qian, Norman Wolmark, George A. Fisher, Matt van de Rijn, and Michael F. Clarke. CDX2 as a Prognostic Biomarker in Stage II and Stage III Colon Cancer. N Engl J Med. 2016 Jan 21;374(3):211-22. doi: 10.1056/NEJMoa1506597.
+                  </li>
+               </ol>
+               
+               <p style=\"margin-left: 15px;\">Copyright &copy; 2016 <strong> Author: Debashis Sahoo </strong> &mdash; All rights reserved.</p>
+            </div>
+           
+            </body>
+            </html>
+    ";
 }
+
+// function printFooter() {
+//     echo "</body>
+//         </html>";
+//     echo "
+//         <br clear=\"all\"/>
+//         <div id=\"ref\">
+//           References:
+//           <ol>
+//             <li>
+//             Debashis Sahoo, David L. Dill, Andrew J. Gentles, Rob Tibshirani,
+//     Sylvia K. Plevritis. Boolean implication networks derived from large scale,
+//     whole genome microarray datasets. Genome Biology, 9:R157, Oct 30 2008.
+//             </li>
+//             <li>
+//     Debashis Sahoo, Jun Seita, Deepta Bhattacharya, Matthew A. Inlay, Sylvia K.
+//     Plevritis, Irving L. Weissman, David L. Dill. MiDReG: A Method of Mining
+//     Developmentally Regulated Genes using Boolean Implications. Proc Natl Acad Sci
+//     i
+//     U S A. 2010 Mar 30;107(13):5732-7. Epub 2010 Mar 15.
+//             </li>
+//             <li>
+//     Piero Dalerba *, Tomer Kalisky *, Debashis Sahoo *, Pradeep S. Rajendran, Mike
+//     Rothenberg, Anne A. Leyrat, Sopheak Sim, Jennifer Okamoto, John D. Johnston,
+//     Dalong Qian, Maider Zabala, Janet Bueno, Norma Neff, Jianbin Wang, Andy A.
+//     Shelton, Brendan Visser, Shigeo Hisamori, Mark van den Wetering, Hans Clevers,
+//     Michael F. Clarke * and Stephen R. Quake *. Single-cell dissection of
+//     transcriptional heterogeneity in human colon tumors. Nature Biotech, 2011 Nov
+//     13. doi: 10.1038/nbt.2038
+//             </li>
+//             <li>
+//     Jens-Peter Volkmer *, Debashis Sahoo *, Robert Chin *, Philip Levy Ho, Chad
+//     Tang, Antonina V. Kurtova, Stephen B. Willingham, Senthil K. Pazhanisamy,
+//     Humberto Contreras-Trujillo, Theresa A. Storm, Yair Lotan, Andrew H. Beck,
+//     Benjamin Chung, Ash A. Alizadeh, Guilherme Godoy, Seth P. Lerner, Matt van de
+//     Rijn, Linda. D. Shortliffe, Irving L. Weissman *, and Keith S. Chan *. Three
+//     differentiation states risk-stratify bladder cancer into distinct subtypes.
+//     PNAS February 7, 2012 vol. 109 no. 6 pp 2078-2083.
+//             </li>
+//             <li>
+//     Piero Dalerba*, Debashis Sahoo*, Soonmyung Paik, Xiangqian Guo, Greg Yothers,
+//     Nan Song, Nate Wilcox-Fogel, Erna Forgó, Pradeep S. Rajendran, Stephen P.
+//     Miranda, Shigeo Hisamori, Jacqueline Hutchison, Tomer Kalisky, Dalong Qian,
+//     Norman Wolmark, George A. Fisher, Matt van de Rijn, and Michael F. Clarke. CDX2
+//     as a Prognostic Biomarker in Stage II and Stage III Colon Cancer. N Engl J Med.
+//     2016 Jan 21;374(3):211-22. doi: 10.1056/NEJMoa1506597.
+//             </li>
+//           </ol>
+//         </div>
+//         <div id=\"footer\">
+//           <p>Copyright &copy; 2016 <strong> Author: Debashis Sahoo </strong> 
+//           &mdash; All rights reserved.</p>
+//         </div>
+//       </body>
+//     </html>
+//     ";
+// }
 
 ?>

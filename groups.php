@@ -16,6 +16,11 @@ function callGroupsPostCommands($file, $groups, $param) {
         $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
         $groups);
   }
+  if (strcmp($_POST["go"], "violinplot") == 0) {
+    violinplotDataUri($file, $_POST['file'], $_POST['id'],
+        $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
+        $groups);
+  }
   if (strcmp($_POST["go"], "getgcorr") == 0) {
     getgcorr($file, $_POST['file'], $_POST['id'],
         $_POST['x'], $_POST['y'], $_POST['xn'],$_POST['yn'], 
@@ -110,13 +115,20 @@ function getSelectTool($file) {
   fclose($fp);
   $head = chop($head, "\r\n");
   $headers = explode("\t", $head);
-  $str = "<select id=\"clinical0\" name=\"clinical\" onchange=\"callSelectTool();\">\n";
-  $str .= "<option value=\"0\"> Select Patient Information </option>\n";
-  for ($i = 1; $i < count($headers); $i++) {
-    $str .= "<option value=\"$i\">$headers[$i]</option>\n";
-  }
-  $str .= "</select>\n";
-  $str .= "<div id=\"selectPatientInfo\"></div>\n";
+    
+    $str = "<div class=\"did-floating-label-content\">\n";
+    $str .= "<select class=\"did-floating-select\" style=\"border-top: none; border-left: none; border-right: none; border-radius: 0px; max-width: 200px; min-width: 200px; background: #F1F1F1;\" id=\"clinical0\" name=\"clinical\" onchange=\"this.setAttribute('value', this.value); callSelectTool();\" onclick=\"this.setAttribute('value', this.value);\" value=\"\">";
+    $str .= "<option value=\"\"></option>\n";
+    for ($i = 1; $i < count($headers); $i++) {
+       $str .= "<option value=\"$i\">$headers[$i]</option>\n";
+    }
+    $str .= "</select>";
+    $str .= "<label class=\"did-floating-label\" style=\"background: #F1F1F1;\">Select Information</label>";
+    $str .= "</div>";
+
+                        
+                     
+  $str .= "<div id=\"selectPatientInfo\" class=\"did-floating-label-content\"></div>\n";
   return $str;
 }
 
@@ -141,72 +153,130 @@ function explore($file, $str1, $str2, $id) {
   $str2 = "$id2: ". $h->getName($id2) . " " . $h->getDesc($id2);
   $sfile = $h->getSurv();
   $selectTool = getSelectTool($sfile);
-  echo "
-    <table border=\"0\">
-    <tr>
-    <td style=\"vertical-align:top\">
-    <img id=\"img0\" class=\"groupPlot\" width=\"640\" height=\"480\"
-    src=\"$url\"/>
-    <br/>
-    <div id=\"rect\"></div>
-    <div class=\"imginfo\">
-    <a target=\"_blank\" id=\"img0link\" href=\"$url\">Image link</a> 
-    <a target=\"_blank\" id=\"img1link\" style=\"visibility:hidden;\" href=\"\">Plot link</a> 
-    <a target=\"_blank\" id=\"img2link\" style=\"visibility:hidden;\" href=\"\">Survival link</a> 
-    <br/>
-    <span id=\"gInfoX\"> $str1 </span> <br/>
-    <span id=\"gInfoY\"> $str2 </span> <br/>
-      <div id=\"lineresults\"> </div>
-    </div>
-    </td>
-    <td style=\"vertical-align:top\">
-    <div id=\"tools_display\">
-      <input type=\"button\" name=\"Union\" value=\"Union\"
-           onclick=\"callUnion();\"/>
-      <input type=\"button\" name=\"Intersection\" value=\"Intersection\"
-           onclick=\"callIntersection();\"/>
-      <input type=\"button\" name=\"Reset\" value=\"Reset\"
-           onclick=\"callReset();\"/>
-      <input type=\"button\" name=\"Remove\" value=\"Remove\"
-           onclick=\"callRemove();\"/>
-      <input type=\"button\" name=\"D-AB\" value=\"D-AB\"
-           onclick=\"callDiffAB();\"/>
-      <input type=\"button\" name=\"D-BA\" value=\"D-BA\"
-           onclick=\"callDiffBA();\"/>
-      <input type=\"button\" name=\"Scr\" value=\"Scr\"
-           onclick=\"callScr();\"/>
-      <input type=\"button\" name=\"Rect1\" value=\"Rect1\"
-           onclick=\"callRect();\"/>
-      <input type=\"button\" name=\"Thr\" value=\"Thr\"
-           onclick=\"callThr();\"/>
-      <input type=\"button\" name=\"BoxP\" value=\"BoxP\"
-           onclick=\"callBoxP();\"/>
-      <input type=\"button\" name=\"Show\" value=\"Show\"
-           onclick=\"callShow();\"/>
-      <input type=\"button\" name=\"ShowIm\" value=\"ShowIm\"
-           onclick=\"callShowIm();\"/>
-      <input type=\"button\" name=\"Stats\" value=\"Stats\"
-           onclick=\"callStats();\"/>
-      <input type=\"button\" name=\"Survival\" value=\"Survival\"
-           onclick=\"callSurvival();\"/>
-      <input type=\"button\" name=\"Corr\" value=\"Corr\"
-           onclick=\"callGCorr();\"/>
-      <input type=\"button\" name=\"Diff\" value=\"Diff\"
-           onclick=\"callGDiff();\"/>
-      <input type=\"button\" name=\"Download\" value=\"Download\"
-           onclick=\"callDownload();\"/>
-      <input type=\"button\" name=\"Search\" value=\"Search\"
-           onclick=\"callSearch();\"/>
-       <br/>
-      $selectTool
-    </div>
-    <div id=\"group_display\"></div>
-    </td>
-    </tr>
-    <script>
-        initDraw(document.getElementById('img0'), loadDisplay);
-    </script>
-  ";
+        echo "
+        <div class=\"flex-container\">
+            <div class=\"inner-flex-container\">
+                <div>
+                    <img id=\"img0\" class=\"groupPlot\" width=\"610\" height=\"460\" src=\"$url\"/>
+                </div>
+
+                <p id=\"coord-display\"></p>
+                
+                <div id=\"rect\"></div>
+
+                <div class=\"imginfo\">
+                    <a target=\"_blank\" id=\"img0link\" href=\"$url\">Image link</a> 
+                    <a target=\"_blank\" id=\"img1link\" style=\"visibility:hidden;\" href=\"\">Plot link</a> 
+                    <a target=\"_blank\" id=\"img2link\" style=\"visibility:hidden;\" href=\"\">Survival link</a> 
+                    <br/>
+                    <span id=\"gInfoX\"> $str1 </span> <br/>
+                    <span id=\"gInfoY\"> $str2 </span> <br/>
+
+                    <div id=\"lineresults\"> </div>
+                
+                 </div>
+             </div>
+              
+
+            <div class=\"inner-flex-container\">
+                <div id=\"tools_display\" class=\"btn-group\">
+                  <button name=\"Union\" name=\"Union\" value=\"Union\" onclick=\"callUnion();\"> Union </button>
+                  <button name=\"Intersection\" value=\"Intersection\" onclick=\"callIntersection();\"> Intersection</button>
+                  <button name=\"D-AB\" value=\"D-AB\" onclick=\"callDiffAB();\"> D-AB </button>
+                  <button name=\"D-BA\" value=\"D-BA\" onclick=\"callDiffBA();\"> D-BA </button>
+                  <button name=\"ViolinP\" value=\"ViolinP\" onclick=\"callViolinP();\"> ViolinP </button>
+                  <input type=\"file\" id=\"file-upload\" accept=\".csv\" hidden onchange=\"callUploadGroup(this);\"/>
+                  <label for=\"file-upload\" class=\"label-file-upload\">Upload Group</label>
+                  <button name=\"Reset\" value=\"Reset\" onclick=\"callReset();\"> Reset </button>
+                </div>
+                
+                <div class=\"flex-container\" style=\"margin: 20px 5px 5px 5px;\">
+                    $selectTool
+
+                </div>
+
+                <div id=\"group_display\"></div>
+            </div>
+        </div>
+        
+        
+         <script>
+            initDraw(document.getElementById('img0'), loadDisplay);
+            
+        </script>
+    ";
+    
+    
+//     <button name=\"Search\" value=\"Search\" onclick=\"callSearch();\"> Search </button>
+    
+//  <button name=\"BoxP\" value=\"BoxP\" onclick=\"callBoxP();\"> BoxP </button>
+    
+//   echo "
+//     <table border=\"0\">
+//     <tr>
+//     <td style=\"vertical-align:top\">
+//     <img id=\"img0\" class=\"groupPlot\" width=\"640\" height=\"480\"
+//     src=\"$url\"/>
+//     <br/>
+//     <div id=\"rect\"></div>
+//     <div class=\"imginfo\">
+//     <a target=\"_blank\" id=\"img0link\" href=\"$url\">Image link</a> 
+//     <a target=\"_blank\" id=\"img1link\" style=\"visibility:hidden;\" href=\"\">Plot link</a> 
+//     <a target=\"_blank\" id=\"img2link\" style=\"visibility:hidden;\" href=\"\">Survival link</a> 
+//     <br/>
+//     <span id=\"gInfoX\"> $str1 </span> <br/>
+//     <span id=\"gInfoY\"> $str2 </span> <br/>
+//       <div id=\"lineresults\"> </div>
+//     </div>
+//     </td>
+//     <td style=\"vertical-align:top\">
+//     <div id=\"tools_display\">
+//       <input type=\"button\" name=\"Union\" value=\"Union\"
+//            onclick=\"callUnion();\"/>
+//       <input type=\"button\" name=\"Intersection\" value=\"Intersection\"
+//            onclick=\"callIntersection();\"/>
+//       <input type=\"button\" name=\"Reset\" value=\"Reset\"
+//            onclick=\"callReset();\"/>
+//       <input type=\"button\" name=\"Remove\" value=\"Remove\"
+//            onclick=\"callRemove();\"/>
+//       <input type=\"button\" name=\"D-AB\" value=\"D-AB\"
+//            onclick=\"callDiffAB();\"/>
+//       <input type=\"button\" name=\"D-BA\" value=\"D-BA\"
+//            onclick=\"callDiffBA();\"/>
+//       <input type=\"button\" name=\"Scr\" value=\"Scr\"
+//            onclick=\"callScr();\"/>
+//       <input type=\"button\" name=\"Rect1\" value=\"Rect1\"
+//            onclick=\"callRect();\"/>
+//       <input type=\"button\" name=\"Thr\" value=\"Thr\"
+//            onclick=\"callThr();\"/>
+//       <input type=\"button\" name=\"BoxP\" value=\"BoxP\"
+//            onclick=\"callBoxP();\"/>
+//       <input type=\"button\" name=\"Show\" value=\"Show\"
+//            onclick=\"callShow();\"/>
+//       <input type=\"button\" name=\"ShowIm\" value=\"ShowIm\"
+//            onclick=\"callShowIm();\"/>
+//       <input type=\"button\" name=\"Stats\" value=\"Stats\"
+//            onclick=\"callStats();\"/>
+//       <input type=\"button\" name=\"Survival\" value=\"Survival\"
+//            onclick=\"callSurvival();\"/>
+//       <input type=\"button\" name=\"Corr\" value=\"Corr\"
+//            onclick=\"callGCorr();\"/>
+//       <input type=\"button\" name=\"Diff\" value=\"Diff\"
+//            onclick=\"callGDiff();\"/>
+//       <input type=\"button\" name=\"Download\" value=\"Download\"
+//            onclick=\"callDownload();\"/>
+//       <input type=\"button\" name=\"Search\" value=\"Search\"
+//            onclick=\"callSearch();\"/>
+//        <br/>
+//       $selectTool
+//     </div>
+//     <div id=\"group_display\"></div>
+//     </td>
+//     </tr>
+//     <script>
+//         initDraw(document.getElementById('img0'), loadDisplay);
+//     </script>
+//   ";
 }
 
 function group($file, $expr, $id, $x, $y, $xn, $yn, $ox, $oy,
@@ -329,8 +399,16 @@ function getPatientInfo($file, $id, $clinical) {
     if (strcmp($type, "status") == 0 || strncmp($type, "c ", 2) == 0) {
       $hash = array();
       foreach ($values as $v) { $hash[$v] = 1; }
-      echo "<select id=\"PiC\" name=\"PiC\" onchange=\"callPatientGroup('PiC', $clinical);\">";
-      echo "<option value=\"\"> Select value </option> ";
+//       echo "<select id=\"PiC\" name=\"PiC\" onchange=\"callPatientGroup('PiC', $clinical);\">";
+//       echo "<option value=\"\"> Select value </option> ";
+        
+        
+        echo "<select class=\"did-floating-select\" style=\"border-top: none; border-left: none; border-right: none; border-radius: 0px; max-width: 200px; min-width: 200px; background: #F1F1F1;\" id=\"PiC\" name=\"PiC\" onchange=\"this.setAttribute('value', this.value); callPatientGroup('PiC', $clinical);\" onclick=\"this.setAttribute('value', this.value);\" value=\"\">";
+        
+        echo "<option value=\"\"></option>\n";
+   
+    $
+        
       $keys = array_keys($hash);
       if (count($keys) > 20) {
         asort($keys);
@@ -343,18 +421,28 @@ function getPatientInfo($file, $id, $clinical) {
           echo "<option value=\"$k\"> $k </option> ";
         }
       }
+
       echo "</select>";
+      echo "<label class=\"did-floating-label\" style=\"background: #F1F1F1;\">Select Value</label>";
     }
     if (strcmp($type, "time") == 0 || strncmp($type, "n ", 2) == 0) {
-      echo "
-        <input type=\"text\" size=\"10\" id=\"PiN\" 
-        name=\"PiN\" value=\"\" alt=\"Patient Information\"/>
-        ";
+//       echo "
+//         <input type=\"text\" size=\"10\" id=\"PiN\" 
+//         name=\"PiN\" value=\"\" alt=\"Patient Information\"/>
+//         ";
+        echo "<div class=\"did-floating-label-content\">
+            <input class=\"did-floating-input\" style=\"background: #F1F1F1;\" placeholder=\" \" type=\"text\" size=\"10\" id=\"PiN\" name=\"PiN\" value=\"\" alt=\"Patient Information\"/>
+            <label class=\"did-floating-label\" style=\"background: #F1F1F1;\">Select Value</label>
+        </div>";
       printf("%.1f:%.1f", min_mod($values), max_mod($values));
-      echo "
-      <input type=\"button\" name=\"GO\" value=\"GO\"
-           onclick=\"callPatientGroup('PiN', $clinical);\"/>
-           ";
+//       echo "
+//       <input type=\"button\" name=\"GO\" value=\"GO\"
+//            onclick=\"callPatientGroup('PiN', $clinical);\"/>
+//            ";
+        
+        echo "<div class=\"did-floating-label-content\">
+            <input class=\"did-floating-input\" type=\"button\" name=\"GO\" value=\"GO\" onclick=\"callPatientGroup('PiN', $clinical);\" style=\"background: #F1F1F1;\" />
+        </div>";
     }
   }
   fclose($fp);
@@ -729,20 +817,22 @@ function boxplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
       }
     }
   }
-  $res = "
-png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
-d <-  c(" . join(",", $data) . ")
-l <-  c(\"" . join("\",\"", $labels) . "\")
-n <-  c(\"" . join("\",\"", $names) . "\")
-c <-  c(\"" . join("\",\"", $clrs) . "\")
-par(font.lab=2)
-boxplot(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
-#boxplot(d ~ l, col=c, names=n, xaxt=\"n\",
-#    ylab=\"Normalized Log2 Expression values\")
-#axis(1, at=1:length(n), labels=n, padj=1, font=2)
-";
-  #echo "<pre>$res</pre>";
+    
+//     legend("topright", legend = levels(warpbreaks$tension),
+//        title = "Tension", pch = 16, col = 1:3)
+//  beeswarm(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
+//         
+    $res = "
+    png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
+    d <-  c(" . join(",", $data) . ")
+    l <-  c(\"" . join("\",\"", $labels) . "\")
+    n <-  c(\"" . join("\",\"", $names) . "\")
+    c <-  c(\"" . join("\",\"", $clrs) . "\")
+    par(font.lab=2)
+    boxplot(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
+   ";
   fwrite($fp, $res);
+  
   fclose($fp);
   if (($fp = fopen("$outprefix.sh", "w")) === FALSE) {
     echo "Can't open file tmp.sh <br>";
@@ -780,6 +870,117 @@ function boxplot($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
   U::cleanup($outprefix);
 }
 
+function violinplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
+  global $colors;
+  if (!$groups) {
+    echo "No groups\n";
+    return;
+  }
+  $better_token = md5(uniqid(rand(), true));
+  $outprefix = "tmpdir/tmp$better_token";
+  if (($fp = fopen("$outprefix.R", "w")) === FALSE) {
+    echo "Can't open file tmp.R <br>";
+  }
+  list($z_arr, $h_arr) = U::getX($expr, $y, 0);
+  $z_n = $yn;
+  $z_id = $z_arr[0];
+  $a_hash = array();
+  for ($i = 0; $i < count($h_arr); $i++) {
+    $a_hash[$h_arr[$i]] = $i;
+  }
+  $list = explode(";", $groups);
+  $data = array();
+  $labels = array();
+  $names = array();
+  $clrs = array();
+  foreach ($list as $g) {
+    if ($g != '') {
+      list($i, $nm, $v) = explode("=", $g, 3);
+      $nmps = explode(",", $nm);
+      if (count($nmps) > 1) {
+        $colors[($i+2) % count($colors)] = trim($nmps[1]);
+        $nm = $nmps[0];
+      }
+      foreach (explode(":", $v) as $a) {
+        if (array_key_exists($a, $a_hash)) {
+          if (!preg_match('/^\s*$/', $z_arr[$a_hash[$a]])) {
+            array_push($data, $z_arr[$a_hash[$a]]);
+            array_push($labels, $nm);
+            $names[$i] = $nm;
+            $clrs[$i] = U::getColor($i+2);
+          }
+        }
+      }
+    }
+  }
+    
+    
+//     echo "outprfix-----".$outprefix;
+    
+//    $res = "
+//     png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
+//     library(vioplot)
+//     d <-  c(" . join(",", $data) . ")
+//     l <-  c(\"" . join("\",\"", $labels) . "\")
+//     l <- sub(\" \", \".\", l)
+//     c <-  c(\"" . join("\",\"", $clrs) . "\")
+//     par(font.lab=2)
+//     vioplot(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
+//    ";
+    
+//    if (!require('ggplot2')) {
+//           install.packages('ggplot2', dependencies = TRUE)
+//         }
+    
+    
+    
+    
+    $res = "
+        if (!require('ggplot2')) {
+             install.packages('ggplot2');
+        }
+        library(ggplot2)
+        d <-  c(" . join(",", $data) . ")
+        l <-  c(\"" . join("\",\"", $labels) . "\")
+        l <- sub(\" \", \".\", l)
+        c <-  c(\"" . join("\",\"", $clrs) . "\")
+        df <- data.frame(d = d, l = l)
+        p <- ggplot(df, aes(x = l, y = d, fill = l)) + geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) + geom_point(position = position_jitter(width = 0.2), size = 2) + scale_fill_manual(values = c) + labs(x = '', y = paste('$z_id', ':', '$z_n', 'Gene Expression')) + theme_minimal()
+        ggsave(filename = '$outprefix.png', plot = p, width = 12, height = 9, dpi = 72, limitsize = FALSE)
+    ";
+    
+      #echo "<pre>$res</pre>";
+      fwrite($fp, $res);
+      fclose($fp);
+      if (($fp = fopen("$outprefix.sh", "w")) === FALSE) {
+        echo "Can't open file tmp.sh <br>";
+      }
+      fwrite($fp, "/usr/bin/R --slave < $outprefix.R\n");
+      fclose($fp);
+   
+    $output = [];
+    $returnValue = 0; 
+    
+    exec("sh $outprefix.sh 2>&1", $output, $returnValue);
+
+    if ($returnValue !== 0) {
+        // Error occurred
+        echo "Error executing the command: " . implode(PHP_EOL, $output);
+    } else {
+        return $outprefix;
+    } 
+}
+
+function violinplotDataUri($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
+    if (!$groups) {
+        echo "No groups\n";
+        return;
+    }
+    $outprefix = violinplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups);
+    echo data_uri("$outprefix.png", "image/png");
+    U::cleanup($outprefix);
+}
+
 function getgcorr($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
   $h = getHegemon($file, $id);
   $id1 = $h->readID($x);
@@ -808,6 +1009,121 @@ function getgdiff($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
     U::cleanup($outprefix);
   }
 }
+
+// function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn, 
+//   $groups, $clinical, $sga) {
+//   $h = getHegemon($file, $id);
+//   $id1 = $h->readID($x);
+//   $id2 = $h->readID($y);
+//   $e1 = $h->getExprData($id1);
+//   $e2 = $h->getExprData($id2);
+//   if ($sga != '') {
+//     $list = preg_split("/\s+/", $sga);
+//     $res = array();
+//     if (count($list) > 0 && $list[0] === "Boolean") {
+//       echo "if boolean";
+//       $f = $h->getExprFile();
+//       $x_t = FALSE;
+//       $y_t = FALSE;
+//       if (count($list) > 1) { $x_t = $list[1]; }
+//       if (count($list) > 2) { $y_t = $list[2]; }
+//       list($x_arr, $y_arr, $h_arr) = U::getXandY($f, $x, $y, 0);
+//       $gr = U::generateBooleanGroups($file, $xn, $yn, $x_arr, $y_arr, $h_arr,
+//         $x_t, $y_t);
+//       foreach ($gr as $g) {
+//         echo count($g[2])."\n";
+//         echo "$g[1]\n";
+//         foreach ($g[2] as $i) {
+//           echo "$i\n";
+//         }
+//       }
+//     }
+//     else {
+//       if (count($list) > 0 && $list[0] === "search") {
+//         echo "else if search";
+//         for ($i = $h->start; $i <= $h->end; $i++) {
+//           $hdr = strtolower($h->headers[$i]);
+//           for ($j = 1; $j < count($list); $j++) {
+//             $k = strtolower($list[$j]);
+//             if (strpos($hdr, $k) !== false) {
+//               array_push($res, $i);
+//               break;
+//             }
+//           }
+//         }
+//       }
+//       else {
+//         echo "else";
+//         $hh = array();
+//         for ($i = $h->start; $i <= $h->end; $i++) {
+//           $hdr = $h->headers[$i];
+//           $hh[strtolower($hdr)] = $i;
+//         }
+//         foreach ($list as $k) {
+//           if (array_key_exists(strtolower($k), $hh)) {
+//             array_push($res, $hh[strtolower($k)]);
+//           }
+//         }
+//       }
+//       echo count($res)."\n";
+//       echo "ArrayID\t$xn\t$yn\n";
+//       foreach ($res as $i) {
+//         echo $h->headers[$i]."\t".$e1[$i]."\t".$e2[$i]."\n";
+//       }
+//     }
+//   }
+//   elseif ($groups != '') {
+// //     $filename = "tmpdir/temp.csv";
+// //     chmod($filename, 0777); 
+// //     if (($f = fopen($filename, "w")) === FALSE) {
+// //         echo "Can't open file temp.csv <br>";
+// //     }
+//     $ahash = U::joinGroupsArray($groups);
+//     for ($i = $h->start; $i <= $h->end; $i++) {
+//       $hdr = $h->headers[$i];
+//       if (array_key_exists($hdr, $ahash)) {
+//         $ahash[$hdr] = $i;
+//       }
+//     }
+//     $sfile = $h->getSurv();
+//     if ($sfile == null || ($fp = fopen($sfile, "r")) === FALSE) {
+//       return;
+//     }
+//     echo count($ahash)."\n";
+    
+//     echo "ArrayID\tValue\t$xn\t$yn\n";
+// //     fputcsv($f, array("ArrayID", "Value", $xn, $yn));
+//     $head = fgets($fp);
+//     $head = chop($head, "\r\n");
+//     $headers = explode("\t", $head);
+//     if ($clinical > 0 && $clinical < count($headers)) {
+//       $type = $headers[$clinical];
+//       while (!feof($fp)) {
+//         $line = fgets($fp);
+//         if ($line == "") {
+//           continue;
+//         }
+//         $line = chop($line, "\r\n");
+//         $list = explode("\t", $line);
+//         $arr = $list[0];
+//         $v = "";
+//         if (array_key_exists($arr, $ahash) && $clinical < count($list)) {
+//           $v = $list[$clinical];
+//           $i = $ahash[$arr];
+//           echo "$arr\t$v\t".$e1[$i]."\t".$e2[$i]."\n";
+// //           fputcsv($f, array($arr, $v, $e1[$i], $e2[$i]));
+//         }
+//       }
+//     }
+//     fclose($fp);
+// //     fclose($f);
+// //     echo "-------\n";
+// //     header("Content-Disposition: attachment; filename=".$filename);
+// //     header("Content-Type: application/csv; "); 
+// //     header('Content-Description: File Transfer');
+// //     readfile($filename);
+//   }
+// }
 
 function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn, 
   $groups, $clinical, $sga) {
@@ -869,6 +1185,10 @@ function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn,
     }
   }
   elseif ($groups != '') {
+    $filename = "tmpdir/temp.csv";
+    if (($f = fopen($filename, "w")) === FALSE) {
+        echo "Can't open file temp.csv <br>";
+    }
     $ahash = U::joinGroupsArray($groups);
     for ($i = $h->start; $i <= $h->end; $i++) {
       $hdr = $h->headers[$i];
@@ -882,11 +1202,13 @@ function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn,
     }
     echo count($ahash)."\n";
     echo "ArrayID\tValue\t$xn\t$yn\n";
+    fputcsv($f, array("ArrayID", "Value", $xn, $yn));
     $head = fgets($fp);
     $head = chop($head, "\r\n");
     $headers = explode("\t", $head);
-    if ($clinical > 0 && $clinical < count($headers)) {
-      $type = $headers[$clinical];
+    // default - when no clinical value is selected
+//     if ($clinical > 0 && $clinical < count($headers)) {
+//       $type = $headers[$clinical];
       while (!feof($fp)) {
         $line = fgets($fp);
         if ($line == "") {
@@ -900,10 +1222,13 @@ function searchGroupArea($file, $expr, $id, $x, $y, $xn, $yn,
           $v = $list[$clinical];
           $i = $ahash[$arr];
           echo "$arr\t$v\t".$e1[$i]."\t".$e2[$i]."\n";
+          fputcsv($f, array($arr, $v, $e1[$i], $e2[$i]));
         }
       }
-    }
+//     }
     fclose($fp);
+    fclose($f);
+//     U::cleanup($f);
   }
 }
 
