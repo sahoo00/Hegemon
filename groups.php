@@ -915,25 +915,6 @@ function violinplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
   }
     
     
-//     echo "outprfix-----".$outprefix;
-    
-//    $res = "
-//     png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
-//     library(vioplot)
-//     d <-  c(" . join(",", $data) . ")
-//     l <-  c(\"" . join("\",\"", $labels) . "\")
-//     l <- sub(\" \", \".\", l)
-//     c <-  c(\"" . join("\",\"", $clrs) . "\")
-//     par(font.lab=2)
-//     vioplot(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
-//    ";
-    
-//    if (!require('ggplot2')) {
-//           install.packages('ggplot2', dependencies = TRUE)
-//         }
-    
-    
-    
     
     $res = "
         if (!require('ggplot2')) {
@@ -949,7 +930,7 @@ function violinplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
         ggsave(filename = '$outprefix.png', plot = p, width = 12, height = 9, dpi = 72, limitsize = FALSE)
     ";
     
-      #echo "<pre>$res</pre>";
+    
       fwrite($fp, $res);
       fclose($fp);
       if (($fp = fopen("$outprefix.sh", "w")) === FALSE) {
