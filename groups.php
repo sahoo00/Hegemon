@@ -730,16 +730,17 @@ function boxplotImage($file, $expr, $id, $x, $y, $xn, $yn, $groups) {
     }
   }
   $res = "
+#library(vioplot)
 png(filename=\"$outprefix.png\", width=640, height=480, pointsize=15)
 d <-  c(" . join(",", $data) . ")
 l <-  c(\"" . join("\",\"", $labels) . "\")
+l <- sub(\" \", \".\", l)
 n <-  c(\"" . join("\",\"", $names) . "\")
+n <- sub(\" \", \".\", n)
 c <-  c(\"" . join("\",\"", $clrs) . "\")
 par(font.lab=2)
 boxplot(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
-#boxplot(d ~ l, col=c, names=n, xaxt=\"n\",
-#    ylab=\"Normalized Log2 Expression values\")
-#axis(1, at=1:length(n), labels=n, padj=1, font=2)
+#vioplot(d ~ l, col=c, ylab=\"$z_id : $z_n Gene Expression\")
 ";
   #echo "<pre>$res</pre>";
   fwrite($fp, $res);

@@ -2377,10 +2377,17 @@ anova & Pr(\$>\$F) & F Value \\\\
         echo "Can't open file $file <br>";
         exit;
       }
-      $idhash = $h->getIDs($genes);
-      foreach ($idhash as $v1 => $n1) {
-        $x_arr = [$v1, $n1, $h->getName($v1)];
-        echo join("\t", $x_arr)."\n";
+      $genelist = preg_split("/\s+/", $genes);
+      foreach ($genelist as $g) {
+        $name = trim($g);
+        if ($name == '' || $name == '---') {
+          continue;
+        }
+        $idhash = $h->getIDs($name);
+        foreach ($idhash as $v1 => $n1) {
+          $x_arr = [$v1, $n1, $h->getName($v1)];
+          echo join("\t", $x_arr)."\n";
+        }
       }
       fclose($fp);
     }

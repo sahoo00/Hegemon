@@ -172,7 +172,7 @@ def getStepMinerThr(data, start=None, end=None):
     end = len(data) - 1;
   array = []
   for i in range(start, len(data)):
-    if (data[i] is None or data[i] is ""):
+    if (data[i] is None or data[i] == ""):
       continue;
     array.append(float(data[i]))
   array.sort()
@@ -392,7 +392,7 @@ def plotBooleanPair(obj, pGroups=None, ax=None, thrx=None, thry=None,
     df["x"] = pd.to_numeric(pd.Series(datax[1][2:]))
     df["y"] = pd.to_numeric(pd.Series(datay[1][2:]))
     df['c'] = "DarkBlue"
-    df1 = df1.append(df)
+    df1 = pd.concat([df1, df], ignore_index=True)
   else:
     for k in range(len(pGroups)):
       df = pd.DataFrame()
@@ -402,7 +402,7 @@ def plotBooleanPair(obj, pGroups=None, ax=None, thrx=None, thry=None,
       val = [datay[1][i] for i in order]
       df["y"] = pd.to_numeric(pd.Series(val))
       df["c"] = pGroups[k][1]
-      df1 = df1.append(df)
+      df1 = pd.concat([df1, df], ignore_index=True)
   if ax is None:
       w,h = (6.4, 4.8)
       dpi = 100
@@ -1286,6 +1286,9 @@ class Hegemon:
     for line in fp:
         line = line.strip();
         ll = line.split("\t");
+        if (len(ll) == 2):
+            ll.append("")
+            ll.append("")
         if (len(ll) == 3):
             ll.append("")
         if (len(ll) != 4):
